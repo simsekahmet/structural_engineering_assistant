@@ -117,15 +117,13 @@ namespace EtabsTools
 
             TableLayoutPanel tlpLeft = new TableLayoutPanel
             {
-                Dock = DockStyle.Top,
-                AutoSize = true,
-                AutoSizeMode = AutoSizeMode.GrowOnly,
+                Dock = DockStyle.Fill,
                 RowCount = 3,
                 ColumnCount = 1
             };
             tlpLeft.RowStyles.Add(new RowStyle(SizeType.Absolute, 215F));
             tlpLeft.RowStyles.Add(new RowStyle(SizeType.Absolute, 180F));
-            tlpLeft.RowStyles.Add(new RowStyle(SizeType.Absolute, 100F));
+            tlpLeft.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
 
             // --- Kombinasyon Seçimi (Üst Sol) ---
             TableLayoutPanel tlpCombos = new TableLayoutPanel

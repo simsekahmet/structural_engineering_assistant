@@ -103,6 +103,7 @@ namespace EtabsTools
             };
             tlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 35F));
             tlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 65F));
+            tlp.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
             tlp.Padding = new Padding(20, 10, 20, 10);
 
             // =============== SOL PANEL (Parametreler) ===============
@@ -110,15 +111,13 @@ namespace EtabsTools
 
             TableLayoutPanel tlpLeft = new TableLayoutPanel
             {
-                Dock = DockStyle.Top,
-                AutoSize = true,
-                AutoSizeMode = AutoSizeMode.GrowOnly,
+                Dock = DockStyle.Fill,
                 RowCount = 3,
                 ColumnCount = 1
             };
             tlpLeft.RowStyles.Add(new RowStyle(SizeType.Absolute, 215F));
             tlpLeft.RowStyles.Add(new RowStyle(SizeType.Absolute, 100F));
-            tlpLeft.RowStyles.Add(new RowStyle(SizeType.Absolute, 100F));
+            tlpLeft.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
 
             // --- Kombinasyon Seçimi (Üst Sol) ---
             TableLayoutPanel tlpCombos = new TableLayoutPanel
