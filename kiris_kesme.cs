@@ -494,13 +494,43 @@ namespace EtabsTools
                 ref tableData
             );
 
-            if (ret != 0 || numberRecords == 0 || fieldsKeysRet == null || tableData == null) return;
+            if (ret != 0 || numberRecords == 0)
+            {
+                // Fallback table name search
+                int numTables = 0;
+                string[] availableTables = null; string[] desc = null; int[] import = null;
+                SapModel.DatabaseTables.GetAvailableTables(ref numTables, ref availableTables, ref desc, ref import);
+                if (availableTables != null)
+                {
+                    foreach (string t in availableTables)
+                    {
+                        if (t.ToUpper().Contains("ELEMENT") && t.ToUpper().Contains("FORCES") && t.ToUpper().Contains("BEAM"))
+                        {
+                            tableName = t;
+                            break;
+                        }
+                    }
+                }
+                ret = SapModel.DatabaseTables.GetTableForDisplayArray(tableName, ref fieldKeys, "", ref tableVersion, ref fieldsKeysRet, ref numberRecords, ref tableData);
+            }
 
-            int idxStory = Array.IndexOf(fieldsKeysRet, "Story");
-            int idxLabel = Array.IndexOf(fieldsKeysRet, "Beam");
-            int idxUnique = Array.IndexOf(fieldsKeysRet, "UniqueName");
-            int idxCase = Array.IndexOf(fieldsKeysRet, "OutputCase");
-            int idxV2 = Array.IndexOf(fieldsKeysRet, "V2");
+            if (ret != 0 || numberRecords == 0 || fieldsKeysRet == null || tableData == null)
+            {
+                MessageBox.Show($"Tablo okunamadı! Tablo Adı: {tableName}, Kayıt sayısı: {numberRecords}, Hata Kodu: {ret}", "ETABS", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            int idxStory = Array.FindIndex(fieldsKeysRet, x => x.Equals("Story", StringComparison.OrdinalIgnoreCase));
+            int idxLabel = Array.FindIndex(fieldsKeysRet, x => x.Equals("Beam", StringComparison.OrdinalIgnoreCase) || x.Equals("Label", StringComparison.OrdinalIgnoreCase));
+            int idxUnique = Array.FindIndex(fieldsKeysRet, x => x.Equals("UniqueName", StringComparison.OrdinalIgnoreCase) || x.Equals("Unique", StringComparison.OrdinalIgnoreCase));
+            int idxCase = Array.FindIndex(fieldsKeysRet, x => x.Equals("OutputCase", StringComparison.OrdinalIgnoreCase) || x.Equals("Case", StringComparison.OrdinalIgnoreCase));
+            int idxV2 = Array.FindIndex(fieldsKeysRet, x => x.Equals("V2", StringComparison.OrdinalIgnoreCase));
+
+            if (idxStory < 0 || idxLabel < 0 || idxUnique < 0 || idxCase < 0 || idxV2 < 0)
+            {
+                MessageBox.Show($"Tabloda gerekli sütunlardan biri bulunamadı:\nStory={idxStory}, Label={idxLabel}, Unique={idxUnique}, Case={idxCase}, V2={idxV2}\nMevcut sütunlar: " + string.Join(", ", fieldsKeysRet), "ETABS", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
 
             int fieldCount = fieldsKeysRet.Length;
 
@@ -515,8 +545,8 @@ namespace EtabsTools
 
                 double v2 = Math.Abs(Convert.ToDouble(tableData[baseIndex + idxV2]));
 
-                if (!combos.Contains(loadCase))
-                    continue;
+                bool matchedCombo = combos.Any(c => string.Equals(loadCase, c, StringComparison.OrdinalIgnoreCase));
+                if (!matchedCombo) continue;
 
                 string key = story + "_" + label;
 

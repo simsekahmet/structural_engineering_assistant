@@ -492,8 +492,8 @@ namespace EtabsTools
 
                 double p = Convert.ToDouble(tableData[baseIndex + idxP]);
 
-                if (!combos.Contains(loadCase))
-                    continue;
+                bool matchedCombo = combos.Any(c => string.Equals(loadCase, c, StringComparison.OrdinalIgnoreCase));
+                if (!matchedCombo) continue;
 
                 if (!_beamData.ContainsKey(unique))
                 {
