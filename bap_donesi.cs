@@ -37,6 +37,38 @@ namespace EtabsTools
             Label header = Form1.CreateHeaderLabel("BAP Donesi");
             mainLayout.Controls.Add(header, 0, 0);
 
+            // --- İÇERİK PANELİ ---
+            TableLayoutPanel tlp = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 2
+            };
+            tlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 30F));
+            tlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 70F));
+            tlp.Padding = new Padding(15, 5, 15, 5);
+
+            // =============== SOL PANEL (Scrollable Wrapper) ===============
+            Panel pnlLeftScroll = new Panel { Dock = DockStyle.Fill, AutoScroll = true };
+            RoundedPanel pnlLeft = new RoundedPanel
+            {
+                Title = "Ayarlar",
+                Dock = DockStyle.Top,
+                BorderRadius = 20,
+                Margin = new Padding(0, 0, 10, 5),
+                TitleFont = new Font("Segoe UI", 12, FontStyle.Bold),
+                Height = 600
+            };
+            pnlLeft.Controls.Add(new Label { 
+                Text = "Konfigürasyon seçenekleri buraya gelecek.", 
+                Location = new Point(20, 50), 
+                AutoSize = true,
+                Font = new Font("Segoe UI", 10, FontStyle.Italic)
+            });
+
+            pnlLeftScroll.Controls.Add(pnlLeft);
+            tlp.Controls.Add(pnlLeftScroll, 0, 0);
+
+            // =============== SAĞ PANEL ===============
             Label lblContent = new Label { 
                 Text = "Bu modül geliştirme aşamasındadır.", 
                 Dock = DockStyle.Fill, 
@@ -44,7 +76,9 @@ namespace EtabsTools
                 Font = new Font("Segoe UI", 12, FontStyle.Italic),
                 ForeColor = Color.Gray
             };
-            mainLayout.Controls.Add(lblContent, 0, 1);
+            tlp.Controls.Add(lblContent, 1, 0);
+
+            mainLayout.Controls.Add(tlp, 0, 1);
 
             int tabIndex = (int)page.Tag;
             page.VisibleChanged += (s, e) => {

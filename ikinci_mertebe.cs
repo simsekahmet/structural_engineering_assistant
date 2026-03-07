@@ -199,16 +199,18 @@ namespace EtabsTools
             tlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 57F));
             tlp.Padding = new Padding(20, 10, 20, 10);
 
-            Panel pnlLeft = new Panel { Dock = DockStyle.Fill, AutoScroll = true };
+            Panel pnlLeftScroll = new Panel { Dock = DockStyle.Fill, AutoScroll = true };
             TableLayoutPanel tlpLeft = new TableLayoutPanel
             {
-                Dock = DockStyle.Fill,
+                Dock = DockStyle.Top,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowOnly,
                 RowCount = 3,
                 ColumnCount = 1
             };
             tlpLeft.RowStyles.Add(new RowStyle(SizeType.Absolute, 215F));
-            tlpLeft.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-            tlpLeft.RowStyles.Add(new RowStyle(SizeType.Absolute, 50F));
+            tlpLeft.RowStyles.Add(new RowStyle(SizeType.Absolute, 400F)); // Sabit yükseklik
+            tlpLeft.RowStyles.Add(new RowStyle(SizeType.Absolute, 60F));
 
             // Kombinasyon Seçim Alanı
             TableLayoutPanel tlpCombos = new TableLayoutPanel
@@ -374,8 +376,8 @@ namespace EtabsTools
             pnlButton.Controls.Add(btnSave);
             tlpLeft.Controls.Add(pnlButton, 0, 2);
 
-            pnlLeft.Controls.Add(tlpLeft);
-            tlp.Controls.Add(pnlLeft, 0, 0);
+            pnlLeftScroll.Controls.Add(tlpLeft);
+            tlp.Controls.Add(pnlLeftScroll, 0, 0);
 
             // Sonuçlar Paneli
             RoundedPanel pnlResults = new RoundedPanel

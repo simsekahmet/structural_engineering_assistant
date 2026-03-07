@@ -181,18 +181,20 @@ namespace EtabsTools
             tlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 57F)); // Sağ panel
             tlp.Padding = new Padding(20, 10, 20, 10);
 
-            // =============== SOL PANEL ===============
-            Panel pnlLeft = new Panel { Dock = DockStyle.Fill, AutoScroll = true };
+            // =============== SOL PANEL (Scrollable Wrapper) ===============
+            Panel pnlLeftScroll = new Panel { Dock = DockStyle.Fill, AutoScroll = true };
             
             // Ana sol panel için TableLayout
             TableLayoutPanel tlpLeft = new TableLayoutPanel
             {
-                Dock = DockStyle.Fill,
+                Dock = DockStyle.Top,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowOnly,
                 RowCount = 3,
                 ColumnCount = 1
             };
             tlpLeft.RowStyles.Add(new RowStyle(SizeType.Absolute, 225F)); // Kombinasyonlar + Seçili (yan yana)
-            tlpLeft.RowStyles.Add(new RowStyle(SizeType.Percent, 100F)); // Parametreler
+            tlpLeft.RowStyles.Add(new RowStyle(SizeType.Absolute, 450F)); // Parametreler için sabit yer
             tlpLeft.RowStyles.Add(new RowStyle(SizeType.Absolute, 60F));  // Hesapla butonu (daha ferah)
 
             // --- KOMBİNASYON SEÇİM ALANI (Yan yana düzen) ---
@@ -383,8 +385,8 @@ namespace EtabsTools
 
             tlpLeft.Controls.Add(pnlButton, 0, 2);
 
-            pnlLeft.Controls.Add(tlpLeft);
-            tlp.Controls.Add(pnlLeft, 0, 0);
+            pnlLeftScroll.Controls.Add(tlpLeft);
+            tlp.Controls.Add(pnlLeftScroll, 0, 0);
 
             // =============== SAĞ PANEL - SONUÇLAR ===============
             RoundedPanel pnlResults = new RoundedPanel

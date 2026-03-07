@@ -120,11 +120,12 @@ namespace EtabsTools
             tlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 65F)); // Grafik paneli
             tlp.Padding = new Padding(20, 10, 20, 10);
 
-            // --- SOL TARAFTAKİ INPUT GRUBU (RoundedPanel) ---
+            // --- SOL TARAFTAKİ INPUT GRUBU (Scrollable Wrapper) ---
+            Panel pnlLeftScroll = new Panel { Dock = DockStyle.Fill, AutoScroll = true };
             RoundedPanel pnlInput = new RoundedPanel
             {
                 Title = "TBDY 2018 Parametreleri",
-                Anchor = AnchorStyles.None,
+                Dock = DockStyle.Top,
                 Size = new Size(330, 360),
                 BorderRadius = 15,
                 Margin = new Padding(0, 0, 15, 0)
@@ -179,9 +180,8 @@ namespace EtabsTools
                 Font = new Font("Segoe UI Semibold", 9f)
             };
             btnSave.Click += BtnSaveSpectrum_Click;
-            pnlInput.Controls.Add(btnSave);
-
-            tlp.Controls.Add(pnlInput, 0, 0);
+            pnlLeftScroll.Controls.Add(pnlInput);
+            tlp.Controls.Add(pnlLeftScroll, 0, 0);
 
             // --- ORTA VERİ PANELİ (ScrollableDataPanel) ---
             scrollableDataPanel = new ScrollableDataPanel

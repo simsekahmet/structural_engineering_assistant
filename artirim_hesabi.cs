@@ -92,14 +92,16 @@ namespace EtabsTools
             tlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 48F)); // Sonuçlar 
             tlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 5F)); // Sağ Boşluk
 
-            // =============== SOL PANEL - PARAMETRELER ===============
+            // =============== SOL PANEL - PARAMETRELER (Scrollable Wrapper) ===============
+            Panel pnlLeftScroll = new Panel { Dock = DockStyle.Fill, AutoScroll = true };
             RoundedPanel pnlParams = new RoundedPanel
             {
                 Title = "Hesap Parametreleri",
-                Dock = DockStyle.Fill,
+                Dock = DockStyle.Top,
                 BorderRadius = 15,
                 Margin = new Padding(0, 0, 15, 0),
-                TitleFont = new Font("Segoe UI Semibold", 13f)
+                TitleFont = new Font("Segoe UI Semibold", 13f),
+                Height = 650 // Sabit yükseklik verilerek scroll oluşması sağlanır
             };
 
             int labelX = 25;
@@ -318,7 +320,8 @@ namespace EtabsTools
             btnCalculateY.Click += BtnCalculateArtirimY_Click;
             pnlParams.Controls.Add(btnCalculateY);
 
-            tlp.Controls.Add(pnlParams, 1, 0);
+            pnlLeftScroll.Controls.Add(pnlParams);
+            tlp.Controls.Add(pnlLeftScroll, 1, 0);
 
             // =============== SAĞ PANEL - SONUÇLAR ===============
             RoundedPanel pnlResults = new RoundedPanel { Title = "Sonuç Raporu", Dock = DockStyle.Fill, BorderRadius = 15, Margin = new Padding(15, 0, 0, 0), TitleFont = new Font("Segoe UI Semibold", 13f) };

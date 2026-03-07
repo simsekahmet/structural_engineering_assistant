@@ -106,14 +106,16 @@ namespace EtabsTools
             tlpContent.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 70F));  
             tlpContent.Padding = new Padding(15, 5, 15, 5);
 
-            // ================= SOL PANEL =================
+            // ================= SOL PANEL (Scrollable Wrapper) =================
+            Panel pnlLeftScroll = new Panel { Dock = DockStyle.Fill, AutoScroll = true };
             RoundedPanel pnlLeft = new RoundedPanel
             {
                 Title = "Ayarlar ve Veri Çekme",
-                Dock = DockStyle.Fill,
+                Dock = DockStyle.Top,
                 BorderRadius = 20,
                 Margin = new Padding(0, 0, 10, 5),
-                TitleFont = new Font("Segoe UI", 12, FontStyle.Bold)
+                TitleFont = new Font("Segoe UI", 12, FontStyle.Bold),
+                Height = 850 // İçerik yüksekliği
             };
 
             btnFetch = new SmoothButton
@@ -258,8 +260,8 @@ namespace EtabsTools
             pnlPlanView.OnColumnClick += OnColumnClicked;
             pnlPlanView.OnColumnsSelected += OnMultipleColumnsSelected;
             pnlPlanView.OnRebarChangeRequested += (cols, newRebar) => ApplyRebarChange(cols, newRebar);
-            pnlRight.Controls.Add(pnlPlanView);
-
+            pnlLeftScroll.Controls.Add(pnlLeft);
+            tlpContent.Controls.Add(pnlLeftScroll, 0, 0);
             tlpContent.Controls.Add(pnlRight, 1, 0);
 
             mainLayout.Controls.Add(tlpContent, 0, 1);
