@@ -256,7 +256,7 @@ namespace EtabsTools
             SmoothButton btnExcel = new SmoothButton
             {
                 Text = "Excel'e Aktar",
-                Size = new Size(145, 40),
+                Size = new Size(110, 40),
                 Location = new Point(145, 5),
                 BaseColor = Color.FromArgb(204, 255, 204), // Açık Yeşil
                 BorderRadius = 15,
@@ -265,6 +265,19 @@ namespace EtabsTools
             };
             btnExcel.Click += BtnExcelExport_Click;
             pnlButton.Controls.Add(btnExcel);
+
+            SmoothButton btnSelectNotOk = new SmoothButton
+            {
+                Text = "Kurtarmayan Kirişleri Seç",
+                Size = new Size(255, 30),
+                Location = new Point(15, 50), // HESAPLA ve Excel tuşlarının altına
+                BaseColor = Color.FromArgb(255, 204, 204), // Açık Kırmızı
+                BorderRadius = 15,
+                EnableCenterAnimation = true,
+                Font = new Font("Segoe UI Semibold", 9.5f)
+            };
+            btnSelectNotOk.Click += BtnSelectNotOkBeams_Click;
+            pnlButton.Controls.Add(btnSelectNotOk);
 
             tlpLeft.Controls.Add(pnlButton, 0, 2);
 
@@ -622,8 +635,8 @@ namespace EtabsTools
                 double Vc = use_vc ? 0.65 * fctd * b * d * 1000 : 0;
                 double Vcr = 0.8 * Vc;
 
-                // Default initial stirrup parameters
-                int n = 2;
+                // Dinamik başlangıç kol sayısı (b > 45 cm ise 4, aksi halde 2)
+                int n = (b > 0.45) ? 4 : 2;
                 int phi = 10;
                 double s = 10;
 
@@ -767,8 +780,29 @@ namespace EtabsTools
         }
 
         // ----------------------------------------------------
-        // EXCEL RAPORU
+        // EXCEL RAPORU VE MODELDE SEÇİM
         // ----------------------------------------------------
+        private void BtnSelectNotOkBeams_Click(object sender, EventArgs e)
+        {
+            if (_lastBeamResults == null || _lastBeamResults.Count == 0) return;
+
+            var notOkBeams = _lastBeamResults.Where(r => r.Status == "NOT OK").Select(r => r.Unique).ToList();
+
+            if (notOkBeams.Count == 0)
+            {
+                ToastForm.ShowToast("Tüm kirişler kurtarıyor.", _form, 2000);
+                return;
+            }
+
+            SapModel.SelectObj.ClearSelection();
+            foreach (var uniqueName in notOkBeams)
+            {
+                SapModel.FrameObj.SetSelected(uniqueName, true);
+            }
+
+            ToastForm.ShowToast($"{notOkBeams.Count} kurtarmayan kiriş modelde seçildi.", _form, 3000);
+        }
+
         private void BtnExcelExport_Click(object sender, EventArgs e)
         {
             if (_lastBeamResults == null || _lastBeamResults.Count == 0)
