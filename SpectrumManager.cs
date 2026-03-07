@@ -125,10 +125,10 @@ namespace EtabsTools
             RoundedPanel pnlInput = new RoundedPanel
             {
                 Title = "TBDY 2018 Parametreleri",
-                Dock = DockStyle.Top,
                 Size = new Size(330, 360),
                 BorderRadius = 15,
-                Margin = new Padding(0, 0, 15, 0)
+                Margin = new Padding(0), // Center hizalama için marjları temizle
+                Anchor = AnchorStyles.None // TLP hücresinde hem X hem Y ortalaması için
             };
 
             int startY = 55;
@@ -180,19 +180,48 @@ namespace EtabsTools
                 Font = new Font("Segoe UI Semibold", 9f)
             };
             btnSave.Click += BtnSaveSpectrum_Click;
-            pnlLeftScroll.Controls.Add(pnlInput);
+            pnlInput.Controls.Add(btnSave);
+
+            // Centering TableLayout for pnlInput (Both Horizontally and Vertically)
+            TableLayoutPanel tlpInnerLeft = new TableLayoutPanel { 
+                Dock = DockStyle.Fill, 
+                ColumnCount = 3, RowCount = 3 
+            };
+            tlpInnerLeft.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50f));
+            tlpInnerLeft.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 330f));
+            tlpInnerLeft.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50f));
+            tlpInnerLeft.RowStyles.Add(new RowStyle(SizeType.Percent, 50f));
+            tlpInnerLeft.RowStyles.Add(new RowStyle(SizeType.Absolute, 360f));
+            tlpInnerLeft.RowStyles.Add(new RowStyle(SizeType.Percent, 50f));
+            tlpInnerLeft.Controls.Add(pnlInput, 1, 1);
+
+            pnlLeftScroll.Controls.Add(tlpInnerLeft);
             tlp.Controls.Add(pnlLeftScroll, 0, 0);
 
             // --- ORTA VERİ PANELİ (Scrollable Wrapper) ---
             Panel pnlMidScroll = new Panel { Dock = DockStyle.Fill, AutoScroll = true };
             scrollableDataPanel = new ScrollableDataPanel
             {
-                Dock = DockStyle.Top,
                 Size = new Size(160, 360), // ESKİ BOYUT
                 BorderRadius = 15,
-                Margin = new Padding(0, 0, 15, 0)
+                Margin = new Padding(0), // Center hizalama için marjları temizle
+                Anchor = AnchorStyles.None // TLP hücresinde hem X hem Y ortalaması için
             };
-            pnlMidScroll.Controls.Add(scrollableDataPanel);
+
+            // Centering TableLayout for scrollableDataPanel (Both Horizontally and Vertically)
+            TableLayoutPanel tlpInnerMid = new TableLayoutPanel { 
+                Dock = DockStyle.Fill, 
+                ColumnCount = 3, RowCount = 3 
+            };
+            tlpInnerMid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50f));
+            tlpInnerMid.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 160f));
+            tlpInnerMid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50f));
+            tlpInnerMid.RowStyles.Add(new RowStyle(SizeType.Percent, 50f));
+            tlpInnerMid.RowStyles.Add(new RowStyle(SizeType.Absolute, 360f));
+            tlpInnerMid.RowStyles.Add(new RowStyle(SizeType.Percent, 50f));
+            tlpInnerMid.Controls.Add(scrollableDataPanel, 1, 1);
+
+            pnlMidScroll.Controls.Add(tlpInnerMid);
             tlp.Controls.Add(pnlMidScroll, 1, 0);
 
             // --- SAĞ TARAFTAKİ GRAFİK PANELİ (RoundedPanel içinde) ---
