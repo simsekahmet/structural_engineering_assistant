@@ -234,7 +234,7 @@ namespace EtabsTools
             SmoothButton btnExcel = new SmoothButton
             {
                 Text = "Excel'e Aktar",
-                Size = new Size(145, 40),
+                Size = new Size(110, 40),
                 Location = new Point(145, 5),
                 BaseColor = Color.FromArgb(204, 255, 204), // Açık Yeşil
                 BorderRadius = 15,
@@ -243,6 +243,19 @@ namespace EtabsTools
             };
             btnExcel.Click += BtnExcelExportBeamAxial_Click;
             pnlButton.Controls.Add(btnExcel);
+
+            SmoothButton btnSelectNotOk = new SmoothButton
+            {
+                Text = "Kolon Gibi Donatılacakları Seç",
+                Size = new Size(255, 30),
+                Location = new Point(15, 50),
+                BaseColor = Color.FromArgb(255, 204, 204), // Açık Kırmızı
+                BorderRadius = 15,
+                EnableCenterAnimation = true,
+                Font = new Font("Segoe UI Semibold", 9.5f)
+            };
+            btnSelectNotOk.Click += BtnSelectNotOkBeams_Click;
+            pnlButton.Controls.Add(btnSelectNotOk);
 
             tlpLeft.Controls.Add(pnlButton, 0, 2);
 
@@ -679,8 +692,29 @@ namespace EtabsTools
         }
 
         // ----------------------------------------------------
-        // EXCEL RAPORU
+        // EXCEL RAPORU VE MODELDE SEÇİM
         // ----------------------------------------------------
+        private void BtnSelectNotOkBeams_Click(object sender, EventArgs e)
+        {
+            if (_lastBeamResults == null || _lastBeamResults.Count == 0) return;
+
+            var notOkBeams = _lastBeamResults.Where(r => r.Status == "KOLON GİBİ DONATILACAK").Select(r => r.Unique).ToList();
+
+            if (notOkBeams.Count == 0)
+            {
+                ToastForm.ShowToast("Tüm kirişler sınırı sağlıyor.", _form, 2000);
+                return;
+            }
+
+            SapModel.SelectObj.ClearSelection();
+            foreach (var uniqueName in notOkBeams)
+            {
+                SapModel.FrameObj.SetSelected(uniqueName, true);
+            }
+
+            ToastForm.ShowToast($"{notOkBeams.Count} kolon gibi donatılacak kiriş modelde seçildi.", _form, 3000);
+        }
+
         private void BtnExcelExportBeamAxial_Click(object sender, EventArgs e)
         {
             if (_lastBeamResults == null || _lastBeamResults.Count == 0)

@@ -313,7 +313,7 @@ namespace EtabsTools
             };
             tlpLeft.RowStyles.Add(new RowStyle(SizeType.Absolute, 340F));  // Parametreler
             tlpLeft.RowStyles.Add(new RowStyle(SizeType.Absolute, 80F));   // Frame/Element
-            tlpLeft.RowStyles.Add(new RowStyle(SizeType.Absolute, 45F));   // Butonlar
+            tlpLeft.RowStyles.Add(new RowStyle(SizeType.Absolute, 90F));   // Butonlar (Height arttırıldı)
             tlpLeft.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));   // Sınırı Aşan Kolonlar
 
             // ========== HESAP PARAMETRELERİ ==========
@@ -483,7 +483,7 @@ namespace EtabsTools
             SmoothButton btnExcel = new SmoothButton
             {
                 Text = "Excel'e Aktar",
-                Size = new Size(145, 40),
+                Size = new Size(110, 40),
                 Location = new Point(145, 5),
                 BaseColor = Color.FromArgb(204, 255, 204), // Açık Yeşil
                 BorderRadius = 15,
@@ -496,7 +496,7 @@ namespace EtabsTools
                     ToastForm.ShowToast("Aktarılacak veri yok. Önce hesaplayınız.", _form, 2000);
                     return;
                 }
-                SaveFileDialog sfd = new SaveFileDialog { Filter = "Excel Dosyası|*.xlsx", Title = "Excel Kaydet" };
+                SaveFileDialog sfd = new SaveFileDialog { Filter = "Excel Dosyası|*.xlsx", Title = "Excel Kaydet", FileName = "Kolon_Eksenel_Raporu.xlsx" };
                 if (sfd.ShowDialog() == DialogResult.OK)
                 {
                     double.TryParse(txtFck.Text, out double fck);
@@ -505,6 +505,19 @@ namespace EtabsTools
                 }
             };
             pnlCalcBtn.Controls.Add(btnExcel);
+
+            SmoothButton btnSelectNotOk = new SmoothButton
+            {
+                Text = "Sınırı Aşan Kolonları Seç",
+                Size = new Size(240, 30),
+                Location = new Point(15, 50),
+                BaseColor = Color.FromArgb(255, 204, 204), // Açık Kırmızı
+                BorderRadius = 15,
+                EnableCenterAnimation = true,
+                Font = new Font("Segoe UI Semibold", 9.5f)
+            };
+            btnSelectNotOk.Click += BtnSelectNotOkColumns_Click;
+            pnlCalcBtn.Controls.Add(btnSelectNotOk);
 
             tlpLeft.Controls.Add(pnlCalcBtn, 0, 2);
 
@@ -1142,6 +1155,29 @@ namespace EtabsTools
             {
                 ToastForm.ShowToast("Hesaplama hatası: " + ex.Message, _form, 2000);
             }
+        }
+
+        private void BtnSelectNotOkColumns_Click(object sender, EventArgs e)
+        {
+            if (_lastKolonResults == null || _lastKolonResults.Count == 0) return;
+
+            // Benzersiz kolon adlarını (FrameObj objelerini) yakalamak için Status/IsOK parametresini baz al
+            var notOkColumns = _lastKolonResults.Where(r => !r.IsOK).Select(r => _kolonFrameAssignments.FirstOrDefault(f => f.Label == r.Column && f.Story == r.Story)?.UniqueName).Where(uid => !string.IsNullOrEmpty(uid)).Distinct().ToList();
+
+            if (notOkColumns.Count == 0)
+            {
+                ToastForm.ShowToast("Tüm kolonlar limiti sağlıyor.", _form, 2000);
+                return;
+            }
+
+            cSapModel sapModel = _getSapModel();
+            sapModel.SelectObj.ClearSelection();
+            foreach (var uniqueName in notOkColumns)
+            {
+                sapModel.FrameObj.SetSelected(uniqueName, true);
+            }
+
+            ToastForm.ShowToast($"{notOkColumns.Count} adet sınırı aşan kolon modelde seçildi.", _form, 3000);
         }
 
         private void SaveKolonEksenelResults(List<KolonEksenelYukResult> results, double fck)
