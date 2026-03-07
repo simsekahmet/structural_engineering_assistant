@@ -669,15 +669,15 @@ namespace EtabsTools
         {
             if (status != "OK")
             {
-                dgvBeamResults.Rows[rowIndex].DefaultCellStyle.BackColor = Color.LightCoral;
-                dgvBeamResults.Rows[rowIndex].DefaultCellStyle.ForeColor = Color.White;
-                dgvBeamResults.Rows[rowIndex].Cells["Status"].Style.Font = new Font("Segoe UI", 9, FontStyle.Bold);
+                dgvBeamResults.Rows[rowIndex].DefaultCellStyle.BackColor = Color.FromArgb(255, 200, 200);
+                dgvBeamResults.Rows[rowIndex].DefaultCellStyle.ForeColor = Color.DarkRed;
+                dgvBeamResults.Rows[rowIndex].DefaultCellStyle.Font = new Font("Segoe UI", 9, FontStyle.Bold);
             }
             else
             {
                 dgvBeamResults.Rows[rowIndex].DefaultCellStyle.BackColor = Color.White;
                 dgvBeamResults.Rows[rowIndex].DefaultCellStyle.ForeColor = Color.Black;
-                dgvBeamResults.Rows[rowIndex].Cells["Status"].Style.Font = new Font("Segoe UI", 9, FontStyle.Regular);
+                dgvBeamResults.Rows[rowIndex].DefaultCellStyle.Font = new Font("Segoe UI", 9, FontStyle.Regular);
             }
         }
 

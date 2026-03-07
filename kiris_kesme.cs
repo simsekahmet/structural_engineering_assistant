@@ -104,10 +104,12 @@ namespace EtabsTools
             TableLayoutPanel tlp = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
-                ColumnCount = 2
+                ColumnCount = 2,
+                RowCount = 1
             };
             tlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 35F));
             tlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 65F));
+            tlp.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
             tlp.Padding = new Padding(20, 10, 20, 10);
 
             // =============== SOL PANEL (Parametreler) ===============
@@ -723,15 +725,15 @@ namespace EtabsTools
         {
             if (status != "OK")
             {
-                dgvBeamResults.Rows[rowIndex].DefaultCellStyle.BackColor = Color.LightCoral;
-                dgvBeamResults.Rows[rowIndex].DefaultCellStyle.ForeColor = Color.White;
-                dgvBeamResults.Rows[rowIndex].Cells["Status"].Style.Font = new Font("Segoe UI", 9, FontStyle.Bold);
+                dgvBeamResults.Rows[rowIndex].DefaultCellStyle.BackColor = Color.FromArgb(255, 200, 200);
+                dgvBeamResults.Rows[rowIndex].DefaultCellStyle.ForeColor = Color.DarkRed;
+                dgvBeamResults.Rows[rowIndex].DefaultCellStyle.Font = new Font("Segoe UI", 9, FontStyle.Bold);
             }
             else
             {
                 dgvBeamResults.Rows[rowIndex].DefaultCellStyle.BackColor = Color.White;
                 dgvBeamResults.Rows[rowIndex].DefaultCellStyle.ForeColor = Color.Black;
-                dgvBeamResults.Rows[rowIndex].Cells["Status"].Style.Font = new Font("Segoe UI", 9, FontStyle.Regular);
+                dgvBeamResults.Rows[rowIndex].DefaultCellStyle.Font = new Font("Segoe UI", 9, FontStyle.Regular);
             }
         }
 
