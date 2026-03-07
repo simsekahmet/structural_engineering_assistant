@@ -67,7 +67,7 @@
     <Compile Include="kolon_eksenel_yuk_kontrolu.cs" />
     <Compile Include="kiris_kesme_guvenligi.cs" />
     <Compile Include="kiris_eksenel_yuk.cs" />
-    <Compile Include="kolon_pmm.cs" />
+    <Compile Include="perde_kesme.cs" />
     <Compile Include="kolon_donesi.cs" />
     <Compile Include="kolon_dwg_export.cs" />
     <Compile Include="perde_donesi.cs" />

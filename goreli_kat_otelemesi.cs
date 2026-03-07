@@ -182,7 +182,7 @@ namespace EtabsTools
             tlp.Padding = new Padding(20, 10, 20, 10);
 
             // =============== SOL PANEL ===============
-            Panel pnlLeft = new Panel { Dock = DockStyle.Fill };
+            Panel pnlLeft = new Panel { Dock = DockStyle.Fill, AutoScroll = true };
             
             // Ana sol panel için TableLayout
             TableLayoutPanel tlpLeft = new TableLayoutPanel

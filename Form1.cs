@@ -356,7 +356,7 @@ namespace EtabsTools
         // YENİ MODÜLLER (ETABS)
         private KirisKesmeGuvenligiUI _kirisKesmeUI;
         private KirisEksenelYukUI _kirisEksenelUI;
-        private KolonPmmUI _kolonPmmUI;
+        private PerdeKesmeUI _perdeKesmeUI;
 
         // YENİ MODÜLLER (DONE)
         private KolonDonesiUI _kolonDonesiUI;
@@ -487,7 +487,12 @@ namespace EtabsTools
             _kolonEksenelYukUI.Initialize(pageKolonEksenel);
 
             // 6: Perde Kesme Kontrolü
-            AddContentPage("Perde Kesme Kontrolü", 6, "ETABS");
+            TabPage pagePerdeKesme = new TabPage("Perde Kesme Kontrolü");
+            pagePerdeKesme.Tag = 6;
+            pagePerdeKesme.BackColor = colorBackground;
+            mainTabControl.TabPages.Add(pagePerdeKesme);
+            _perdeKesmeUI = new PerdeKesmeUI(this, () => _sapModel, (i) => CreateNavigationPanel(i, "ETABS"), GoToPage, colorBackground);
+            _perdeKesmeUI.Initialize(pagePerdeKesme);
 
             // 7: Kiriş Kesme Güvenliği
             TabPage pageKirisKesme = new TabPage("Kiriş Kesme Güvenliği Kontrolü");
@@ -505,59 +510,53 @@ namespace EtabsTools
             _kirisEksenelUI = new KirisEksenelYukUI(this, () => _sapModel, (p, i, c) => CreateNavigationPanel(i, c), GoToPage, colorBackground);
             _kirisEksenelUI.Initialize(pageKirisEksenel);
 
-            // 9: Kolon PMM
-            TabPage pageKolonPmm = new TabPage("Kolon PMM Kontrolü");
-            pageKolonPmm.Tag = 9;
-            pageKolonPmm.BackColor = colorBackground;
-            mainTabControl.TabPages.Add(pageKolonPmm);
-            _kolonPmmUI = new KolonPmmUI(this, () => _sapModel, (p, i, c) => CreateNavigationPanel(i, c), GoToPage, colorBackground);
-            _kolonPmmUI.Initialize(pageKolonPmm);
 
-            // --- DONE ASİSTANI (10-15) ---
 
-            // 10: Kolon Donesi
+            // --- DONE ASİSTANI (9-14) ---
+
+            // 9: Kolon Donesi
             TabPage pageKolonDonesi = new TabPage("Kolon Donesi");
-            pageKolonDonesi.Tag = 10;
+            pageKolonDonesi.Tag = 9;
             pageKolonDonesi.BackColor = colorBackground;
             mainTabControl.TabPages.Add(pageKolonDonesi);
             _kolonDonesiUI = new KolonDonesiUI(this, () => _sapModel, (p, i, c) => CreateNavigationPanel(i, c), GoToPage, colorBackground);
             _kolonDonesiUI.Initialize(pageKolonDonesi);
 
-            // 11: Perde Donesi
+            // 10: Perde Donesi
              TabPage pagePerdeDonesi = new TabPage("Perde Donesi");
-            pagePerdeDonesi.Tag = 11;
+            pagePerdeDonesi.Tag = 10;
             pagePerdeDonesi.BackColor = colorBackground;
             mainTabControl.TabPages.Add(pagePerdeDonesi);
             _perdeDonesiUI = new PerdeDonesiUI(this, () => _sapModel, (p, i, c) => CreateNavigationPanel(i, c), GoToPage, colorBackground);
             _perdeDonesiUI.Initialize(pagePerdeDonesi);
 
-            // 12: Kiriş Donesi
+            // 11: Kiriş Donesi
              TabPage pageKirisDonesi = new TabPage("Kiriş Donesi");
-            pageKirisDonesi.Tag = 12;
+            pageKirisDonesi.Tag = 11;
             pageKirisDonesi.BackColor = colorBackground;
             mainTabControl.TabPages.Add(pageKirisDonesi);
             _kirisDonesiUI = new KirisDonesiUI(this, () => _sapModel, (p, i, c) => CreateNavigationPanel(i, c), GoToPage, colorBackground);
             _kirisDonesiUI.Initialize(pageKirisDonesi);
 
-            // 13: Döşeme Donesi
+            // 12: Döşeme Donesi
              TabPage pageDosemeDonesi = new TabPage("Döşeme Donesi");
-            pageDosemeDonesi.Tag = 13;
+            pageDosemeDonesi.Tag = 12;
             pageDosemeDonesi.BackColor = colorBackground;
             mainTabControl.TabPages.Add(pageDosemeDonesi);
             _dosemeDonesiUI = new DosemeDonesiUI(this, () => _sapModel, (p, i, c) => CreateNavigationPanel(i, c), GoToPage, colorBackground);
             _dosemeDonesiUI.Initialize(pageDosemeDonesi);
 
-            // 14: BAP Donesi
+            // 13: BAP Donesi
              TabPage pageBapDonesi = new TabPage("BAP Donesi");
-            pageBapDonesi.Tag = 14;
+            pageBapDonesi.Tag = 13;
             pageBapDonesi.BackColor = colorBackground;
             mainTabControl.TabPages.Add(pageBapDonesi);
             _bapDonesiUI = new BapDonesiUI(this, () => _sapModel, (p, i, c) => CreateNavigationPanel(i, c), GoToPage, colorBackground);
             _bapDonesiUI.Initialize(pageBapDonesi);
 
-            // 15: Temel Donesi
+            // 14: Temel Donesi
              TabPage pageTemelDonesi = new TabPage("Temel Donesi");
-            pageTemelDonesi.Tag = 15;
+            pageTemelDonesi.Tag = 14;
             pageTemelDonesi.BackColor = colorBackground;
             mainTabControl.TabPages.Add(pageTemelDonesi);
             _temelDonesiUI = new TemelDonesiUI(this, () => _sapModel, (p, i, c) => CreateNavigationPanel(i, c), GoToPage, colorBackground);
@@ -651,13 +650,13 @@ namespace EtabsTools
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 2,
-                RowCount = 5,
+                RowCount = 4,
                 Padding = new Padding(20)
             };
             tlpLeft.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
             tlpLeft.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
-            // 5 satır eşit yükseklik
-            for (int i = 0; i < 5; i++) tlpLeft.RowStyles.Add(new RowStyle(SizeType.Percent, 20F));
+            // 4 satır eşit yükseklik
+            for (int i = 0; i < 4; i++) tlpLeft.RowStyles.Add(new RowStyle(SizeType.Percent, 25F));
 
             AddButtonToGrid(tlpLeft, CreateDashButton("Tasarım Spektrumu", 1, tabColors[1]), 0, 0);
             AddButtonToGrid(tlpLeft, CreateDashButton("Artırım Hesabı", 2, tabColors[2]), 0, 1);
@@ -667,7 +666,6 @@ namespace EtabsTools
             AddButtonToGrid(tlpLeft, CreateDashButton("Perde Kesme Kontrolü", 6, tabColors[6]), 2, 1);
             AddButtonToGrid(tlpLeft, CreateDashButton("Kiriş Kesme Güvenliği", 7, tabColors[7]), 3, 0);
             AddButtonToGrid(tlpLeft, CreateDashButton("Kiriş Eksenel Yük", 8, tabColors[8]), 3, 1);
-            AddButtonToGrid(tlpLeft, CreateDashButton("Kolon PMM Kontrolü", 9, tabColors[9]), 4, 0);
 
             tlpContent.Controls.Add(tlpLeft, 0, 1);
 
@@ -677,20 +675,20 @@ namespace EtabsTools
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 2,
-                RowCount = 5, 
+                RowCount = 4, 
                 Padding = new Padding(20)
             };
             tlpRight.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
             tlpRight.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
-            // 5 satır eşit yükseklik
-            for (int i = 0; i < 5; i++) tlpRight.RowStyles.Add(new RowStyle(SizeType.Percent, 20F));
+            // 4 satır eşit yükseklik
+            for (int i = 0; i < 4; i++) tlpRight.RowStyles.Add(new RowStyle(SizeType.Percent, 25F));
 
-            AddButtonToGrid(tlpRight, CreateDashButton("Kolon Donesi", 10, tabColors[10]), 0, 0);
-            AddButtonToGrid(tlpRight, CreateDashButton("Perde Donesi", 11, tabColors[11]), 0, 1);
-            AddButtonToGrid(tlpRight, CreateDashButton("Kiriş Donesi", 12, tabColors[12]), 1, 0);
-            AddButtonToGrid(tlpRight, CreateDashButton("Döşeme Donesi", 13, tabColors[13]), 1, 1);
-            AddButtonToGrid(tlpRight, CreateDashButton("BAP Donesi", 14, tabColors[14]), 2, 0);
-            AddButtonToGrid(tlpRight, CreateDashButton("Temel Donesi", 15, tabColors[15]), 2, 1);
+            AddButtonToGrid(tlpRight, CreateDashButton("Kolon Donesi", 9, tabColors[9]), 0, 0);
+            AddButtonToGrid(tlpRight, CreateDashButton("Perde Donesi", 10, tabColors[10]), 0, 1);
+            AddButtonToGrid(tlpRight, CreateDashButton("Kiriş Donesi", 11, tabColors[11]), 1, 0);
+            AddButtonToGrid(tlpRight, CreateDashButton("Döşeme Donesi", 12, tabColors[12]), 1, 1);
+            AddButtonToGrid(tlpRight, CreateDashButton("BAP Donesi", 13, tabColors[13]), 2, 0);
+            AddButtonToGrid(tlpRight, CreateDashButton("Temel Donesi", 14, tabColors[14]), 2, 1);
 
             tlpContent.Controls.Add(tlpRight, 2, 1);
 
@@ -886,23 +884,22 @@ namespace EtabsTools
         private readonly Color[] tabColors = new Color[]
         {
             Color.FromArgb(244, 247, 254), // 0: Dashboard
-            // ETABS ASISTANI (Sade, asil ama renkli soft pastel tonlar)
+            // ETABS ASISTANI
             Color.FromArgb(218, 232, 252), // 1: Tasarım Spektrumu (Soft Mavi)
             Color.FromArgb(213, 232, 212), // 2: Artırım Hesabı (Soft Yeşil)
             Color.FromArgb(255, 230, 204), // 3: Göreli Kat Ötelemesi (Soft Turuncu)
             Color.FromArgb(225, 213, 233), // 4: İkinci Mertebe (Soft Mor)
-            Color.FromArgb(255, 204, 204), // 5: Kolon Eksenel Yük Kontrolü (Soft Pembe/Kırmızı)
+            Color.FromArgb(255, 204, 204), // 5: Kolon Eksenel Yük Kontrolü (Soft Pembe)
             Color.FromArgb(204, 229, 255), // 6: Perde Kesme Kontrolü (Ferah Açık Mavi)
             Color.FromArgb(255, 242, 204), // 7: Kiriş Kesme Güvenliği (Soft Sarı)
             Color.FromArgb(218, 222, 228), // 8: Kiriş Eksenel Yük (Açık Gri Mavi)
-            Color.FromArgb(194, 235, 225), // 9: Kolon PMM (Soft Turkuaz/Nane)
-            // DONE ASISTANI (Daha enerjik, temiz görünümlü tonlar)
-            Color.FromArgb(218, 232, 252), // 10: Kolon Donesi
-            Color.FromArgb(213, 232, 212), // 11: Perde Donesi
-            Color.FromArgb(255, 230, 204), // 12: Kiriş Donesi
-            Color.FromArgb(225, 213, 233), // 13: Döşeme Donesi
-            Color.FromArgb(255, 204, 204), // 14: BAP Donesi
-            Color.FromArgb(204, 229, 255)  // 15: Temel Donesi
+            // DONE ASISTANI
+            Color.FromArgb(218, 232, 252), // 9: Kolon Donesi
+            Color.FromArgb(213, 232, 212), // 10: Perde Donesi
+            Color.FromArgb(255, 230, 204), // 11: Kiriş Donesi
+            Color.FromArgb(225, 213, 233), // 12: Döşeme Donesi
+            Color.FromArgb(255, 204, 204), // 13: BAP Donesi
+            Color.FromArgb(204, 229, 255)  // 14: Temel Donesi
         };
 
         private Panel CreateNavigationPanel(int currentTabIndex, string context = "ETABS")
@@ -927,13 +924,12 @@ namespace EtabsTools
                 "Perde Kesme",                    // 6
                 "Kiriş Kesme",                    // 7
                 "Kiriş Eksenel",                  // 8
-                "Kolon PMM",                      // 9
-                "Kolon Donesi",                   // 10
-                "Perde Donesi",                   // 11
-                "Kiriş Donesi",                   // 12
-                "Döşeme Donesi",                  // 13
-                "BAP Donesi",                     // 14
-                "Temel Donesi"                    // 15
+                "Kolon Donesi",                   // 9
+                "Perde Donesi",                   // 10
+                "Kiriş Donesi",                   // 11
+                "Döşeme Donesi",                  // 12
+                "BAP Donesi",                     // 13
+                "Temel Donesi"                    // 14
             };
 
             // Görünecek butonları belirle
@@ -941,11 +937,11 @@ namespace EtabsTools
 
             if (context == "ETABS")
             {
-                 visibleIndices.AddRange(new int[] { 1, 2, 3, 4, 5, 6, 7, 8, 9 });
+                 visibleIndices.AddRange(new int[] { 1, 2, 3, 4, 5, 6, 7, 8 });
             }
             else if (context == "DONE")
             {
-                 visibleIndices.AddRange(new int[] { 10, 11, 12, 13, 14, 15 });
+                 visibleIndices.AddRange(new int[] { 9, 10, 11, 12, 13, 14 });
             }
 
             // Mevcut sayfayı çıkar

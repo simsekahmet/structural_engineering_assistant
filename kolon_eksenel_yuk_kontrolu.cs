@@ -298,9 +298,12 @@ namespace EtabsTools
             tlp.Padding = new Padding(15, 5, 15, 5);
 
             // =============== SOL PANEL ===============
+            Panel pnlLeftScroll = new Panel { Dock = DockStyle.Fill, AutoScroll = true };
             TableLayoutPanel tlpLeft = new TableLayoutPanel
             {
-                Dock = DockStyle.Fill,
+                Dock = DockStyle.Top,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowOnly,
                 RowCount = 4,
                 ColumnCount = 1
             };
@@ -356,7 +359,9 @@ namespace EtabsTools
                 Location = new Point(5, 28),
                 Size = new Size(180, 140),
                 SelectionMode = SelectionMode.MultiExtended,
-                Font = new Font("Segoe UI", 8)
+                Font = new Font("Segoe UI", 9f),
+                BackColor = Color.FromArgb(250, 252, 255),
+                BorderStyle = BorderStyle.None
             };
             lstKolonCombinations.DoubleClick += LstKolonCombinations_DoubleClick;
             pnlCombosLeft.Controls.Add(lstKolonCombinations);
@@ -368,7 +373,8 @@ namespace EtabsTools
                 Location = new Point(5, 175),
                 BaseColor = Color.FromArgb(255, 204, 204), // Soft Pink
                 BorderRadius = 12,
-                EnableCenterAnimation = true
+                EnableCenterAnimation = true,
+                Font = new Font("Segoe UI Semibold", 9f, FontStyle.Regular)
             };
             btnKolonLoadCombos.Click += BtnKolonLoadCombos_Click;
             pnlCombosLeft.Controls.Add(btnKolonLoadCombos);
@@ -380,7 +386,8 @@ namespace EtabsTools
                 Location = new Point(70, 175),
                 BaseColor = Color.FromArgb(255, 204, 204),
                 BorderRadius = 12,
-                EnableCenterAnimation = true
+                EnableCenterAnimation = true,
+                Font = new Font("Segoe UI Semibold", 9f, FontStyle.Regular)
             };
             btnKolonSelectCombos.Click += BtnKolonSelectCombos_Click;
             pnlCombosLeft.Controls.Add(btnKolonSelectCombos);
@@ -462,7 +469,8 @@ namespace EtabsTools
                 Location = new Point(15, 5),
                 BaseColor = Color.FromArgb(255, 204, 204),
                 BorderRadius = 15,
-                EnableCenterAnimation = true
+                EnableCenterAnimation = true,
+                Font = new Font("Segoe UI Semibold", 9f, FontStyle.Regular)
             };
             btnCalculate.Click += BtnCalculateKolonEksenel_Click;
             pnlCalcBtn.Controls.Add(btnCalculate);
@@ -474,7 +482,8 @@ namespace EtabsTools
                 Location = new Point(155, 5),
                 BaseColor = Color.FromArgb(235, 240, 245),
                 BorderRadius = 15,
-                EnableCenterAnimation = true
+                EnableCenterAnimation = true,
+                Font = new Font("Segoe UI Semibold", 9f, FontStyle.Regular)
             };
             btnSave.Click += BtnSaveKolonEksenel_Click;
             pnlCalcBtn.Controls.Add(btnSave);
@@ -502,8 +511,9 @@ namespace EtabsTools
             };
             pnlFailed.Controls.Add(rtbFailedColumns);
             tlpLeft.Controls.Add(pnlFailed, 0, 3);
-            
-            tlp.Controls.Add(tlpLeft, 0, 0);
+
+            pnlLeftScroll.Controls.Add(tlpLeft);
+            tlp.Controls.Add(pnlLeftScroll, 0, 0);
 
             // =============== SAĞ PANEL - SONUÇLAR ===============
             RoundedPanel pnlResults = new RoundedPanel

@@ -199,7 +199,7 @@ namespace EtabsTools
             tlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 57F));
             tlp.Padding = new Padding(20, 10, 20, 10);
 
-            Panel pnlLeft = new Panel { Dock = DockStyle.Fill };
+            Panel pnlLeft = new Panel { Dock = DockStyle.Fill, AutoScroll = true };
             TableLayoutPanel tlpLeft = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
@@ -234,7 +234,9 @@ namespace EtabsTools
                 Location = new Point(15, 35),
                 Size = new Size(145, 125),
                 SelectionMode = SelectionMode.MultiExtended,
-                Font = new Font("Segoe UI", 8)
+                Font = new Font("Segoe UI", 9f),
+                BackColor = Color.FromArgb(250, 252, 255),
+                BorderStyle = BorderStyle.None
             };
 
             SmoothButton btnLoadCombosIkinci = new SmoothButton
@@ -244,7 +246,8 @@ namespace EtabsTools
                 Location = new Point(15, 165),
                 BaseColor = Color.FromArgb(225, 213, 233), // Soft Purple
                 BorderRadius = 12,
-                EnableCenterAnimation = true
+                EnableCenterAnimation = true,
+                Font = new Font("Segoe UI Semibold", 9f, FontStyle.Regular)
             };
             btnLoadCombosIkinci.Click += BtnGetCombosIkinci_Click;
 
@@ -255,7 +258,8 @@ namespace EtabsTools
                 Location = new Point(80, 165),
                 BaseColor = Color.FromArgb(225, 213, 233),
                 BorderRadius = 12,
-                EnableCenterAnimation = true
+                EnableCenterAnimation = true,
+                Font = new Font("Segoe UI Semibold", 9f, FontStyle.Regular)
             };
             btnSelectCombosIkinci.Click += BtnSelectCombosIkinci_Click;
 
