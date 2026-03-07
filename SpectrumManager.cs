@@ -125,37 +125,41 @@ namespace EtabsTools
             {
                 Title = "TBDY 2018 Parametreleri",
                 Anchor = AnchorStyles.None,
-                Size = new Size(320, 350),
-                BorderRadius = 25
+                Size = new Size(330, 360),
+                BorderRadius = 15,
+                Margin = new Padding(0, 0, 15, 0)
             };
 
-            int startY = 50;
-            int gapY = 45;
-            int labelX = 50;
-            int textX = 100;
+            int startY = 55;
+            int gapY = 40;
+            int labelX = 35;
+            int textX = 140;
 
-            pnlInput.Controls.Add(CreateLabel("SDS:", labelX, startY));
-            txtSDS = CreateTextBox(textX, startY); pnlInput.Controls.Add(txtSDS);
+            Font lblFont = new Font("Segoe UI", 10f, FontStyle.Regular);
+            Color lblColor = Color.FromArgb(113, 128, 150);
 
-            pnlInput.Controls.Add(CreateLabel("SD1:", labelX, startY + gapY));
-            txtSD1 = CreateTextBox(textX, startY + gapY); pnlInput.Controls.Add(txtSD1);
+            pnlInput.Controls.Add(CreateLabel("SDS (g):", labelX, startY));
+            txtSDS = CreateTextBox(textX, startY-2); pnlInput.Controls.Add(txtSDS);
 
-            pnlInput.Controls.Add(CreateLabel("R:", labelX, startY + gapY * 2));
-            txtR = CreateTextBox(textX, startY + gapY * 2); pnlInput.Controls.Add(txtR);
+            pnlInput.Controls.Add(CreateLabel("SD1 (g):", labelX, startY + gapY));
+            txtSD1 = CreateTextBox(textX, startY + gapY-2); pnlInput.Controls.Add(txtSD1);
 
-            pnlInput.Controls.Add(CreateLabel("D:", labelX, startY + gapY * 3));
-            txtD = CreateTextBox(textX, startY + gapY * 3); pnlInput.Controls.Add(txtD);
+            pnlInput.Controls.Add(CreateLabel("R Kats.:", labelX, startY + gapY * 2));
+            txtR = CreateTextBox(textX, startY + gapY * 2-2); pnlInput.Controls.Add(txtR);
 
-            pnlInput.Controls.Add(CreateLabel("I:", labelX, startY + gapY * 4));
-            txtI = CreateTextBox(textX, startY + gapY * 4); pnlInput.Controls.Add(txtI);
+            pnlInput.Controls.Add(CreateLabel("D Kats.:", labelX, startY + gapY * 3));
+            txtD = CreateTextBox(textX, startY + gapY * 3-2); pnlInput.Controls.Add(txtD);
+
+            pnlInput.Controls.Add(CreateLabel("I Kats.:", labelX, startY + gapY * 4));
+            txtI = CreateTextBox(textX, startY + gapY * 4-2); pnlInput.Controls.Add(txtI);
 
             SmoothButton btnCalculate = new SmoothButton
             {
-                Text = "Hesapla",
-                Size = new Size(120, 30),
-                Location = new Point(20, 280),
-                BaseColor = Color.SteelBlue,
-                BorderRadius = 20,
+                Text = "HESAPLA",
+                Size = new Size(130, 40),
+                Location = new Point(25, 290),
+                BaseColor = Color.FromArgb(210, 227, 243),
+                BorderRadius = 15,
                 EnableCenterAnimation = true,
                 Anchor = AnchorStyles.None
             };
@@ -164,11 +168,11 @@ namespace EtabsTools
 
             SmoothButton btnSave = new SmoothButton
             {
-                Text = "Kaydet",
-                Size = new Size(120, 30),
-                Location = new Point(160, 280),
-                BaseColor = Color.SeaGreen,
-                BorderRadius = 20,
+                Text = "KAYDET",
+                Size = new Size(130, 40),
+                Location = new Point(170, 290),
+                BaseColor = Color.FromArgb(235, 240, 245),
+                BorderRadius = 15,
                 EnableCenterAnimation = true,
                 Anchor = AnchorStyles.None
             };
@@ -181,8 +185,9 @@ namespace EtabsTools
             scrollableDataPanel = new ScrollableDataPanel
             {
                 Anchor = AnchorStyles.None,
-                Size = new Size(160, 350), // ESKİ BOYUT
-                BorderRadius = 25
+                Size = new Size(160, 360), // ESKİ BOYUT
+                BorderRadius = 15,
+                Margin = new Padding(0, 0, 15, 0)
             };
             tlp.Controls.Add(scrollableDataPanel, 1, 0);
 
@@ -192,13 +197,13 @@ namespace EtabsTools
             {
                 Title = "",
                 Anchor = AnchorStyles.None,
-                BorderRadius = 25,
-                BackColor = Color.WhiteSmoke,
-                Padding = new Padding(10)
+                BorderRadius = 15,
+                BackColor = Color.FromArgb(250, 252, 255), // Çok hafif buz mavisi-beyaz karışımı
+                Padding = new Padding(15)
             };
             pnlRight.Resize += (s, ev) => {
                 int w = (int)(pnlRight.Width * 0.95);
-                int h = (int)(pnlRight.Height * 0.9);
+                int h = (int)(pnlRight.Height * 0.92);
                 if (w > 0 && h > 0) {
                     pnlChartContainer.Size = new Size(w, h);
                     pnlChartContainer.Location = new Point((pnlRight.Width - w) / 2, (pnlRight.Height - h) / 2);
@@ -207,15 +212,24 @@ namespace EtabsTools
 
             chartSpectrum = new Chart();
             chartSpectrum.Dock = DockStyle.Fill;
-            chartSpectrum.BackColor = Color.WhiteSmoke;
+            chartSpectrum.BackColor = Color.FromArgb(250, 252, 255);
 
             ChartArea area = new ChartArea("MainArea");
+            area.BackColor = Color.FromArgb(250, 252, 255);
             area.AxisX.Title = "Periyot (s)";
-            area.AxisY.Title = "SaR";
-            area.AxisX.TitleFont = new Font("Segoe UI", 11, FontStyle.Bold);
-            area.AxisY.TitleFont = new Font("Segoe UI", 11, FontStyle.Bold);
-            area.AxisX.MajorGrid.LineColor = Color.LightGray;
-            area.AxisY.MajorGrid.LineColor = Color.LightGray;
+            area.AxisY.Title = "SaR (m/s²)";
+            area.AxisX.TitleFont = new Font("Segoe UI Semibold", 10.5f);
+            area.AxisY.TitleFont = new Font("Segoe UI Semibold", 10.5f);
+            area.AxisX.TitleForeColor = Color.FromArgb(113, 128, 150);
+            area.AxisY.TitleForeColor = Color.FromArgb(113, 128, 150);
+            
+            area.AxisX.MajorGrid.LineColor = Color.FromArgb(234, 240, 246);
+            area.AxisY.MajorGrid.LineColor = Color.FromArgb(234, 240, 246);
+            area.AxisX.LineColor = Color.FromArgb(200, 210, 220);
+            area.AxisY.LineColor = Color.FromArgb(200, 210, 220);
+            area.AxisX.LabelStyle.ForeColor = Color.FromArgb(113, 128, 150);
+            area.AxisY.LabelStyle.ForeColor = Color.FromArgb(113, 128, 150);
+            
             area.AxisX.LabelStyle.Format = "0.0";
             area.AxisX.Minimum = 0;
             area.AxisX.Maximum = 6;
@@ -223,7 +237,7 @@ namespace EtabsTools
             area.AxisY.Maximum = 10;
             chartSpectrum.ChartAreas.Add(area);
 
-            Legend legend = new Legend("Legend1") { Docking = Docking.Top };
+            Legend legend = new Legend("Legend1") { Docking = Docking.Top, BackColor = Color.Transparent, Font = new Font("Segoe UI", 9f) };
             chartSpectrum.Legends.Add(legend);
 
             // Hover ile periyot ve ivme gösterimi
@@ -239,8 +253,8 @@ namespace EtabsTools
                 Text = "",
                 AutoSize = true,
                 Dock = DockStyle.Bottom,
-                Font = new Font("Segoe UI", 9, FontStyle.Italic),
-                ForeColor = Color.Blue,
+                Font = new Font("Segoe UI", 10, FontStyle.Italic),
+                ForeColor = Color.FromArgb(163, 174, 208),
                 Padding = new Padding(0, 5, 0, 0)
             };
 
@@ -355,12 +369,12 @@ namespace EtabsTools
 
         private Label CreateLabel(string text, int x, int y)
         {
-            return new Label { Text = text, Location = new Point(x, y), AutoSize = true, Font = new Font("Segoe UI", 10, FontStyle.Bold) };
+            return new Label { Text = text, Location = new Point(x, y), AutoSize = true, Font = new Font("Segoe UI", 9.5f, FontStyle.Regular), ForeColor = Color.FromArgb(113, 128, 150) };
         }
 
         private TextBox CreateTextBox(int x, int y)
         {
-            return new TextBox { Location = new Point(x, y), Width = 100, Text = "0" };
+            return new TextBox { Location = new Point(x, y), Width = 110, Text = "0", Font = new Font("Segoe UI", 9.5f, FontStyle.Regular) };
         }
     }
 }

@@ -24,7 +24,6 @@ namespace EtabsTools
         public bool EnableCenterAnimation { get; set; } = false; // Merkezden büyüme
 
         private Timer _animTimer;
-        private Size _targetSize;
         private Size _originalSize;
         private Point _originalLocation;
         private Point _centerPoint;
@@ -136,15 +135,15 @@ namespace EtabsTools
     // ---------------------------------------------------------
     public class RoundedPanel : Panel
     {
-        public int BorderRadius { get; set; } = 20;
-        public Color BorderColor { get; set; } = Color.LightGray;
+        public int BorderRadius { get; set; } = 15; // Figma style soft corner
+        public Color BorderColor { get; set; } = Color.FromArgb(226, 232, 240); // #E2E8F0 Soft border
         public string Title { get; set; } = "";
         public Font TitleFont { get; set; } = null; // Özel başlık fontu
 
         public RoundedPanel()
         {
-            this.BackColor = Color.White;
-            this.Padding = new Padding(15, 35, 15, 15);
+            this.BackColor = Color.FromArgb(255, 255, 255); // Saf Beyaz
+            this.Padding = new Padding(20, 45, 20, 20); // Daha bol padding (Ferahlık)
             this.DoubleBuffered = true;
         }
 
@@ -175,8 +174,8 @@ namespace EtabsTools
 
             if (!string.IsNullOrEmpty(Title))
             {
-                Font usedFont = TitleFont ?? new Font("Segoe UI", 10, FontStyle.Bold);
-                using (Brush brush = new SolidBrush(Color.FromArgb(80, 80, 80)))
+                Font usedFont = TitleFont ?? new Font("Segoe UI Semibold", 11f, FontStyle.Regular);
+                using (Brush brush = new SolidBrush(Color.FromArgb(45, 55, 72))) // #2D3748 Dark slate
                 {
                     e.Graphics.DrawString(Title, usedFont, brush, 15, 10);
                 }
@@ -215,19 +214,21 @@ namespace EtabsTools
             this.Padding = new Padding(10, 35, 10, 10);
 
             // Header Panel
-            headerPanel = new Panel { Height = 25, Dock = DockStyle.Top };
+            headerPanel = new Panel { Height = 30, Dock = DockStyle.Top };
             Label lblPeriod = new Label
             {
                 Text = "Periyot (s.)",
-                Font = new Font("Segoe UI", 9, FontStyle.Bold),
+                Font = new Font("Segoe UI Semibold", 9f, FontStyle.Regular),
+                ForeColor = Color.FromArgb(113, 128, 150), // #718096 (Soft gray)
                 Location = new Point(5, 5),
                 AutoSize = true
             };
             Label lblSaR = new Label
             {
                 Text = "SaR",
-                Font = new Font("Segoe UI", 9, FontStyle.Bold),
-                Location = new Point(80, 5), // REVERTED (110 -> 80)
+                Font = new Font("Segoe UI Semibold", 9f, FontStyle.Regular),
+                ForeColor = Color.FromArgb(113, 128, 150),
+                Location = new Point(80, 5), 
                 AutoSize = true
             };
             headerPanel.Controls.Add(lblPeriod);
@@ -311,10 +312,10 @@ namespace EtabsTools
             return new Label
             {
                 Text = text,
-                Font = new Font("Segoe UI", 20, FontStyle.Bold),
-                ForeColor = Color.DimGray,
+                Font = new Font("Segoe UI", 22, FontStyle.Bold),
+                ForeColor = Color.FromArgb(43, 54, 116), // #2B3674 Asil lacivert
                 Dock = DockStyle.Top,
-                Height = 60,
+                Height = 70,
                 TextAlign = ContentAlignment.MiddleCenter
             };
         }
@@ -342,8 +343,11 @@ namespace EtabsTools
         // Kolon Eksenel Yük Kontrolü UI (ayrı modülden)
         private KolonEksenelYukUI _kolonEksenelYukUI;
 
-        private Color colorBackground = Color.FromArgb(240, 244, 248);
-        private Color colorHeader = Color.White;
+        // YENİ RENKLER (Figma / Minimalist Flat Design)
+        private Color colorBackground = Color.FromArgb(244, 247, 254); // #F4F7FE Soft App BG
+        private Color colorHeader = Color.FromArgb(255, 255, 255); // Saf beyaz
+        private Color colorTextPrimary = Color.FromArgb(43, 54, 116); // #2B3674
+        private Color colorTextSecondary = Color.FromArgb(113, 128, 150); // #718096
 
         // İkinci Mertebe Etkileri UI (ayrı modülden)
         private TabPage tabIkinciMertebe;
@@ -386,12 +390,13 @@ namespace EtabsTools
             pnlHeader = new Panel
             {
                 Dock = DockStyle.Top,
-                Height = 80,
+                Height = 85,
                 BackColor = colorHeader,
-                Padding = new Padding(20),
-                Width = this.Width // Width'i baştan set et ki Anchor doğru çalışsın
+                Padding = new Padding(25),
+                Width = this.Width 
             };
-            pnlHeader.Paint += (s, e) => { e.Graphics.DrawLine(new Pen(Color.LightGray), 0, 79, pnlHeader.Width, 79); };
+            // Altında çok ince ve zarif bir ayıraç
+            pnlHeader.Paint += (s, e) => { e.Graphics.DrawLine(new Pen(Color.FromArgb(234, 240, 246)), 0, 84, pnlHeader.Width, 84); };
 
             // Bağlan Tuşu
             var btnConnect = new SmoothButton
@@ -406,9 +411,9 @@ namespace EtabsTools
             btnConnect.Click += BtnConnect_Click;
 
             // Etiketler
-            lblConnectionStatus = new Label { Text = "Durum: Bekleniyor...", Location = new Point(190, 30), AutoSize = true, ForeColor = Color.Gray };
-            lblModelName = new Label { Text = "Model: -", Location = new Point(350, 20), AutoSize = true, Font = new Font("Segoe UI", 9f, FontStyle.Bold) };
-            lblLockStatus = new Label { Text = "Kilit: -", Location = new Point(350, 45), AutoSize = true };
+            lblConnectionStatus = new Label { Text = "Durum: Bağlantı Bekleniyor...", Location = new Point(190, 32), AutoSize = true, ForeColor = colorTextSecondary, Font=new Font("Segoe UI", 10f) };
+            lblModelName = new Label { Text = "Model: -", Location = new Point(400, 22), AutoSize = true, Font = new Font("Segoe UI", 10f, FontStyle.Bold), ForeColor = colorTextPrimary };
+            lblLockStatus = new Label { Text = "Kilit: -", Location = new Point(400, 47), AutoSize = true, Font = new Font("Segoe UI", 9f), ForeColor = colorTextSecondary };
 
             // TabControl Tanımlama
             mainTabControl = new TabControl();
@@ -586,8 +591,8 @@ namespace EtabsTools
             {
                 Text = "Structural Engineering Assistant",
                 TextAlign = ContentAlignment.BottomCenter,
-                Font = new Font("Segoe UI Light", 28, FontStyle.Regular),
-                ForeColor = Color.FromArgb(64, 64, 64),
+                Font = new Font("Segoe UI Light", 32, FontStyle.Regular),
+                ForeColor = colorTextPrimary,
                 Dock = DockStyle.Fill,
                 AutoSize = false
             };
@@ -611,20 +616,20 @@ namespace EtabsTools
             // Sol Başlık
             Label lblEtabsTitle = new Label
             {
-                Text = "ETABS Asistanı",
+                Text = "ETABS Modülleri",
                 TextAlign = ContentAlignment.MiddleCenter,
-                Font = new Font("Segoe UI", 22, FontStyle.Regular), // (28+16)/2 = 22
-                ForeColor = Color.DimGray,
+                Font = new Font("Segoe UI Semibold", 20, FontStyle.Regular), 
+                ForeColor = colorTextSecondary,
                 Dock = DockStyle.Fill
             };
             tlpContent.Controls.Add(lblEtabsTitle, 0, 0);
 
-            // Ortadaki Dikey Çizgi (Başlık satırından sona kadar)
+            // Ortadaki Dikey Çizgi 
             Panel vSeparator = new Panel
             {
-                Width = 2,
+                Width = 1,
                 Dock = DockStyle.Fill,
-                BackColor = Color.LightGray,
+                BackColor = Color.FromArgb(226, 232, 240), // Çok ince zarif çizgi #E2E8F0
                 Margin = new Padding(0, 10, 0, 10)
             };
             tlpContent.Controls.Add(vSeparator, 1, 0);
@@ -633,10 +638,10 @@ namespace EtabsTools
             // Sağ Başlık
             Label lblDoneTitle = new Label
             {
-                Text = "Done Asistanı",
+                Text = "Done Modülleri",
                 TextAlign = ContentAlignment.MiddleCenter,
-                Font = new Font("Segoe UI", 22, FontStyle.Regular), // (28+16)/2 = 22
-                ForeColor = Color.DimGray,
+                Font = new Font("Segoe UI Semibold", 20, FontStyle.Regular), 
+                ForeColor = colorTextSecondary,
                 Dock = DockStyle.Fill
             };
             tlpContent.Controls.Add(lblDoneTitle, 2, 0);

@@ -85,11 +85,11 @@ namespace EtabsTools
                 Dock = DockStyle.Fill,
                 ColumnCount = 4,
                 RowCount = 1,
-                Padding = new Padding(0)
+                Padding = new Padding(0, 5, 0, 5) // Dikey boşluk eklendi
             };
             tlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 5F)); // Sol Boşluk
-            tlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 38F)); // Parametreler (48 -> 38)
-            tlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 42F)); // Sonuçlar (52 -> 42)
+            tlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 42F)); // Parametreler 
+            tlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 48F)); // Sonuçlar 
             tlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 5F)); // Sağ Boşluk
 
             // =============== SOL PANEL - PARAMETRELER ===============
@@ -97,155 +97,214 @@ namespace EtabsTools
             {
                 Title = "Hesap Parametreleri",
                 Dock = DockStyle.Fill,
-                BorderRadius = 25,
-                Margin = new Padding(0, 0, 10, 0),
-                TitleFont = new Font("Segoe UI", 14, FontStyle.Bold)
+                BorderRadius = 15,
+                Margin = new Padding(0, 0, 15, 0),
+                TitleFont = new Font("Segoe UI Semibold", 13f)
             };
 
-            int labelX = 20;
-            int textX = 200;
+            int labelX = 25;
+            int textX = 210;
             int textW = 80;
-            int btnX = 290;
-            int infoX = 385;
-            int currentY = 60;
-            int gapY = 36;
+            int btnX = 300;
+            int infoX = 395;
+            int currentY = 55;
+            int gapY = 38;
+
+            Font lblFont = new Font("Segoe UI", 9.5f);
+            Color lblColor = Color.FromArgb(113, 128, 150);
 
             // ===== BODRUM AYARI (EN ÜSTTE) =====
-            chkArtirimBodrum = new CheckBox { Text = "Bodrum kabulü var mı?", Location = new Point(labelX, currentY), AutoSize = true, Font = new Font("Segoe UI", 8) };
+            chkArtirimBodrum = new CheckBox 
+            { 
+                Text = "Bodrum kabulü var mı?", 
+                Location = new Point(labelX, currentY), 
+                AutoSize = true, 
+                Font = lblFont, ForeColor = lblColor 
+            };
             pnlParams.Controls.Add(chkArtirimBodrum);
 
-            pnlParams.Controls.Add(new Label { Text = "Bodrum Kat:", Location = new Point(labelX + 180, currentY), AutoSize = true, Font = new Font("Segoe UI", 8) });
-            txtArtirimBodrumKat = new TextBox { Location = new Point(labelX + 260, currentY - 3), Width = 40, Text = "0" };
+            pnlParams.Controls.Add(new Label { Text = "Bodrum Kat:", Location = new Point(labelX + 175, currentY+2), AutoSize = true, Font = lblFont, ForeColor = lblColor });
+            txtArtirimBodrumKat = new TextBox { Location = new Point(labelX + 265, currentY), Width = 45, Text = "0", Font=lblFont };
             pnlParams.Controls.Add(txtArtirimBodrumKat);
             currentY += gapY;
 
             // ===== KÜTLE BİLGİSİ =====
-            pnlParams.Controls.Add(new Label { Text = "Yapı Toplam Kütlesi (ton):", Location = new Point(labelX, currentY), AutoSize = true, Font = new Font("Segoe UI", 9) });
-            txtMt = new TextBox { Location = new Point(textX, currentY - 3), Width = textW, Text = "0" };
+            pnlParams.Controls.Add(new Label { Text = "Yapı Toplam Kütlesi (ton):", Location = new Point(labelX, currentY+2), AutoSize = true, Font = lblFont, ForeColor = lblColor });
+            txtMt = new TextBox { Location = new Point(textX, currentY), Width = textW, Text = "0", Font=lblFont };
             pnlParams.Controls.Add(txtMt);
-            Button btnGetMt = new Button { Text = "Değeri Getir", Location = new Point(btnX, currentY - 5), Size = new Size(85, 26), BackColor = Color.FromArgb(159, 219, 255), FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI", 8, FontStyle.Bold), Cursor = Cursors.Hand };
-            btnGetMt.FlatAppearance.BorderSize = 1;
+            Button btnGetMt = new Button 
+            { 
+                Text = "Getir", 
+                Location = new Point(btnX, currentY-1), 
+                Size = new Size(80, 26), 
+                BackColor = Color.FromArgb(230, 238, 245), 
+                ForeColor = Color.FromArgb(43, 54, 116),
+                FlatStyle = FlatStyle.Flat, 
+                Font = new Font("Segoe UI Semibold", 8.5f), 
+                Cursor = Cursors.Hand 
+            };
+            btnGetMt.FlatAppearance.BorderSize = 0;
             btnGetMt.Click += BtnGetMt_Click;
             pnlParams.Controls.Add(btnGetMt);
             
-            currentY += gapY + 5;
-
-            // ===== HN ve Ct PARAMETRELERİ =====
-            pnlParams.Controls.Add(new Label { Text = "Bina Yüsekliği Hn (m):", Location = new Point(labelX, currentY), AutoSize = true, Font = new Font("Segoe UI", 9) });
-            txtHN = new TextBox { Location = new Point(textX, currentY - 3), Width = textW, Text = "0" };
-            pnlParams.Controls.Add(txtHN);
-            
-            pnlParams.Controls.Add(new Label { Text = "Ct (0.07):", Location = new Point(labelX + 290, currentY), AutoSize = true, Font = new Font("Segoe UI", 9) });
-            txtCt = new TextBox { Location = new Point(labelX + 350, currentY - 3), Width = 40, Text = "0.07" };
-            pnlParams.Controls.Add(txtCt);
-
             currentY += gapY;
 
-            // ===== KOMBİNASYON SEÇİMİ =====
-            pnlParams.Controls.Add(new Label { Text = "Combinations and Cases:", Location = new Point(labelX, currentY), AutoSize = true, Font = new Font("Segoe UI", 9, FontStyle.Bold) });
-            currentY += 30;
+            // ===== HN ve Ct PARAMETRELERİ =====
+            pnlParams.Controls.Add(new Label { Text = "Bina Yüksekliği Hn (m):", Location = new Point(labelX, currentY+2), AutoSize = true, Font = lblFont, ForeColor = lblColor });
+            txtHN = new TextBox { Location = new Point(textX, currentY), Width = textW, Text = "0", Font=lblFont };
+            pnlParams.Controls.Add(txtHN);
+            
+            pnlParams.Controls.Add(new Label { Text = "Ct (0.07):", Location = new Point(labelX + 300, currentY+2), AutoSize = true, Font = lblFont, ForeColor = lblColor });
+            txtCt = new TextBox { Location = new Point(labelX + 365, currentY), Width = 45, Text = "0.07", Font=lblFont };
+            pnlParams.Controls.Add(txtCt);
 
-            lstArtirimCombinations = new ListBox { Location = new Point(labelX, currentY), Size = new Size(150, 110), SelectionMode = SelectionMode.MultiExtended, Font = new Font("Segoe UI", 8) };
+            currentY += gapY + 5;
+
+            // ===== KOMBİNASYON SEÇİMİ =====
+            pnlParams.Controls.Add(new Label { Text = "Kombinasyon Seçimi", Location = new Point(labelX, currentY), AutoSize = true, Font = new Font("Segoe UI Semibold", 10.5f), ForeColor=Color.FromArgb(45,55,72) });
+            currentY += 28;
+
+            lstArtirimCombinations = new ListBox 
+            { 
+                Location = new Point(labelX, currentY), 
+                Size = new Size(160, 115), 
+                SelectionMode = SelectionMode.MultiExtended, 
+                Font = new Font("Segoe UI", 9f),
+                BackColor = Color.FromArgb(250, 252, 255),
+                BorderStyle = BorderStyle.None
+            };
             pnlParams.Controls.Add(lstArtirimCombinations);
 
-            Button btnArtirimGetir = new Button { Text = "Getir", Location = new Point(labelX + 155, currentY), Size = new Size(45, 24), BackColor = Color.FromArgb(220, 220, 220), FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI", 7, FontStyle.Bold), Cursor = Cursors.Hand };
-            btnArtirimGetir.FlatAppearance.BorderSize = 1;
+            Button btnArtirimGetir = new Button 
+            { 
+                Text = "Getir", 
+                Location = new Point(labelX + 170, currentY), 
+                Size = new Size(55, 30), 
+                BackColor = Color.FromArgb(230, 238, 245), 
+                ForeColor = Color.FromArgb(43, 54, 116),
+                FlatStyle = FlatStyle.Flat, 
+                Font = new Font("Segoe UI Semibold", 8.5f), 
+                Cursor = Cursors.Hand 
+            };
+            btnArtirimGetir.FlatAppearance.BorderSize = 0;
             btnArtirimGetir.Click += BtnArtirimLoadCombos_Click;
             pnlParams.Controls.Add(btnArtirimGetir);
 
-            Button btnArtirimSec = new Button { Text = "Seç", Location = new Point(labelX + 155, currentY + 28), Size = new Size(45, 24), BackColor = Color.FromArgb(159, 219, 255), FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI", 7, FontStyle.Bold), Cursor = Cursors.Hand };
-            btnArtirimSec.FlatAppearance.BorderSize = 1;
+            Button btnArtirimSec = new Button 
+            { 
+                Text = "Seç", 
+                Location = new Point(labelX + 170, currentY + 35), 
+                Size = new Size(55, 30), 
+                BackColor = Color.FromArgb(210, 227, 243), 
+                ForeColor = Color.FromArgb(43, 54, 116),
+                FlatStyle = FlatStyle.Flat, 
+                Font = new Font("Segoe UI Semibold", 8.5f), 
+                Cursor = Cursors.Hand 
+            };
+            btnArtirimSec.FlatAppearance.BorderSize = 0;
             btnArtirimSec.Click += BtnArtirimSelectCombos_Click;
             pnlParams.Controls.Add(btnArtirimSec);
 
-            pnlArtirimSelectedCombos = new FlowLayoutPanel { Location = new Point(labelX + 210, currentY), Size = new Size(160, 110), FlowDirection = FlowDirection.LeftToRight, WrapContents = true, AutoScroll = true, BackColor = Color.White, BorderStyle = BorderStyle.FixedSingle };
+            pnlArtirimSelectedCombos = new FlowLayoutPanel 
+            { 
+                Location = new Point(labelX + 235, currentY), 
+                Size = new Size(170, 115), 
+                FlowDirection = FlowDirection.LeftToRight, 
+                WrapContents = true, 
+                AutoScroll = true, 
+                BackColor = Color.FromArgb(250, 252, 255)
+            };
             pnlParams.Controls.Add(pnlArtirimSelectedCombos);
-            currentY += 125;
+            currentY += 135;
 
             // ===== AYIRICI ÇİZGİ =====
-            pnlParams.Controls.Add(new Panel { Location = new Point(labelX, currentY), Size = new Size(380, 2), BackColor = Color.FromArgb(200, 200, 200) });
-            currentY += 12;
+            pnlParams.Controls.Add(new Panel { Location = new Point(labelX, currentY), Size = new Size(390, 1), BackColor = Color.FromArgb(226, 232, 240) });
+            currentY += 15;
 
             // ===== X YÖNÜ =====
-            pnlParams.Controls.Add(new Label { Text = "X Yönü", Location = new Point(labelX, currentY), AutoSize = true, Font = new Font("Segoe UI", 11, FontStyle.Bold), ForeColor = Color.FromArgb(70, 130, 180) });
-            currentY += 26;
+            // Soft Blue
+            pnlParams.Controls.Add(new Label { Text = "X Yönü", Location = new Point(labelX, currentY), AutoSize = true, Font = new Font("Segoe UI Semibold", 11.5f), ForeColor = Color.FromArgb(66, 153, 225) });
+            currentY += 28;
 
             // Periyot Tx
-            pnlParams.Controls.Add(new Label { Text = "Periyot Tx (s):", Location = new Point(labelX + 15, currentY), AutoSize = true, Font = new Font("Segoe UI", 9) });
-            txtTx = new TextBox { Location = new Point(textX, currentY - 3), Width = textW, Text = "0" };
+            pnlParams.Controls.Add(new Label { Text = "Periyot Tx (s):", Location = new Point(labelX + 15, currentY+2), AutoSize = true, Font = lblFont, ForeColor=lblColor });
+            txtTx = new TextBox { Location = new Point(textX, currentY), Width = textW, Text = "0", Font=lblFont };
             pnlParams.Controls.Add(txtTx);
-            Button btnGetTx = new Button { Text = "Değeri Getir", Location = new Point(btnX, currentY - 5), Size = new Size(85, 26), BackColor = Color.FromArgb(159, 219, 255), FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI", 8, FontStyle.Bold), Cursor = Cursors.Hand };
-            btnGetTx.FlatAppearance.BorderSize = 1;
+            Button btnGetTx = new Button { Text = "Getir", Location = new Point(btnX, currentY-1), Size = new Size(80, 26), BackColor = Color.FromArgb(235, 248, 255), ForeColor=Color.FromArgb(43, 108, 176), FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI Semibold", 8.5f), Cursor = Cursors.Hand };
+            btnGetTx.FlatAppearance.BorderSize = 0;
             btnGetTx.Click += (s, ev) => BtnGetPeriod_Click("X");
             pnlParams.Controls.Add(btnGetTx);
-            Label lblInfoTx = new Label { Text = "ℹ", Location = new Point(infoX, currentY - 2), AutoSize = true, Font = new Font("Segoe UI", 12), ForeColor = Color.FromArgb(70, 130, 180), Cursor = Cursors.Hand };
+            Label lblInfoTx = new Label { Text = "ℹ", Location = new Point(infoX, currentY), AutoSize = true, Font = new Font("Segoe UI", 11), ForeColor = Color.FromArgb(66, 153, 225), Cursor = Cursors.Hand };
             lblInfoTx.MouseEnter += (s, ev) => ShowPeriodInfoPopup(lblInfoTx, "X");
             lblInfoTx.MouseLeave += (s, ev) => HidePeriodInfoPopup();
             pnlParams.Controls.Add(lblInfoTx);
             currentY += gapY;
 
             // Modal Vt-X
-            pnlParams.Controls.Add(new Label { Text = "Modal Vt-X (kN):", Location = new Point(labelX + 15, currentY), AutoSize = true, Font = new Font("Segoe UI", 9) });
-            txtVtX = new TextBox { Location = new Point(textX, currentY - 3), Width = textW, Text = "0" };
+            pnlParams.Controls.Add(new Label { Text = "Modal Vt-X (kN):", Location = new Point(labelX + 15, currentY+2), AutoSize = true, Font = lblFont, ForeColor=lblColor });
+            txtVtX = new TextBox { Location = new Point(textX, currentY), Width = textW, Text = "0", Font=lblFont };
             pnlParams.Controls.Add(txtVtX);
-            Button btnGetVtX = new Button { Text = "Değeri Getir", Location = new Point(btnX, currentY - 5), Size = new Size(85, 26), BackColor = Color.FromArgb(159, 219, 255), FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI", 8, FontStyle.Bold), Cursor = Cursors.Hand };
-            btnGetVtX.FlatAppearance.BorderSize = 1;
+            Button btnGetVtX = new Button { Text = "Getir", Location = new Point(btnX, currentY-1), Size = new Size(80, 26), BackColor = Color.FromArgb(235, 248, 255), ForeColor=Color.FromArgb(43, 108, 176), FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI Semibold", 8.5f), Cursor = Cursors.Hand };
+            btnGetVtX.FlatAppearance.BorderSize = 0;
             btnGetVtX.Click += (s, ev) => BtnGetVt_Click("X");
             pnlParams.Controls.Add(btnGetVtX);
             currentY += gapY;
 
-            SmoothButton btnCalculateX = new SmoothButton { Text = "X Yönü Hesapla", BaseColor = Color.FromArgb(70, 130, 180), Size = new Size(130, 30), Location = new Point(labelX + 40, currentY), GrowAmount = 2 };
+            SmoothButton btnCalculateX = new SmoothButton { Text = "X YÖNÜ HESAPLA", BaseColor = Color.FromArgb(66, 153, 225), ForeColor=Color.White, Size = new Size(150, 36), Location = new Point(labelX + 130, currentY), GrowAmount = 2, BorderRadius=10, Font=new Font("Segoe UI Semibold",9f) };
             btnCalculateX.Click += BtnCalculateArtirimX_Click;
             pnlParams.Controls.Add(btnCalculateX);
-            currentY += gapY + 10;
+            currentY += gapY + 15;
 
             // ===== AYIRICI ÇİZGİ 2 =====
-            pnlParams.Controls.Add(new Panel { Location = new Point(labelX, currentY), Size = new Size(380, 2), BackColor = Color.FromArgb(200, 200, 200) });
-            currentY += 12;
+            pnlParams.Controls.Add(new Panel { Location = new Point(labelX, currentY), Size = new Size(390, 1), BackColor = Color.FromArgb(226, 232, 240) });
+            currentY += 15;
 
             // ===== Y YÖNÜ =====
-            pnlParams.Controls.Add(new Label { Text = "Y Yönü", Location = new Point(labelX, currentY), AutoSize = true, Font = new Font("Segoe UI", 11, FontStyle.Bold), ForeColor = Color.FromArgb(46, 139, 87) });
-            currentY += 26;
+            // Soft Green
+            pnlParams.Controls.Add(new Label { Text = "Y Yönü", Location = new Point(labelX, currentY), AutoSize = true, Font = new Font("Segoe UI Semibold", 11.5f), ForeColor = Color.FromArgb(72, 187, 120) });
+            currentY += 28;
 
             // Periyot Ty
-            pnlParams.Controls.Add(new Label { Text = "Periyot Ty (s):", Location = new Point(labelX + 15, currentY), AutoSize = true, Font = new Font("Segoe UI", 9) });
-            txtTy = new TextBox { Location = new Point(textX, currentY - 3), Width = textW, Text = "0" };
+            pnlParams.Controls.Add(new Label { Text = "Periyot Ty (s):", Location = new Point(labelX + 15, currentY+2), AutoSize = true, Font = lblFont, ForeColor=lblColor });
+            txtTy = new TextBox { Location = new Point(textX, currentY), Width = textW, Text = "0", Font=lblFont };
             pnlParams.Controls.Add(txtTy);
-            Button btnGetTy = new Button { Text = "Değeri Getir", Location = new Point(btnX, currentY - 5), Size = new Size(85, 26), BackColor = Color.FromArgb(159, 219, 255), FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI", 8, FontStyle.Bold), Cursor = Cursors.Hand };
-            btnGetTy.FlatAppearance.BorderSize = 1;
+            Button btnGetTy = new Button { Text = "Getir", Location = new Point(btnX, currentY-1), Size = new Size(80, 26), BackColor = Color.FromArgb(240, 255, 244), ForeColor=Color.FromArgb(39, 103, 73), FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI Semibold", 8.5f), Cursor = Cursors.Hand };
+            btnGetTy.FlatAppearance.BorderSize = 0;
             btnGetTy.Click += (s, ev) => BtnGetPeriod_Click("Y");
             pnlParams.Controls.Add(btnGetTy);
-            Label lblInfoTy = new Label { Text = "ℹ", Location = new Point(infoX, currentY - 2), AutoSize = true, Font = new Font("Segoe UI", 12), ForeColor = Color.FromArgb(46, 139, 87), Cursor = Cursors.Hand };
+            Label lblInfoTy = new Label { Text = "ℹ", Location = new Point(infoX, currentY), AutoSize = true, Font = new Font("Segoe UI", 11), ForeColor = Color.FromArgb(72, 187, 120), Cursor = Cursors.Hand };
             lblInfoTy.MouseEnter += (s, ev) => ShowPeriodInfoPopup(lblInfoTy, "Y");
             lblInfoTy.MouseLeave += (s, ev) => HidePeriodInfoPopup();
             pnlParams.Controls.Add(lblInfoTy);
             currentY += gapY;
 
             // Modal Vt-Y
-            pnlParams.Controls.Add(new Label { Text = "Modal Vt-Y (kN):", Location = new Point(labelX + 15, currentY), AutoSize = true, Font = new Font("Segoe UI", 9) });
-            txtVtY = new TextBox { Location = new Point(textX, currentY - 3), Width = textW, Text = "0" };
+            pnlParams.Controls.Add(new Label { Text = "Modal Vt-Y (kN):", Location = new Point(labelX + 15, currentY+2), AutoSize = true, Font = lblFont, ForeColor=lblColor });
+            txtVtY = new TextBox { Location = new Point(textX, currentY), Width = textW, Text = "0", Font=lblFont };
             pnlParams.Controls.Add(txtVtY);
-            Button btnGetVtY = new Button { Text = "Değeri Getir", Location = new Point(btnX, currentY - 5), Size = new Size(85, 26), BackColor = Color.FromArgb(159, 219, 255), FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI", 8, FontStyle.Bold), Cursor = Cursors.Hand };
-            btnGetVtY.FlatAppearance.BorderSize = 1;
+            Button btnGetVtY = new Button { Text = "Getir", Location = new Point(btnX, currentY-1), Size = new Size(80, 26), BackColor = Color.FromArgb(240, 255, 244), ForeColor=Color.FromArgb(39, 103, 73), FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI Semibold", 8.5f), Cursor = Cursors.Hand };
+            btnGetVtY.FlatAppearance.BorderSize = 0;
             btnGetVtY.Click += (s, ev) => BtnGetVt_Click("Y");
             pnlParams.Controls.Add(btnGetVtY);
             currentY += gapY;
 
-            SmoothButton btnCalculateY = new SmoothButton { Text = "Y Yönü Hesapla", BaseColor = Color.FromArgb(46, 139, 87), Size = new Size(130, 30), Location = new Point(labelX + 40, currentY), GrowAmount = 2 };
+            SmoothButton btnCalculateY = new SmoothButton { Text = "Y YÖNÜ HESAPLA", BaseColor = Color.FromArgb(72, 187, 120), ForeColor=Color.White, Size = new Size(150, 36), Location = new Point(labelX + 130, currentY), GrowAmount = 2, BorderRadius=10, Font=new Font("Segoe UI Semibold",9f) };
             btnCalculateY.Click += BtnCalculateArtirimY_Click;
             pnlParams.Controls.Add(btnCalculateY);
 
             tlp.Controls.Add(pnlParams, 1, 0);
 
             // =============== SAĞ PANEL - SONUÇLAR ===============
-            RoundedPanel pnlResults = new RoundedPanel { Title = "Sonuçlar", Dock = DockStyle.Fill, BorderRadius = 25, Margin = new Padding(10, 0, 0, 0), TitleFont = new Font("Segoe UI", 14, FontStyle.Bold) };
+            RoundedPanel pnlResults = new RoundedPanel { Title = "Sonuç Raporu", Dock = DockStyle.Fill, BorderRadius = 15, Margin = new Padding(15, 0, 0, 0), TitleFont = new Font("Segoe UI Semibold", 13f) };
 
-            pnlResults.Controls.Add(new Label { Text = "X Yönü", Location = new Point(20, 50), AutoSize = true, Font = new Font("Segoe UI", 11, FontStyle.Bold), ForeColor = Color.FromArgb(70, 130, 180) });
-            lblArtirimStatusX = new Label { Text = "Hesaplanmadı", Location = new Point(20, 80), Size = new Size(300, 150), Font = new Font("Segoe UI", 10), ForeColor = Color.Gray };
+            pnlResults.Controls.Add(new Label { Text = "X Yönü Sonuçları", Location = new Point(25, 60), AutoSize = true, Font = new Font("Segoe UI Semibold", 11.5f), ForeColor = Color.FromArgb(66, 153, 225) });
+            lblArtirimStatusX = new Label { Text = "Henüz hesaplanmadı...", Location = new Point(25, 95), Size = new Size(350, 160), Font = new Font("Segoe UI", 10.5f), ForeColor = Color.FromArgb(163, 174, 208) };
             pnlResults.Controls.Add(lblArtirimStatusX);
 
-            pnlResults.Controls.Add(new Label { Text = "Y Yönü", Location = new Point(20, 300), AutoSize = true, Font = new Font("Segoe UI", 11, FontStyle.Bold), ForeColor = Color.FromArgb(46, 139, 87) });
-            lblArtirimStatusY = new Label { Text = "Hesaplanmadı", Location = new Point(20, 330), Size = new Size(300, 150), Font = new Font("Segoe UI", 10), ForeColor = Color.Gray };
+            pnlResults.Controls.Add(new Panel { Location = new Point(25, 270), Size = new Size(350, 1), BackColor=Color.FromArgb(226, 232, 240) });
+
+            pnlResults.Controls.Add(new Label { Text = "Y Yönü Sonuçları", Location = new Point(25, 290), AutoSize = true, Font = new Font("Segoe UI Semibold", 11.5f), ForeColor = Color.FromArgb(72, 187, 120) });
+            lblArtirimStatusY = new Label { Text = "Henüz hesaplanmadı...", Location = new Point(25, 325), Size = new Size(350, 160), Font = new Font("Segoe UI", 10.5f), ForeColor = Color.FromArgb(163, 174, 208) };
             pnlResults.Controls.Add(lblArtirimStatusY);
 
             tlp.Controls.Add(pnlResults, 2, 0);
@@ -724,7 +783,7 @@ namespace EtabsTools
                                    $"Artırım Katsayısı β: {beta:0.000}";
 
                 lblArtirimStatusX.Text = sonucText;
-                lblArtirimStatusX.ForeColor = Color.FromArgb(70, 130, 180);
+                lblArtirimStatusX.ForeColor = Color.FromArgb(66, 153, 225);
             }
             catch (Exception ex)
             {
@@ -785,7 +844,7 @@ namespace EtabsTools
                                    $"Artırım Katsayısı β: {beta:0.000}";
 
                 lblArtirimStatusY.Text = sonucText;
-                lblArtirimStatusY.ForeColor = Color.FromArgb(46, 139, 87);
+                lblArtirimStatusY.ForeColor = Color.FromArgb(72, 187, 120);
             }
             catch (Exception ex)
             {

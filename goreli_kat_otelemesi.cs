@@ -191,9 +191,9 @@ namespace EtabsTools
                 RowCount = 3,
                 ColumnCount = 1
             };
-            tlpLeft.RowStyles.Add(new RowStyle(SizeType.Absolute, 215F)); // Kombinasyonlar + Seçili (yan yana)
+            tlpLeft.RowStyles.Add(new RowStyle(SizeType.Absolute, 225F)); // Kombinasyonlar + Seçili (yan yana)
             tlpLeft.RowStyles.Add(new RowStyle(SizeType.Percent, 100F)); // Parametreler
-            tlpLeft.RowStyles.Add(new RowStyle(SizeType.Absolute, 50F));  // Hesapla butonu
+            tlpLeft.RowStyles.Add(new RowStyle(SizeType.Absolute, 60F));  // Hesapla butonu (daha ferah)
 
             // --- KOMBİNASYON SEÇİM ALANI (Yan yana düzen) ---
             TableLayoutPanel tlpCombos = new TableLayoutPanel
@@ -201,7 +201,7 @@ namespace EtabsTools
                 Dock = DockStyle.Fill,
                 RowCount = 1,
                 ColumnCount = 2,
-                Margin = new Padding(0, 0, 10, 5)
+                Margin = new Padding(0, 0, 15, 10)
             };
             tlpCombos.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
             tlpCombos.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
@@ -209,45 +209,49 @@ namespace EtabsTools
             // Sol: Kombinasyonlar paneli
             RoundedPanel pnlCombos = new RoundedPanel
             {
-                Title = "Combinations and Cases",
+                Title = "Yük Kombinasyonları",
                 Dock = DockStyle.Fill,
-                BorderRadius = 20,
-                Margin = new Padding(0, 0, 5, 0)
+                BorderRadius = 15,
+                Margin = new Padding(0, 0, 8, 0)
             };
 
             lstCombinations = new ListBox
             {
-                Location = new Point(15, 35),
-                Size = new Size(145, 125),
+                Location = new Point(20, 45),
+                Size = new Size(160, 115),
                 SelectionMode = SelectionMode.MultiExtended,
-                Font = new Font("Segoe UI", 8)
+                Font = new Font("Segoe UI", 9f),
+                BackColor = Color.FromArgb(250, 252, 255),
+                BorderStyle = BorderStyle.None
             };
             lstCombinations.DoubleClick += LstCombinations_DoubleClick;
 
             Button btnLoadCombos = new Button
             {
                 Text = "Getir",
-                Size = new Size(55, 28),
-                Location = new Point(15, 165),
-                BackColor = Color.FromArgb(220, 220, 220),
+                Size = new Size(65, 30),
+                Location = new Point(20, 170),
+                BackColor = Color.FromArgb(230, 238, 245),
+                ForeColor = Color.FromArgb(43, 54, 116),
                 FlatStyle = FlatStyle.Flat,
-                Font = new Font("Segoe UI", 8, FontStyle.Bold),
+                Font = new Font("Segoe UI Semibold", 9f),
                 Cursor = Cursors.Hand
             };
-            btnLoadCombos.FlatAppearance.BorderSize = 1;
+            btnLoadCombos.FlatAppearance.BorderSize = 0;
             btnLoadCombos.Click += BtnLoadCombos_Click;
 
             Button btnSelectCombos = new Button
             {
                 Text = "Seç",
-                Size = new Size(55, 28),
-                Location = new Point(80, 165),
-                BackColor = Color.FromArgb(159, 219, 255),
+                Size = new Size(65, 30),
+                Location = new Point(95, 170),
+                BackColor = Color.FromArgb(210, 227, 243),
+                ForeColor = Color.FromArgb(43, 54, 116),
                 FlatStyle = FlatStyle.Flat,
-                Font = new Font("Segoe UI", 8, FontStyle.Bold),
+                Font = new Font("Segoe UI Semibold", 9f),
                 Cursor = Cursors.Hand
             };
-            btnSelectCombos.FlatAppearance.BorderSize = 1;
+            btnSelectCombos.FlatAppearance.BorderSize = 0;
             btnSelectCombos.Click += BtnSelectCombos_Click;
 
             pnlCombos.Controls.Add(lstCombinations);
@@ -258,16 +262,16 @@ namespace EtabsTools
             // Sağ: Seçili Kombinasyonlar paneli
             RoundedPanel pnlSelectedWrapper = new RoundedPanel
             {
-                Title = "Seçili Kombinasyonlar",
+                Title = "Seçilenler",
                 Dock = DockStyle.Fill,
-                BorderRadius = 20,
-                Margin = new Padding(5, 0, 0, 0)
+                BorderRadius = 15,
+                Margin = new Padding(8, 0, 0, 0)
             };
 
             pnlSelectedCombos = new FlowLayoutPanel
             {
-                Location = new Point(10, 35),
-                Size = new Size(130, 160),
+                Location = new Point(15, 45),
+                Size = new Size(160, 150),
                 FlowDirection = FlowDirection.LeftToRight,
                 WrapContents = true,
                 AutoScroll = true,
@@ -283,66 +287,70 @@ namespace EtabsTools
             {
                 Title = "Deprem Parametreleri",
                 Dock = DockStyle.Fill,
-                BorderRadius = 20,
-                Margin = new Padding(0, 5, 10, 5)
+                BorderRadius = 15,
+                Margin = new Padding(0, 5, 15, 10)
             };
 
-            int startY = 50;
+            int startY = 45;
             int gapY = 32;
-            int labelX = 15;
-            int textX = 120;
+            int labelX = 20;
+            int textX = 140;
             int textW = 80;
 
-            pnlParams.Controls.Add(new Label { Text = "SDS (DD-2):", Location = new Point(labelX, startY), AutoSize = true });
-            txtSDS_DD2 = new TextBox { Location = new Point(textX, startY - 3), Width = textW, Text = "0" };
+            Font lblFont = new Font("Segoe UI", 9.5f);
+            Color lblColor = Color.FromArgb(113, 128, 150);
+
+            pnlParams.Controls.Add(new Label { Text = "SDS (DD-2):", Location = new Point(labelX, startY), AutoSize = true, Font=lblFont, ForeColor=lblColor });
+            txtSDS_DD2 = new TextBox { Location = new Point(textX, startY - 2), Width = textW, Text = "0", Font=lblFont };
             pnlParams.Controls.Add(txtSDS_DD2);
 
-            pnlParams.Controls.Add(new Label { Text = "SDS (DD-3):", Location = new Point(labelX, startY + gapY), AutoSize = true });
-            txtSDS_DD3 = new TextBox { Location = new Point(textX, startY + gapY - 3), Width = textW, Text = "0" };
+            pnlParams.Controls.Add(new Label { Text = "SDS (DD-3):", Location = new Point(labelX, startY + gapY), AutoSize = true, Font=lblFont, ForeColor=lblColor });
+            txtSDS_DD3 = new TextBox { Location = new Point(textX, startY + gapY - 2), Width = textW, Text = "0", Font=lblFont };
             pnlParams.Controls.Add(txtSDS_DD3);
 
-            pnlParams.Controls.Add(new Label { Text = "SD1 (DD-2):", Location = new Point(labelX, startY + gapY * 2), AutoSize = true });
-            txtSD1_DD2 = new TextBox { Location = new Point(textX, startY + gapY * 2 - 3), Width = textW, Text = "0" };
+            pnlParams.Controls.Add(new Label { Text = "SD1 (DD-2):", Location = new Point(labelX, startY + gapY * 2), AutoSize = true, Font=lblFont, ForeColor=lblColor });
+            txtSD1_DD2 = new TextBox { Location = new Point(textX, startY + gapY * 2 - 2), Width = textW, Text = "0", Font=lblFont };
             pnlParams.Controls.Add(txtSD1_DD2);
 
-            pnlParams.Controls.Add(new Label { Text = "SD1 (DD-3):", Location = new Point(labelX, startY + gapY * 3), AutoSize = true });
-            txtSD1_DD3 = new TextBox { Location = new Point(textX, startY + gapY * 3 - 3), Width = textW, Text = "0" };
+            pnlParams.Controls.Add(new Label { Text = "SD1 (DD-3):", Location = new Point(labelX, startY + gapY * 3), AutoSize = true, Font=lblFont, ForeColor=lblColor });
+            txtSD1_DD3 = new TextBox { Location = new Point(textX, startY + gapY * 3 - 2), Width = textW, Text = "0", Font=lblFont };
             pnlParams.Controls.Add(txtSD1_DD3);
 
-            pnlParams.Controls.Add(new Label { Text = "k:", Location = new Point(labelX, startY + gapY * 4), AutoSize = true });
-            txtK = new TextBox { Location = new Point(textX, startY + gapY * 4 - 3), Width = textW, Text = "1" };
+            pnlParams.Controls.Add(new Label { Text = "k:", Location = new Point(labelX, startY + gapY * 4), AutoSize = true, Font=lblFont, ForeColor=lblColor });
+            txtK = new TextBox { Location = new Point(textX, startY + gapY * 4 - 2), Width = textW, Text = "1", Font=lblFont };
             pnlParams.Controls.Add(txtK);
 
-            pnlParams.Controls.Add(new Label { Text = "Tp:", Location = new Point(labelX, startY + gapY * 5), AutoSize = true });
-            txtTp = new TextBox { Location = new Point(textX, startY + gapY * 5 - 3), Width = textW, Text = "0.5" };
+            pnlParams.Controls.Add(new Label { Text = "Tp:", Location = new Point(labelX, startY + gapY * 5), AutoSize = true, Font=lblFont, ForeColor=lblColor });
+            txtTp = new TextBox { Location = new Point(textX, startY + gapY * 5 - 2), Width = textW, Text = "0.5", Font=lblFont };
             pnlParams.Controls.Add(txtTp);
 
             chkEsnekDerz = new CheckBox
             {
                 Text = "Esnek derz var mı? (Var: 0.016, Yok: 0.008)",
-                Location = new Point(labelX, startY + gapY * 6),
-                AutoSize = true
+                Location = new Point(labelX, startY + gapY * 6 + 5),
+                AutoSize = true, Font=lblFont, ForeColor=lblColor
             };
             pnlParams.Controls.Add(chkEsnekDerz);
 
             chkBodrum = new CheckBox
             {
                 Text = "Bodrum kabulü var mı?",
-                Location = new Point(labelX, startY + gapY * 7),
-                AutoSize = true
+                Location = new Point(labelX, startY + gapY * 7 + 10),
+                AutoSize = true, Font=lblFont, ForeColor=lblColor
             };
             chkBodrum.CheckedChanged += (s, e) => { numBodrumKat.Enabled = chkBodrum.Checked; };
             pnlParams.Controls.Add(chkBodrum);
 
-            pnlParams.Controls.Add(new Label { Text = "Bodrum kat sayısı:", Location = new Point(labelX + 20, startY + gapY * 8), AutoSize = true });
+            pnlParams.Controls.Add(new Label { Text = "Bodrum kat sayısı:", Location = new Point(labelX + 25, startY + gapY * 8 + 10), AutoSize = true, Font=lblFont, ForeColor=lblColor });
             numBodrumKat = new NumericUpDown
             {
-                Location = new Point(textX + 30, startY + gapY * 8 - 3),
+                Location = new Point(textX + 50, startY + gapY * 8 + 8),
                 Width = 50,
                 Minimum = 0,
                 Maximum = 20,
                 Value = 0,
-                Enabled = false
+                Enabled = false,
+                Font=lblFont
             };
             pnlParams.Controls.Add(numBodrumKat);
 
@@ -353,11 +361,11 @@ namespace EtabsTools
             
             SmoothButton btnCalculate = new SmoothButton
             {
-                Text = "Hesapla",
-                Size = new Size(120, 30),
-                Location = new Point(15, 5),
-                BaseColor = Color.FromArgb(159, 219, 255),
-                BorderRadius = 20,
+                Text = "HESAPLA",
+                Size = new Size(140, 45),
+                Location = new Point(20, 5),
+                BaseColor = Color.FromArgb(210, 227, 243),
+                BorderRadius = 15,
                 EnableCenterAnimation = true
             };
             btnCalculate.Click += BtnCalculateGoreliKat_Click;
@@ -365,11 +373,11 @@ namespace EtabsTools
 
             SmoothButton btnSave = new SmoothButton
             {
-                Text = "Kaydet",
-                Size = new Size(120, 30),
-                Location = new Point(155, 5),
-                BaseColor = Color.SeaGreen,
-                BorderRadius = 20,
+                Text = "KAYDET",
+                Size = new Size(140, 45),
+                Location = new Point(175, 5),
+                BaseColor = Color.FromArgb(235, 240, 245),
+                BorderRadius = 15,
                 EnableCenterAnimation = true
             };
             btnSave.Click += BtnSaveGoreliKat_Click;
@@ -383,11 +391,11 @@ namespace EtabsTools
             // =============== SAĞ PANEL - SONUÇLAR ===============
             RoundedPanel pnlResults = new RoundedPanel
             {
-                Title = "Sonuçlar",
+                Title = "Analiz Sonuçları",
                 Dock = DockStyle.Fill,
-                BorderRadius = 25,
-                Margin = new Padding(10, 0, 0, 0),
-                TitleFont = new Font("Segoe UI", 14, FontStyle.Bold)
+                BorderRadius = 15,
+                Margin = new Padding(15, 0, 0, 5),
+                TitleFont = new Font("Segoe UI Semibold", 14f, FontStyle.Regular)
             };
 
             dgvResults = new DataGridView
@@ -400,22 +408,32 @@ namespace EtabsTools
                 AllowUserToDeleteRows = false,
                 ReadOnly = true,
                 AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
-                Font = new Font("Segoe UI", 9),
+                Font = new Font("Inter", 9.5f, FontStyle.Regular),
                 ScrollBars = ScrollBars.Both,
+                CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal,
+                GridColor = Color.FromArgb(244, 247, 254),
+                EnableHeadersVisualStyles = false,
+                ColumnHeadersHeight = 40,
                 ColumnHeadersDefaultCellStyle = new DataGridViewCellStyle
                 {
-                    BackColor = Color.FromArgb(159, 219, 255),
-                    Font = new Font("Segoe UI", 9, FontStyle.Bold),
-                    Alignment = DataGridViewContentAlignment.MiddleCenter
+                    BackColor = Color.FromArgb(244, 247, 254),
+                    ForeColor = Color.FromArgb(113, 128, 150),
+                    Font = new Font("Segoe UI Semibold", 9.5f, FontStyle.Regular),
+                    Alignment = DataGridViewContentAlignment.MiddleCenter,
+                    SelectionBackColor = Color.FromArgb(244, 247, 254)
                 },
                 DefaultCellStyle = new DataGridViewCellStyle
                 {
-                    Alignment = DataGridViewContentAlignment.MiddleCenter
+                    Alignment = DataGridViewContentAlignment.MiddleCenter,
+                    SelectionBackColor = Color.FromArgb(235, 240, 245),
+                    SelectionForeColor = Color.FromArgb(43, 54, 116),
+                    BackColor = Color.White,
+                    ForeColor = Color.FromArgb(45, 55, 72)
                 }
             };
             dgvResults.Columns.Add("Kat", "Kat");
             dgvResults.Columns.Add("Kombinasyon", "Kombinasyon");
-            dgvResults.Columns.Add("Dogrultu", "Doğrultu");
+            dgvResults.Columns.Add("Dogrultu", "Yön");
             dgvResults.Columns.Add("Drift", "Drift");
             dgvResults.Columns.Add("LambdaDrift", "λδi/hi");
             dgvResults.Columns.Add("Limit", "Limit");
@@ -423,18 +441,18 @@ namespace EtabsTools
 
             lblGoreliStatus = new Label
             {
-                Text = "",
+                Text = "Sonuç Bekleniyor...",
                 Dock = DockStyle.Bottom,
-                Height = 25,
-                Font = new Font("Segoe UI", 9, FontStyle.Italic),
-                ForeColor = Color.Blue,
+                Height = 35,
+                Font = new Font("Segoe UI", 10.5f, FontStyle.Italic),
+                ForeColor = Color.FromArgb(163, 174, 208),
                 TextAlign = ContentAlignment.MiddleCenter
             };
 
             Panel dgvContainer = new Panel
             {
                 Dock = DockStyle.Fill,
-                Padding = new Padding(15, 15, 15, 15)
+                Padding = new Padding(20, 45, 20, 15)
             };
             dgvContainer.Controls.Add(dgvResults);
             dgvContainer.Controls.Add(lblGoreliStatus);
