@@ -511,15 +511,6 @@ namespace EtabsTools
             _kirisEksenelUI = new KirisEksenelYukUI(this, () => _sapModel, (p, i, c) => CreateNavigationPanel(i, c), GoToPage, colorBackground);
             _kirisEksenelUI.Initialize(pageKirisEksenel);
 
-            // 15: Perde Eksenel Yük
-            TabPage pagePerdeEksenel = new TabPage("Perde Eksenel Yük Kontrolü");
-            pagePerdeEksenel.Tag = 15;
-            pagePerdeEksenel.BackColor = colorBackground;
-            mainTabControl.TabPages.Add(pagePerdeEksenel);
-            _perdeEksenelUI = new PerdeEksenelUI(this, () => _sapModel, (p, i, c) => CreateNavigationPanel(i, c));
-            _perdeEksenelUI.Initialize(pagePerdeEksenel);
-
-
             // --- DONE ASİSTANI (9-14) ---
 
             // 9: Kolon Donesi
@@ -569,6 +560,14 @@ namespace EtabsTools
             mainTabControl.TabPages.Add(pageTemelDonesi);
             _temelDonesiUI = new TemelDonesiUI(this, () => _sapModel, (p, i, c) => CreateNavigationPanel(i, c), GoToPage, colorBackground);
             _temelDonesiUI.Initialize(pageTemelDonesi);
+
+            // 15: Perde Eksenel Yük
+            TabPage pagePerdeEksenel = new TabPage("Perde Eksenel Yük Kontrolü");
+            pagePerdeEksenel.Tag = 15;
+            pagePerdeEksenel.BackColor = colorBackground;
+            mainTabControl.TabPages.Add(pagePerdeEksenel);
+            _perdeEksenelUI = new PerdeEksenelUI(this, () => _sapModel, (p, i, c) => CreateNavigationPanel(i, c));
+            _perdeEksenelUI.Initialize(pagePerdeEksenel);
 
             this.Controls.Add(mainTabControl);
             this.Controls.Add(pnlHeader);
@@ -939,7 +938,8 @@ namespace EtabsTools
                 "Kiriş Donesi",                   // 11
                 "Döşeme Donesi",                  // 12
                 "BAP Donesi",                     // 13
-                "Temel Donesi"                    // 14
+                "Temel Donesi",                   // 14
+                "Perde Eksenel"                   // 15
             };
 
             // Görünecek butonları belirle
@@ -947,7 +947,7 @@ namespace EtabsTools
 
             if (context == "ETABS")
             {
-                 visibleIndices.AddRange(new int[] { 1, 2, 3, 4, 5, 6, 7, 8 });
+                 visibleIndices.AddRange(new int[] { 1, 2, 3, 4, 5, 6, 7, 8, 15 });
             }
             else if (context == "DONE")
             {
