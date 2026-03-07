@@ -1169,12 +1169,8 @@ namespace EtabsTools
         {
             if (_lastKolonResults == null || _lastKolonResults.Count == 0) return;
 
-            // Benzersiz kolon adlarını (FrameObj objelerini) yakalamak için Status/IsOK parametresini baz al
             var notOkColumns = _lastKolonResults
                 .Where(r => !r.IsOK)
-                .Select(r => r.UniqueName)
-                .Where(uid => !string.IsNullOrEmpty(uid))
-                .Distinct()
                 .ToList();
 
             if (notOkColumns.Count == 0)
@@ -1185,13 +1181,35 @@ namespace EtabsTools
 
             cSapModel sapModel = _getSapModel();
             sapModel.SelectObj.ClearSelection();
-            foreach (var uniqueName in notOkColumns)
+            
+            int numNames = 0;
+            string[] frameNames = null;
+            sapModel.FrameObj.GetNameList(ref numNames, ref frameNames);
+            
+            int selectCount = 0;
+            if (frameNames != null)
             {
-                sapModel.FrameObj.SetSelected(uniqueName, true);
+                foreach (string name in frameNames)
+                {
+                    string label = "";
+                    string story = "";
+                    sapModel.FrameObj.GetLabelFromName(name, ref label, ref story);
+                    
+                    bool isNotOk = notOkColumns.Any(r => 
+                        string.Equals(r.Column?.Trim(), label?.Trim(), StringComparison.OrdinalIgnoreCase) && 
+                        string.Equals(r.Story?.Trim(), story?.Trim(), StringComparison.OrdinalIgnoreCase));
+                        
+                    if (isNotOk)
+                    {
+                        sapModel.FrameObj.SetSelected(name, true);
+                        selectCount++;
+                    }
+                }
             }
+            
             sapModel.View.RefreshView(0, false);
 
-            ToastForm.ShowToast($"{notOkColumns.Count} adet sınırı aşan kolon modelde seçildi.", _form, 3000);
+            ToastForm.ShowToast($"{selectCount} adet sınırı aşan kolon modelde seçildi.", _form, 3000);
         }
 
         private void SaveKolonEksenelResults(List<KolonEksenelYukResult> results, double fck)
