@@ -53,17 +53,8 @@ namespace EtabsTools
             mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 60F)); // Navigation
 
             // =============== HEADER ===============
-            Panel pnlHeader = new Panel { Dock = DockStyle.Fill, BackColor = Color.White };
-            Label lblHeader = new Label
-            {
-                Text = "PERDE EKSENEL YÜK KONTROLÜ",
-                Font = new Font("Segoe UI", 18, FontStyle.Bold),
-                ForeColor = Color.FromArgb(44, 62, 80),
-                AutoSize = true,
-                Location = new Point(20, 20)
-            };
-            pnlHeader.Controls.Add(lblHeader);
-            mainLayout.Controls.Add(pnlHeader, 0, 0);
+            Label lblHeader = Form1.CreateHeaderLabel("Perde Eksenel Yük Kontrolü");
+            mainLayout.Controls.Add(lblHeader, 0, 0);
 
             // =============== BODY ===============
             TableLayoutPanel tlp = new TableLayoutPanel
@@ -446,15 +437,15 @@ namespace EtabsTools
         {
             if (status != "OK")
             {
-                dgvWallResults.Rows[rowIndex].DefaultCellStyle.BackColor = Color.FromArgb(255, 200, 200);
-                dgvWallResults.Rows[rowIndex].DefaultCellStyle.ForeColor = Color.DarkRed;
-                dgvWallResults.Rows[rowIndex].DefaultCellStyle.Font = new Font("Segoe UI", 9, FontStyle.Bold);
+                dgvWallResults.Rows[rowIndex].Cells[9].Style.BackColor = Color.FromArgb(255, 200, 200);
+                dgvWallResults.Rows[rowIndex].Cells[9].Style.ForeColor = Color.DarkRed;
+                dgvWallResults.Rows[rowIndex].Cells[9].Style.Font = new Font("Segoe UI", 9, FontStyle.Bold);
             }
             else
             {
-                dgvWallResults.Rows[rowIndex].DefaultCellStyle.BackColor = Color.LightGreen;
-                dgvWallResults.Rows[rowIndex].DefaultCellStyle.ForeColor = Color.Black;
-                dgvWallResults.Rows[rowIndex].DefaultCellStyle.Font = new Font("Segoe UI", 9, FontStyle.Regular);
+                dgvWallResults.Rows[rowIndex].Cells[9].Style.BackColor = Color.LightGreen;
+                dgvWallResults.Rows[rowIndex].Cells[9].Style.ForeColor = Color.Black;
+                dgvWallResults.Rows[rowIndex].Cells[9].Style.Font = new Font("Segoe UI", 9, FontStyle.Regular);
             }
         }
 
@@ -815,19 +806,6 @@ namespace EtabsTools
                     ws.Cells[row, 8].Value = r.Ac;
                     ws.Cells[row, 9].Value = r.ratio;
                     ws.Cells[row, 10].Value = r.status;
-
-                    if (r.status == "OK")
-                    {
-                        ws.Cells[row, 1, row, 10].Style.Fill.PatternType = ExcelFillStyle.Solid;
-                        ws.Cells[row, 1, row, 10].Style.Fill.BackgroundColor.SetColor(Color.LightGreen);
-                    }
-                    else if (r.status == "NOT OK")
-                    {
-                        ws.Cells[row, 1, row, 10].Style.Fill.PatternType = ExcelFillStyle.Solid;
-                        ws.Cells[row, 1, row, 10].Style.Fill.BackgroundColor.SetColor(Color.FromArgb(255, 200, 200));
-                        ws.Cells[row, 1, row, 10].Style.Font.Color.SetColor(Color.DarkRed);
-                        ws.Cells[row, 1, row, 10].Style.Font.Bold = true;
-                    }
 
                     row++;
                 }
