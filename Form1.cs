@@ -37,9 +37,9 @@ namespace EtabsTools
             this.FlatAppearance.BorderSize = 0;
             this.Size = new Size(220, 65);
             this.BackColor = BaseColor;
-            this.ForeColor = Color.FromArgb(50, 50, 50);
+            this.ForeColor = Color.FromArgb(25, 30, 35); // Daha okunaklı, koyu gri-siyah ton
             this.Cursor = Cursors.Hand;
-            this.Font = new Font("Segoe UI", 10f, FontStyle.Bold);
+            this.Font = new Font("Segoe UI", 11f, FontStyle.Bold); // 1 tık daha büyük ve net punto
 
             _animTimer = new Timer();
             _animTimer.Interval = 10;
@@ -375,7 +375,7 @@ namespace EtabsTools
 
         private void InitializeCustomUI()
         {
-            this.Text = "ETABS Mühendislik Asistanı";
+            this.Text = "Structural Engineering Assistant";
             this.Size = new Size(1300, 900);
             this.MinimumSize = new Size(1000, 700);
             this.StartPosition = FormStartPosition.CenterScreen;
@@ -397,7 +397,7 @@ namespace EtabsTools
             var btnConnect = new SmoothButton
             {
                 Text = "ETABS'a Bağlan",
-                BaseColor = Color.FromArgb(255, 179, 186),
+                BaseColor = Color.FromArgb(210, 225, 240), // Çok daha profesyonel, asil bir yumuşak mavi
                 Location = new Point(20, 20),
                 Size = new Size(150, 40),
                 BorderRadius = 20,
@@ -581,10 +581,10 @@ namespace EtabsTools
             tlp.RowStyles.Add(new RowStyle(SizeType.Percent, 15F)); 
             tlp.RowStyles.Add(new RowStyle(SizeType.Percent, 85F)); 
 
-            // -- 1. "Mühendislik Asistanı" Başlığı --
+            // -- 1. "Structural Engineering Assistant" Başlığı --
             Label lblMainTitle = new Label
             {
-                Text = "Mühendislik Asistanı",
+                Text = "Structural Engineering Assistant",
                 TextAlign = ContentAlignment.BottomCenter,
                 Font = new Font("Segoe UI Light", 28, FontStyle.Regular),
                 ForeColor = Color.FromArgb(64, 64, 64),
@@ -881,23 +881,23 @@ namespace EtabsTools
         private readonly Color[] tabColors = new Color[]
         {
             Color.FromArgb(240, 244, 248), // 0: Dashboard (kullanılmaz)
-            // ETABS ASISTANI
-            Color.FromArgb(255, 159, 168), // 1: Tasarım Spektrumu
-            Color.FromArgb(255, 220, 180), // 2: Artırım Hesabı
-            Color.FromArgb(159, 219, 255), // 3: Göreli Kat Ötelemesi
-            Color.FromArgb(255, 236, 159), // 4: İkinci Mertebe
-            Color.FromArgb(255, 203, 159), // 5: Kolon Eksenel Yük Kontrolü
-            Color.FromArgb(219, 190, 255), // 6: Perde Kesme Kontrolü
-            Color.FromArgb(255, 180, 200), // 7: Kiriş Kesme Güvenliği
-            Color.FromArgb(200, 255, 200), // 8: Kiriş Eksenel Yük
-            Color.FromArgb(200, 200, 255), // 9: Kolon PMM
-            // DONE ASISTANI
-            Color.FromArgb(255, 159, 168), // 10: Kolon Donesi
-            Color.FromArgb(255, 220, 180), // 11: Perde Donesi
-            Color.FromArgb(159, 219, 255), // 12: Kiriş Donesi
-            Color.FromArgb(255, 236, 159), // 13: Döşeme Donesi
-            Color.FromArgb(255, 203, 159), // 14: BAP Donesi
-            Color.FromArgb(219, 190, 255)  // 15: Temel Donesi
+            // ETABS ASISTANI (Sade, asil ve okunaklı yumuşak palet - soft slate blue tonları)
+            Color.FromArgb(235, 240, 245), // 1: Tasarım Spektrumu
+            Color.FromArgb(230, 238, 245), // 2: Artırım Hesabı
+            Color.FromArgb(225, 235, 245), // 3: Göreli Kat Ötelemesi
+            Color.FromArgb(220, 232, 244), // 4: İkinci Mertebe
+            Color.FromArgb(215, 230, 244), // 5: Kolon Eksenel Yük Kontrolü
+            Color.FromArgb(210, 227, 243), // 6: Perde Kesme Kontrolü
+            Color.FromArgb(205, 225, 243), // 7: Kiriş Kesme Güvenliği
+            Color.FromArgb(200, 222, 242), // 8: Kiriş Eksenel Yük
+            Color.FromArgb(195, 220, 242), // 9: Kolon PMM
+            // DONE ASISTANI (Aynı asil sadelikte, temiz görünümlü tonlar)
+            Color.FromArgb(235, 240, 245), // 10: Kolon Donesi
+            Color.FromArgb(230, 238, 245), // 11: Perde Donesi
+            Color.FromArgb(225, 235, 245), // 12: Kiriş Donesi
+            Color.FromArgb(220, 232, 244), // 13: Döşeme Donesi
+            Color.FromArgb(215, 230, 244), // 14: BAP Donesi
+            Color.FromArgb(210, 227, 243)  // 15: Temel Donesi
         };
 
         private Panel CreateNavigationPanel(int currentTabIndex, string context = "ETABS")
