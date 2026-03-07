@@ -132,18 +132,16 @@ namespace EtabsTools
             pnlParams.Controls.Add(new Label { Text = "Yapı Toplam Kütlesi (ton):", Location = new Point(labelX, currentY+2), AutoSize = true, Font = lblFont, ForeColor = lblColor });
             txtMt = new TextBox { Location = new Point(textX, currentY), Width = textW, Text = "0", Font=lblFont };
             pnlParams.Controls.Add(txtMt);
-            Button btnGetMt = new Button 
+            SmoothButton btnGetMt = new SmoothButton 
             { 
                 Text = "Getir", 
                 Location = new Point(btnX, currentY-1), 
-                Size = new Size(80, 26), 
-                BackColor = Color.FromArgb(230, 238, 245), 
-                ForeColor = Color.FromArgb(43, 54, 116),
-                FlatStyle = FlatStyle.Flat, 
-                Font = new Font("Segoe UI Semibold", 8.5f), 
-                Cursor = Cursors.Hand 
+                Size = new Size(80, 30), 
+                BaseColor = Color.FromArgb(213, 232, 212), // Soft Green
+                BorderRadius = 12,
+                EnableCenterAnimation = true,
+                Font = new Font("Segoe UI Semibold", 8.5f)
             };
-            btnGetMt.FlatAppearance.BorderSize = 0;
             btnGetMt.Click += BtnGetMt_Click;
             pnlParams.Controls.Add(btnGetMt);
             
@@ -175,33 +173,29 @@ namespace EtabsTools
             };
             pnlParams.Controls.Add(lstArtirimCombinations);
 
-            Button btnArtirimGetir = new Button 
+            SmoothButton btnArtirimGetir = new SmoothButton 
             { 
                 Text = "Getir", 
                 Location = new Point(labelX + 170, currentY), 
                 Size = new Size(55, 30), 
-                BackColor = Color.FromArgb(230, 238, 245), 
-                ForeColor = Color.FromArgb(43, 54, 116),
-                FlatStyle = FlatStyle.Flat, 
-                Font = new Font("Segoe UI Semibold", 8.5f), 
-                Cursor = Cursors.Hand 
+                BaseColor = Color.FromArgb(213, 232, 212),
+                BorderRadius = 12,
+                EnableCenterAnimation = true,
+                Font = new Font("Segoe UI Semibold", 8.5f)
             };
-            btnArtirimGetir.FlatAppearance.BorderSize = 0;
             btnArtirimGetir.Click += BtnArtirimLoadCombos_Click;
             pnlParams.Controls.Add(btnArtirimGetir);
 
-            Button btnArtirimSec = new Button 
+            SmoothButton btnArtirimSec = new SmoothButton
             { 
                 Text = "Seç", 
                 Location = new Point(labelX + 170, currentY + 35), 
                 Size = new Size(55, 30), 
-                BackColor = Color.FromArgb(210, 227, 243), 
-                ForeColor = Color.FromArgb(43, 54, 116),
-                FlatStyle = FlatStyle.Flat, 
-                Font = new Font("Segoe UI Semibold", 8.5f), 
-                Cursor = Cursors.Hand 
+                BaseColor = Color.FromArgb(213, 232, 212),
+                BorderRadius = 12,
+                EnableCenterAnimation = true,
+                Font = new Font("Segoe UI Semibold", 8.5f)
             };
-            btnArtirimSec.FlatAppearance.BorderSize = 0;
             btnArtirimSec.Click += BtnArtirimSelectCombos_Click;
             pnlParams.Controls.Add(btnArtirimSec);
 
@@ -230,8 +224,16 @@ namespace EtabsTools
             pnlParams.Controls.Add(new Label { Text = "Periyot Tx (s):", Location = new Point(labelX + 15, currentY+2), AutoSize = true, Font = lblFont, ForeColor=lblColor });
             txtTx = new TextBox { Location = new Point(textX, currentY), Width = textW, Text = "0", Font=lblFont };
             pnlParams.Controls.Add(txtTx);
-            Button btnGetTx = new Button { Text = "Getir", Location = new Point(btnX, currentY-1), Size = new Size(80, 26), BackColor = Color.FromArgb(235, 248, 255), ForeColor=Color.FromArgb(43, 108, 176), FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI Semibold", 8.5f), Cursor = Cursors.Hand };
-            btnGetTx.FlatAppearance.BorderSize = 0;
+            SmoothButton btnGetTx = new SmoothButton 
+            { 
+                Text = "Getir", 
+                Location = new Point(btnX, currentY-1), 
+                Size = new Size(80, 30), 
+                BaseColor = Color.FromArgb(213, 232, 212), 
+                BorderRadius = 12,
+                EnableCenterAnimation = true,
+                Font = new Font("Segoe UI Semibold", 8.5f)
+            };
             btnGetTx.Click += (s, ev) => BtnGetPeriod_Click("X");
             pnlParams.Controls.Add(btnGetTx);
             Label lblInfoTx = new Label { Text = "ℹ", Location = new Point(infoX, currentY), AutoSize = true, Font = new Font("Segoe UI", 11), ForeColor = Color.FromArgb(66, 153, 225), Cursor = Cursors.Hand };
@@ -244,8 +246,16 @@ namespace EtabsTools
             pnlParams.Controls.Add(new Label { Text = "Modal Vt-X (kN):", Location = new Point(labelX + 15, currentY+2), AutoSize = true, Font = lblFont, ForeColor=lblColor });
             txtVtX = new TextBox { Location = new Point(textX, currentY), Width = textW, Text = "0", Font=lblFont };
             pnlParams.Controls.Add(txtVtX);
-            Button btnGetVtX = new Button { Text = "Getir", Location = new Point(btnX, currentY-1), Size = new Size(80, 26), BackColor = Color.FromArgb(235, 248, 255), ForeColor=Color.FromArgb(43, 108, 176), FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI Semibold", 8.5f), Cursor = Cursors.Hand };
-            btnGetVtX.FlatAppearance.BorderSize = 0;
+            SmoothButton btnGetVtX = new SmoothButton 
+            { 
+                Text = "Getir", 
+                Location = new Point(btnX, currentY-1), 
+                Size = new Size(80, 30), 
+                BaseColor = Color.FromArgb(213, 232, 212), 
+                BorderRadius = 12,
+                EnableCenterAnimation = true,
+                Font = new Font("Segoe UI Semibold", 8.5f)
+            };
             btnGetVtX.Click += (s, ev) => BtnGetVt_Click("X");
             pnlParams.Controls.Add(btnGetVtX);
             currentY += gapY;
@@ -268,8 +278,16 @@ namespace EtabsTools
             pnlParams.Controls.Add(new Label { Text = "Periyot Ty (s):", Location = new Point(labelX + 15, currentY+2), AutoSize = true, Font = lblFont, ForeColor=lblColor });
             txtTy = new TextBox { Location = new Point(textX, currentY), Width = textW, Text = "0", Font=lblFont };
             pnlParams.Controls.Add(txtTy);
-            Button btnGetTy = new Button { Text = "Getir", Location = new Point(btnX, currentY-1), Size = new Size(80, 26), BackColor = Color.FromArgb(240, 255, 244), ForeColor=Color.FromArgb(39, 103, 73), FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI Semibold", 8.5f), Cursor = Cursors.Hand };
-            btnGetTy.FlatAppearance.BorderSize = 0;
+            SmoothButton btnGetTy = new SmoothButton 
+            { 
+                Text = "Getir", 
+                Location = new Point(btnX, currentY-1), 
+                Size = new Size(80, 30), 
+                BaseColor = Color.FromArgb(213, 232, 212), 
+                BorderRadius = 12,
+                EnableCenterAnimation = true,
+                Font = new Font("Segoe UI Semibold", 8.5f)
+            };
             btnGetTy.Click += (s, ev) => BtnGetPeriod_Click("Y");
             pnlParams.Controls.Add(btnGetTy);
             Label lblInfoTy = new Label { Text = "ℹ", Location = new Point(infoX, currentY), AutoSize = true, Font = new Font("Segoe UI", 11), ForeColor = Color.FromArgb(72, 187, 120), Cursor = Cursors.Hand };
@@ -282,8 +300,16 @@ namespace EtabsTools
             pnlParams.Controls.Add(new Label { Text = "Modal Vt-Y (kN):", Location = new Point(labelX + 15, currentY+2), AutoSize = true, Font = lblFont, ForeColor=lblColor });
             txtVtY = new TextBox { Location = new Point(textX, currentY), Width = textW, Text = "0", Font=lblFont };
             pnlParams.Controls.Add(txtVtY);
-            Button btnGetVtY = new Button { Text = "Getir", Location = new Point(btnX, currentY-1), Size = new Size(80, 26), BackColor = Color.FromArgb(240, 255, 244), ForeColor=Color.FromArgb(39, 103, 73), FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI Semibold", 8.5f), Cursor = Cursors.Hand };
-            btnGetVtY.FlatAppearance.BorderSize = 0;
+            SmoothButton btnGetVtY = new SmoothButton 
+            { 
+                Text = "Getir", 
+                Location = new Point(btnX, currentY-1), 
+                Size = new Size(80, 30), 
+                BaseColor = Color.FromArgb(213, 232, 212), 
+                BorderRadius = 12,
+                EnableCenterAnimation = true,
+                Font = new Font("Segoe UI Semibold", 8.5f)
+            };
             btnGetVtY.Click += (s, ev) => BtnGetVt_Click("Y");
             pnlParams.Controls.Add(btnGetVtY);
             currentY += gapY;

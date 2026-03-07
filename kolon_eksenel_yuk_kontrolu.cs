@@ -361,13 +361,27 @@ namespace EtabsTools
             lstKolonCombinations.DoubleClick += LstKolonCombinations_DoubleClick;
             pnlCombosLeft.Controls.Add(lstKolonCombinations);
 
-            Button btnKolonLoadCombos = new Button { Text = "Getir", Size = new Size(55, 28), Location = new Point(5, 175), BackColor = Color.FromArgb(220, 220, 220), FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI", 8, FontStyle.Bold), Cursor = Cursors.Hand };
-            btnKolonLoadCombos.FlatAppearance.BorderSize = 1;
+            SmoothButton btnKolonLoadCombos = new SmoothButton
+            {
+                Text = "Getir",
+                Size = new Size(55, 30),
+                Location = new Point(5, 175),
+                BaseColor = Color.FromArgb(255, 204, 204), // Soft Pink
+                BorderRadius = 12,
+                EnableCenterAnimation = true
+            };
             btnKolonLoadCombos.Click += BtnKolonLoadCombos_Click;
             pnlCombosLeft.Controls.Add(btnKolonLoadCombos);
 
-            Button btnKolonSelectCombos = new Button { Text = "Seç", Size = new Size(55, 28), Location = new Point(70, 175), BackColor = Color.FromArgb(159, 219, 255), FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI", 8, FontStyle.Bold), Cursor = Cursors.Hand };
-            btnKolonSelectCombos.FlatAppearance.BorderSize = 1;
+            SmoothButton btnKolonSelectCombos = new SmoothButton
+            {
+                Text = "Seç",
+                Size = new Size(55, 30),
+                Location = new Point(70, 175),
+                BaseColor = Color.FromArgb(255, 204, 204),
+                BorderRadius = 12,
+                EnableCenterAnimation = true
+            };
             btnKolonSelectCombos.Click += BtnKolonSelectCombos_Click;
             pnlCombosLeft.Controls.Add(btnKolonSelectCombos);
 
@@ -405,8 +419,15 @@ namespace EtabsTools
             tlpDataTables.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
 
             RoundedPanel pnlFrameData = new RoundedPanel { Title = "Frame Assignment", Dock = DockStyle.Fill, BorderRadius = 20, Margin = new Padding(0, 0, 5, 0) };
-            Button btnGetFrame = new Button { Text = "Getir", Size = new Size(60, 28), Location = new Point(15, 35), BackColor = Color.FromArgb(220, 220, 220), FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI", 8, FontStyle.Bold), Cursor = Cursors.Hand };
-            btnGetFrame.FlatAppearance.BorderSize = 1;
+            SmoothButton btnGetFrame = new SmoothButton
+            {
+                Text = "Getir",
+                Size = new Size(60, 30),
+                Location = new Point(15, 35),
+                BaseColor = Color.FromArgb(255, 204, 204),
+                BorderRadius = 12,
+                EnableCenterAnimation = true
+            };
             btnGetFrame.Click += BtnGetFrameAssignment_Click;
             pnlFrameData.Controls.Add(btnGetFrame);
             
@@ -414,8 +435,15 @@ namespace EtabsTools
             tlpDataTables.Controls.Add(pnlFrameData, 0, 0);
 
             RoundedPanel pnlElemData = new RoundedPanel { Title = "Element Forces", Dock = DockStyle.Fill, BorderRadius = 20, Margin = new Padding(5, 0, 0, 0) };
-            Button btnGetElem = new Button { Text = "Getir", Size = new Size(60, 28), Location = new Point(15, 35), BackColor = Color.FromArgb(220, 220, 220), FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI", 8, FontStyle.Bold), Cursor = Cursors.Hand };
-            btnGetElem.FlatAppearance.BorderSize = 1;
+            SmoothButton btnGetElem = new SmoothButton
+            {
+                Text = "Getir",
+                Size = new Size(60, 30),
+                Location = new Point(15, 35),
+                BaseColor = Color.FromArgb(255, 204, 204),
+                BorderRadius = 12,
+                EnableCenterAnimation = true
+            };
             btnGetElem.Click += BtnKolonGetValues_Click;
             pnlElemData.Controls.Add(btnGetElem);
 
@@ -429,11 +457,11 @@ namespace EtabsTools
             
             SmoothButton btnCalculate = new SmoothButton
             {
-                Text = "Hesapla",
-                Size = new Size(120, 30),
+                Text = "HESAPLA",
+                Size = new Size(120, 40),
                 Location = new Point(15, 5),
-                BaseColor = Color.FromArgb(159, 219, 255),
-                BorderRadius = 20,
+                BaseColor = Color.FromArgb(255, 204, 204),
+                BorderRadius = 15,
                 EnableCenterAnimation = true
             };
             btnCalculate.Click += BtnCalculateKolonEksenel_Click;
@@ -441,11 +469,11 @@ namespace EtabsTools
 
             SmoothButton btnSave = new SmoothButton
             {
-                Text = "Kaydet",
-                Size = new Size(120, 30),
+                Text = "KAYDET",
+                Size = new Size(120, 40),
                 Location = new Point(155, 5),
-                BaseColor = Color.SeaGreen,
-                BorderRadius = 20,
+                BaseColor = Color.FromArgb(235, 240, 245),
+                BorderRadius = 15,
                 EnableCenterAnimation = true
             };
             btnSave.Click += BtnSaveKolonEksenel_Click;
@@ -502,8 +530,9 @@ namespace EtabsTools
                 EditMode = DataGridViewEditMode.EditOnEnter,
                 ColumnHeadersDefaultCellStyle = new DataGridViewCellStyle
                 {
-                    BackColor = Color.FromArgb(255, 203, 159),
-                    Font = new Font("Segoe UI", 8, FontStyle.Bold),
+                    BackColor = Color.FromArgb(244, 247, 254),
+                    ForeColor = Color.FromArgb(113, 128, 150),
+                    Font = new Font("Segoe UI Semibold", 8f, FontStyle.Regular),
                     Alignment = DataGridViewContentAlignment.MiddleCenter
                 },
                 DefaultCellStyle = new DataGridViewCellStyle

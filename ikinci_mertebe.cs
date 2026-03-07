@@ -237,30 +237,26 @@ namespace EtabsTools
                 Font = new Font("Segoe UI", 8)
             };
 
-            Button btnLoadCombosIkinci = new Button
+            SmoothButton btnLoadCombosIkinci = new SmoothButton
             {
                 Text = "Getir",
-                Size = new Size(55, 28),
+                Size = new Size(55, 30),
                 Location = new Point(15, 165),
-                BackColor = Color.FromArgb(220, 220, 220),
-                FlatStyle = FlatStyle.Flat,
-                Font = new Font("Segoe UI", 8, FontStyle.Bold),
-                Cursor = Cursors.Hand
+                BaseColor = Color.FromArgb(225, 213, 233), // Soft Purple
+                BorderRadius = 12,
+                EnableCenterAnimation = true
             };
-            btnLoadCombosIkinci.FlatAppearance.BorderSize = 1;
             btnLoadCombosIkinci.Click += BtnGetCombosIkinci_Click;
 
-            Button btnSelectCombosIkinci = new Button
+            SmoothButton btnSelectCombosIkinci = new SmoothButton
             {
                 Text = "Seç",
-                Size = new Size(55, 28),
+                Size = new Size(55, 30),
                 Location = new Point(80, 165),
-                BackColor = Color.FromArgb(255, 236, 159),
-                FlatStyle = FlatStyle.Flat,
-                Font = new Font("Segoe UI", 8, FontStyle.Bold),
-                Cursor = Cursors.Hand
+                BaseColor = Color.FromArgb(225, 213, 233),
+                BorderRadius = 12,
+                EnableCenterAnimation = true
             };
-            btnSelectCombosIkinci.FlatAppearance.BorderSize = 1;
             btnSelectCombosIkinci.Click += BtnSelectCombosIkinci_Click;
 
             pnlCombos.Controls.Add(lstCombosIkinci);
@@ -336,10 +332,10 @@ namespace EtabsTools
             SmoothButton btnFetchAll = new SmoothButton
             {
                 Text = "Değerleri Çek",
-                Size = new Size(140, 30),
+                Size = new Size(140, 35),
                 Location = new Point(35, startY + gapY * 5),
-                BaseColor = Color.NavajoWhite,
-                BorderRadius = 15,
+                BaseColor = Color.FromArgb(225, 213, 233),
+                BorderRadius = 12,
                 EnableCenterAnimation = true
             };
             btnFetchAll.Click += BtnFetchAll_Click;
@@ -351,11 +347,11 @@ namespace EtabsTools
             
             SmoothButton btnCalculate = new SmoothButton
             {
-                Text = "Hesapla",
-                Size = new Size(120, 30),
+                Text = "HESAPLA",
+                Size = new Size(120, 40),
                 Location = new Point(15, 5),
-                BaseColor = Color.FromArgb(159, 219, 255),
-                BorderRadius = 20,
+                BaseColor = Color.FromArgb(225, 213, 233),
+                BorderRadius = 15,
                 EnableCenterAnimation = true
             };
             btnCalculate.Click += BtnCalculateIkinciMertebe_Click;
@@ -363,11 +359,11 @@ namespace EtabsTools
 
             SmoothButton btnSave = new SmoothButton
             {
-                Text = "Kaydet",
-                Size = new Size(120, 30),
+                Text = "KAYDET",
+                Size = new Size(120, 40),
                 Location = new Point(155, 5),
-                BaseColor = Color.SeaGreen,
-                BorderRadius = 20,
+                BaseColor = Color.FromArgb(235, 240, 245),
+                BorderRadius = 15,
                 EnableCenterAnimation = true
             };
             btnSave.Click += BtnSaveIkinciMertebe_Click;
@@ -401,8 +397,9 @@ namespace EtabsTools
                 ScrollBars = ScrollBars.Both,
                 ColumnHeadersDefaultCellStyle = new DataGridViewCellStyle
                 {
-                    BackColor = Color.FromArgb(255, 236, 159),
-                    Font = new Font("Segoe UI", 9, FontStyle.Bold),
+                    BackColor = Color.FromArgb(244, 247, 254),
+                    ForeColor = Color.FromArgb(113, 128, 150),
+                    Font = new Font("Segoe UI Semibold", 9f, FontStyle.Regular),
                     Alignment = DataGridViewContentAlignment.MiddleCenter
                 },
                 DefaultCellStyle = new DataGridViewCellStyle { Alignment = DataGridViewContentAlignment.MiddleCenter }

@@ -116,16 +116,15 @@ namespace EtabsTools
                 TitleFont = new Font("Segoe UI", 12, FontStyle.Bold)
             };
 
-            // === İlk sıra: Model Bilgilerini Çek + Orijinale Dön yan yana ===
             btnFetch = new SmoothButton
             {
                 Text = "Model Bilgilerini Çek",
                 Size = new Size(145, 40),
                 Location = new Point(10, 35),
-                BaseColor = Color.FromArgb(159, 219, 255),
+                BaseColor = Color.FromArgb(218, 232, 252), // Soft Blue
                 BorderRadius = 15,
                 EnableCenterAnimation = true,
-                Font = new Font("Segoe UI", 8.5f, FontStyle.Bold)
+                Font = new Font("Segoe UI Semibold", 9f, FontStyle.Regular)
             };
             btnFetch.Click += BtnFetch_Click;
 
@@ -134,10 +133,10 @@ namespace EtabsTools
                 Text = "Orijinale Dön",
                 Size = new Size(110, 40),
                 Location = new Point(160, 35),
-                BaseColor = Color.LightCoral,
+                BaseColor = Color.FromArgb(255, 235, 235), // Soft Red/Pink for reset
                 BorderRadius = 15,
                 EnableCenterAnimation = true,
-                Font = new Font("Segoe UI", 8.5f, FontStyle.Bold)
+                Font = new Font("Segoe UI Semibold", 8.5f, FontStyle.Regular)
             };
             btnReset.Click += BtnReset_Click;
 
@@ -165,9 +164,10 @@ namespace EtabsTools
                 Text = "DWG Olarak Kaydet",
                 Size = new Size(180, 40),
                 Location = new Point(15, 270),
-                BaseColor = Color.LightGreen,
+                BaseColor = Color.FromArgb(213, 232, 212), // Soft Green
                 BorderRadius = 15,
-                EnableCenterAnimation = true
+                EnableCenterAnimation = true,
+                Font = new Font("Segoe UI Semibold", 9f, FontStyle.Regular)
             };
             btnDWG.Click += BtnDWG_Click;
 
@@ -203,13 +203,28 @@ namespace EtabsTools
                 TitleFont = new Font("Segoe UI", 12, FontStyle.Bold)
             };
 
-            Button btnUp = new Button { Text = "▲", Font = new Font("Segoe UI", 12, FontStyle.Bold), Size = new Size(35, 30), Location = new Point(pnlRight.Width - 85, 8), Anchor = AnchorStyles.Top | AnchorStyles.Right, FlatStyle = FlatStyle.Flat, BackColor = Color.White };
-            btnUp.FlatAppearance.BorderSize = 1;
+            SmoothButton btnUp = new SmoothButton 
+            { 
+                Text = "▲", 
+                Size = new Size(35, 30), 
+                Location = new Point(pnlRight.Width - 90, 8), 
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                BaseColor = Color.FromArgb(244, 247, 254),
+                BorderRadius = 8,
+                Font = new Font("Segoe UI", 12, FontStyle.Bold)
+            };
             btnUp.Click += (s, e) => ChangeStory(1);
             
-            Button btnDown = new Button { Text = "▼", Font = new Font("Segoe UI", 12, FontStyle.Bold), Size = new Size(35, 30), Location = new Point(pnlRight.Width - 45, 8), Anchor = AnchorStyles.Top | AnchorStyles.Right, FlatStyle = FlatStyle.Flat, BackColor = Color.White };
-            btnDown.FlatAppearance.BorderSize = 1;
-            btnDown.Click += (s, e) => ChangeStory(-1);
+            SmoothButton btnDown = new SmoothButton 
+            { 
+                Text = "▼", 
+                Size = new Size(35, 30), 
+                Location = new Point(pnlRight.Width - 50, 8), 
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                BaseColor = Color.FromArgb(244, 247, 254),
+                BorderRadius = 8,
+                Font = new Font("Segoe UI", 12, FontStyle.Bold)
+            };
 
             pnlRight.Controls.Add(btnUp);
             pnlRight.Controls.Add(btnDown);

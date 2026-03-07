@@ -885,24 +885,24 @@ namespace EtabsTools
         // Sekme renklerini tanımla (dashboard ile aynı)
         private readonly Color[] tabColors = new Color[]
         {
-            Color.FromArgb(240, 244, 248), // 0: Dashboard (kullanılmaz)
-            // ETABS ASISTANI (Sade, asil ve okunaklı yumuşak palet - soft slate blue tonları)
-            Color.FromArgb(235, 240, 245), // 1: Tasarım Spektrumu
-            Color.FromArgb(230, 238, 245), // 2: Artırım Hesabı
-            Color.FromArgb(225, 235, 245), // 3: Göreli Kat Ötelemesi
-            Color.FromArgb(220, 232, 244), // 4: İkinci Mertebe
-            Color.FromArgb(215, 230, 244), // 5: Kolon Eksenel Yük Kontrolü
-            Color.FromArgb(210, 227, 243), // 6: Perde Kesme Kontrolü
-            Color.FromArgb(205, 225, 243), // 7: Kiriş Kesme Güvenliği
-            Color.FromArgb(200, 222, 242), // 8: Kiriş Eksenel Yük
-            Color.FromArgb(195, 220, 242), // 9: Kolon PMM
-            // DONE ASISTANI (Aynı asil sadelikte, temiz görünümlü tonlar)
-            Color.FromArgb(235, 240, 245), // 10: Kolon Donesi
-            Color.FromArgb(230, 238, 245), // 11: Perde Donesi
-            Color.FromArgb(225, 235, 245), // 12: Kiriş Donesi
-            Color.FromArgb(220, 232, 244), // 13: Döşeme Donesi
-            Color.FromArgb(215, 230, 244), // 14: BAP Donesi
-            Color.FromArgb(210, 227, 243)  // 15: Temel Donesi
+            Color.FromArgb(244, 247, 254), // 0: Dashboard
+            // ETABS ASISTANI (Sade, asil ama renkli soft pastel tonlar)
+            Color.FromArgb(218, 232, 252), // 1: Tasarım Spektrumu (Soft Mavi)
+            Color.FromArgb(213, 232, 212), // 2: Artırım Hesabı (Soft Yeşil)
+            Color.FromArgb(255, 230, 204), // 3: Göreli Kat Ötelemesi (Soft Turuncu)
+            Color.FromArgb(225, 213, 233), // 4: İkinci Mertebe (Soft Mor)
+            Color.FromArgb(255, 204, 204), // 5: Kolon Eksenel Yük Kontrolü (Soft Pembe/Kırmızı)
+            Color.FromArgb(204, 229, 255), // 6: Perde Kesme Kontrolü (Ferah Açık Mavi)
+            Color.FromArgb(255, 242, 204), // 7: Kiriş Kesme Güvenliği (Soft Sarı)
+            Color.FromArgb(218, 222, 228), // 8: Kiriş Eksenel Yük (Açık Gri Mavi)
+            Color.FromArgb(194, 235, 225), // 9: Kolon PMM (Soft Turkuaz/Nane)
+            // DONE ASISTANI (Daha enerjik, temiz görünümlü tonlar)
+            Color.FromArgb(218, 232, 252), // 10: Kolon Donesi
+            Color.FromArgb(213, 232, 212), // 11: Perde Donesi
+            Color.FromArgb(255, 230, 204), // 12: Kiriş Donesi
+            Color.FromArgb(225, 213, 233), // 13: Döşeme Donesi
+            Color.FromArgb(255, 204, 204), // 14: BAP Donesi
+            Color.FromArgb(204, 229, 255)  // 15: Temel Donesi
         };
 
         private Panel CreateNavigationPanel(int currentTabIndex, string context = "ETABS")

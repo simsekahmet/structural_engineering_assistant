@@ -226,32 +226,28 @@ namespace EtabsTools
             };
             lstCombinations.DoubleClick += LstCombinations_DoubleClick;
 
-            Button btnLoadCombos = new Button
+            SmoothButton btnLoadCombos = new SmoothButton
             {
                 Text = "Getir",
                 Size = new Size(65, 30),
                 Location = new Point(20, 170),
-                BackColor = Color.FromArgb(230, 238, 245),
-                ForeColor = Color.FromArgb(43, 54, 116),
-                FlatStyle = FlatStyle.Flat,
-                Font = new Font("Segoe UI Semibold", 9f),
-                Cursor = Cursors.Hand
+                BaseColor = Color.FromArgb(255, 224, 178), // Soft Orange
+                BorderRadius = 12,
+                EnableCenterAnimation = true,
+                Font = new Font("Segoe UI Semibold", 9f)
             };
-            btnLoadCombos.FlatAppearance.BorderSize = 0;
             btnLoadCombos.Click += BtnLoadCombos_Click;
 
-            Button btnSelectCombos = new Button
+            SmoothButton btnSelectCombos = new SmoothButton
             {
                 Text = "Seç",
                 Size = new Size(65, 30),
                 Location = new Point(95, 170),
-                BackColor = Color.FromArgb(210, 227, 243),
-                ForeColor = Color.FromArgb(43, 54, 116),
-                FlatStyle = FlatStyle.Flat,
-                Font = new Font("Segoe UI Semibold", 9f),
-                Cursor = Cursors.Hand
+                BaseColor = Color.FromArgb(255, 224, 178),
+                BorderRadius = 12,
+                EnableCenterAnimation = true,
+                Font = new Font("Segoe UI Semibold", 9f)
             };
-            btnSelectCombos.FlatAppearance.BorderSize = 0;
             btnSelectCombos.Click += BtnSelectCombos_Click;
 
             pnlCombos.Controls.Add(lstCombinations);
@@ -364,9 +360,10 @@ namespace EtabsTools
                 Text = "HESAPLA",
                 Size = new Size(140, 45),
                 Location = new Point(20, 5),
-                BaseColor = Color.FromArgb(210, 227, 243),
+                BaseColor = Color.FromArgb(255, 224, 178),
                 BorderRadius = 15,
-                EnableCenterAnimation = true
+                EnableCenterAnimation = true,
+                Font = new Font("Segoe UI Semibold", 10f)
             };
             btnCalculate.Click += BtnCalculateGoreliKat_Click;
             pnlButton.Controls.Add(btnCalculate);
@@ -378,7 +375,8 @@ namespace EtabsTools
                 Location = new Point(175, 5),
                 BaseColor = Color.FromArgb(235, 240, 245),
                 BorderRadius = 15,
-                EnableCenterAnimation = true
+                EnableCenterAnimation = true,
+                Font = new Font("Segoe UI Semibold", 10f)
             };
             btnSave.Click += BtnSaveGoreliKat_Click;
             pnlButton.Controls.Add(btnSave);

@@ -158,10 +158,11 @@ namespace EtabsTools
                 Text = "HESAPLA",
                 Size = new Size(130, 40),
                 Location = new Point(25, 290),
-                BaseColor = Color.FromArgb(210, 227, 243),
+                BaseColor = Color.FromArgb(218, 232, 252), // Soft Blue
                 BorderRadius = 15,
                 EnableCenterAnimation = true,
-                Anchor = AnchorStyles.None
+                Anchor = AnchorStyles.None,
+                Font = new Font("Segoe UI Semibold", 9f)
             };
             btnCalculate.Click += BtnCalculateSpectrum_Click;
             pnlInput.Controls.Add(btnCalculate);
@@ -174,7 +175,8 @@ namespace EtabsTools
                 BaseColor = Color.FromArgb(235, 240, 245),
                 BorderRadius = 15,
                 EnableCenterAnimation = true,
-                Anchor = AnchorStyles.None
+                Anchor = AnchorStyles.None,
+                Font = new Font("Segoe UI Semibold", 9f)
             };
             btnSave.Click += BtnSaveSpectrum_Click;
             pnlInput.Controls.Add(btnSave);
