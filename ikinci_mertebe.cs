@@ -342,7 +342,8 @@ namespace EtabsTools
                 Location = new Point(35, startY + gapY * 5),
                 BaseColor = Color.FromArgb(225, 213, 233),
                 BorderRadius = 12,
-                EnableCenterAnimation = true
+                EnableCenterAnimation = true,
+                Font = new Font("Segoe UI Semibold", 10f)
             };
             btnFetchAll.Click += BtnFetchAll_Click;
             pnlParams.Controls.Add(btnFetchAll);
