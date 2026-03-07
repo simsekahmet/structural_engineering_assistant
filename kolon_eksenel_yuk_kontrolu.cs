@@ -7,6 +7,10 @@ using System.Text.RegularExpressions;
 using System.Globalization;
 using System.Windows.Forms;
 using CSiAPIv1;
+using OfficeOpenXml;
+using OfficeOpenXml.Style;
+using OfficeOpenXml.ConditionalFormatting;
+using System.IO;
 
 namespace EtabsTools
 {
@@ -479,8 +483,8 @@ namespace EtabsTools
             SmoothButton btnSave = new SmoothButton
             {
                 Text = "KAYDET",
-                Size = new Size(120, 40),
-                Location = new Point(155, 5),
+                Size = new Size(110, 40),
+                Location = new Point(145, 5),
                 BaseColor = Color.FromArgb(235, 240, 245),
                 BorderRadius = 15,
                 EnableCenterAnimation = true,
@@ -488,6 +492,32 @@ namespace EtabsTools
             };
             btnSave.Click += BtnSaveKolonEksenel_Click;
             pnlCalcBtn.Controls.Add(btnSave);
+
+            SmoothButton btnExcel = new SmoothButton
+            {
+                Text = "EXCEL",
+                Size = new Size(110, 40),
+                Location = new Point(265, 5),
+                BaseColor = Color.FromArgb(204, 255, 204), // Açık Yeşil
+                BorderRadius = 15,
+                EnableCenterAnimation = true,
+                Font = new Font("Segoe UI Semibold", 9f, FontStyle.Regular)
+            };
+            btnExcel.Click += (s, ev) => {
+                if (_lastKolonResults == null || _lastKolonResults.Count == 0)
+                {
+                    ToastForm.ShowToast("Aktarılacak veri yok. Önce hesaplayınız.", _form, 2000);
+                    return;
+                }
+                SaveFileDialog sfd = new SaveFileDialog { Filter = "Excel Dosyası|*.xlsx", Title = "Excel Kaydet" };
+                if (sfd.ShowDialog() == DialogResult.OK)
+                {
+                    double.TryParse(txtFck.Text, out double fck);
+                    double.TryParse(txtLimit.Text, out double limit);
+                    ExportExcel(sfd.FileName, _lastKolonResults, fck, limit);
+                }
+            };
+            pnlCalcBtn.Controls.Add(btnExcel);
 
             tlpLeft.Controls.Add(pnlCalcBtn, 0, 2);
 
@@ -1289,6 +1319,75 @@ namespace EtabsTools
                 rtbFailedColumns.Text = "Sınırı aşan kolon yok.";
                 rtbFailedColumns.ForeColor = Color.Green;
             }
+        }
+
+        public void ExportExcel(string path, List<KolonEksenelYukResult> data, double fck, double limit)
+        {
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+            try
+            {
+                using (var package = new ExcelPackage())
+                {
+                    var ws = package.Workbook.Worksheets.Add("Kolon Eksenel Raporu");
+                    ws.Cells[1, 1, 1, 13].Merge = true;
+                    ws.Cells[1, 1].Value = "KOLON EKSENEL YÜK KONTROLÜ";
+                    ws.Cells[1, 1].Style.Font.Size = 14;
+                    ws.Cells[1, 1].Style.Font.Bold = true;
+                    ws.Cells[1, 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                    ws.Cells[2, 15].Value = "PARAMETRELER";
+                    ws.Cells[2, 15].Style.Font.Bold = true;
+                    ws.Cells[3, 15].Value = "fck";
+                    ws.Cells[3, 15].Style.Font.Bold = true;
+                    ws.Cells[3, 16].Value = fck;
+                    ws.Cells[2, 12].Value = "Sınır";
+                    ws.Cells[3, 12].Value = limit;
+                    string[] headers = { "Story","Column","Unique Name","fck","Load Case","Section","b (cm)","d (cm)","Ac (cm2)","Ac*fck (kN)","P (kN)","Oran","Durum" };
+                    for (int i = 0; i < headers.Length; i++) {
+                        var cell = ws.Cells[3, i + 1];
+                        cell.Value = headers[i];
+                        cell.Style.Font.Bold = true;
+                        cell.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                        cell.Style.Fill.BackgroundColor.SetColor(Color.LightGray);
+                        cell.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                    }
+                    int startRow = 4;
+                    for (int i = 0; i < data.Count; i++) {
+                        var r = startRow + i;
+                        var item = data[i];
+                        ws.Cells[r, 1].Value = item.Story;
+                        ws.Cells[r, 2].Value = item.Column;
+                        ws.Cells[r, 3].Value = item.UniqueName;
+                        ws.Cells[r, 4].Formula = "$P$3";
+                        ws.Cells[r, 5].Value = item.LoadCase;
+                        ws.Cells[r, 6].Value = item.Section;
+                        ws.Cells[r, 7].Value = item.B == 0 ? null : (object)item.B;
+                        ws.Cells[r, 8].Value = item.D;
+                        ws.Cells[r, 9].Formula = $"IF(G{r}=\"\", PI()*POWER(H{r},2)/4, G{r}*H{r})";
+                        ws.Cells[r, 10].Formula = $"(I{r}*D{r})/10";
+                        ws.Cells[r, 11].Value = item.Nd;
+                        ws.Cells[r, 12].Formula = $"IF(J{r}<>0, K{r}/J{r}, 0)";
+                        ws.Cells[r, 13].Formula = $"IF(L{r}<>0, IF(L{r}<=L$3, \"OK\", \"NOT OK\"), \"HATA\")";
+                    }
+                    int lastRow = startRow + data.Count - 1;
+                    if (data.Count > 0) {
+                        var notOk = ws.ConditionalFormatting.AddEqual(ws.Cells[$"M{startRow}:M{lastRow}"]);
+                        notOk.Formula = "\"NOT OK\"";
+                        notOk.Style.Fill.BackgroundColor.Color = Color.LightPink;
+                        var ok = ws.ConditionalFormatting.AddEqual(ws.Cells[$"M{startRow}:M{lastRow}"]);
+                        ok.Formula = "\"OK\"";
+                        ok.Style.Fill.BackgroundColor.Color = Color.LightGreen;
+                        var colorScale = ws.ConditionalFormatting.AddThreeColorScale(ws.Cells[$"L{startRow}:L{lastRow}"]);
+                        colorScale.LowValue.Color = Color.LightGreen;
+                        colorScale.MiddleValue.Color = Color.Yellow;
+                        colorScale.HighValue.Color = Color.Red;
+                    }
+                    ws.Cells.AutoFitColumns();
+                    package.SaveAs(new FileInfo(path));
+                }
+                ToastForm.ShowToast("Excel raporu başarıyla oluşturuldu.", _form, 2000);
+                System.Diagnostics.Process.Start(path);
+            }
+            catch (Exception ex) { MessageBox.Show("Excel oluşturma hatası: " + ex.Message); }
         }
     }
 }
