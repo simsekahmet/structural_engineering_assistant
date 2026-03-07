@@ -354,7 +354,7 @@ namespace EtabsTools
         private IkinciMertebeUI _ikinciMertebeUI;
 
         // YENİ MODÜLLER (ETABS)
-        private KirisKesmeGuvenligiUI _kirisKesmeUI;
+        private KirisKesmeUI _kirisKesmeUI;
         private KirisEksenelYukUI _kirisEksenelUI;
         private PerdeKesmeUI _perdeKesmeUI;
 
@@ -499,7 +499,7 @@ namespace EtabsTools
             pageKirisKesme.Tag = 7;
             pageKirisKesme.BackColor = colorBackground;
             mainTabControl.TabPages.Add(pageKirisKesme);
-            _kirisKesmeUI = new KirisKesmeGuvenligiUI(this, () => _sapModel, (p, i, c) => CreateNavigationPanel(i, c), GoToPage, colorBackground);
+            _kirisKesmeUI = new KirisKesmeUI(this, () => _sapModel, (p, i, c) => CreateNavigationPanel(i, c), GoToPage, colorBackground);
             _kirisKesmeUI.Initialize(pageKirisKesme);
 
             // 8: Kiriş Eksenel Yük

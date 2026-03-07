@@ -157,7 +157,7 @@ namespace EtabsTools
                 BaseColor = Color.FromArgb(225, 230, 240),
                 BorderRadius = 12,
                 EnableCenterAnimation = true,
-                Font = new Font("Segoe UI Semibold", 10f)
+                Font = new Font("Segoe UI", 10f, FontStyle.Regular)
             };
             btnLoadCombosBeam.Click += BtnLoadCombosBeam_Click;
 
@@ -169,7 +169,7 @@ namespace EtabsTools
                 BaseColor = Color.FromArgb(225, 230, 240),
                 BorderRadius = 12,
                 EnableCenterAnimation = true,
-                Font = new Font("Segoe UI Semibold", 9f, FontStyle.Regular)
+                Font = new Font("Segoe UI", 9f, FontStyle.Regular)
             };
             btnSelectCombosBeam.Click += BtnSelectCombosBeam_Click;
 
@@ -226,7 +226,7 @@ namespace EtabsTools
                 BaseColor = Color.FromArgb(255, 230, 204), // Açık Turuncu
                 BorderRadius = 15,
                 EnableCenterAnimation = true,
-                Font = new Font("Segoe UI Semibold", 10f)
+                Font = new Font("Segoe UI", 10f, FontStyle.Regular)
             };
             btnCalculate.Click += BtnCalculateBeamAxial_Click;
             pnlButton.Controls.Add(btnCalculate);
@@ -239,7 +239,7 @@ namespace EtabsTools
                 BaseColor = Color.FromArgb(204, 255, 204), // Açık Yeşil
                 BorderRadius = 15,
                 EnableCenterAnimation = true,
-                Font = new Font("Segoe UI Semibold", 9.5f)
+                Font = new Font("Segoe UI", 9.5f, FontStyle.Regular)
             };
             btnExcel.Click += BtnExcelExportBeamAxial_Click;
             pnlButton.Controls.Add(btnExcel);
@@ -292,6 +292,12 @@ namespace EtabsTools
             dgvBeamResults.Columns.Add("P", "P (kN)");
             dgvBeamResults.Columns.Add("Ratio", "Ratio");
             dgvBeamResults.Columns.Add("Status", "Durum");
+            dgvBeamResults.Columns.Add("Unique", "Unique");
+            dgvBeamResults.Columns["Unique"].Visible = false;
+
+            // Düzenlenebilir sütunları renklendir
+            dgvBeamResults.Columns["B"].DefaultCellStyle.BackColor = Color.FromArgb(250, 255, 230);
+            dgvBeamResults.Columns["D"].DefaultCellStyle.BackColor = Color.FromArgb(250, 255, 230);
 
             // Sadece B ve D sütunları düzenlenebilir olsun
             foreach (DataGridViewColumn col in dgvBeamResults.Columns)
@@ -592,7 +598,8 @@ namespace EtabsTools
                     res.Capacity.ToString("0.##"),
                     res.P.ToString("0.##"),
                     res.Ratio.ToString("0.###"),
-                    res.Status
+                    res.Status,
+                    res.Unique
                 );
 
                 UpdateDgvRowColor(rowIndex, res.Status);

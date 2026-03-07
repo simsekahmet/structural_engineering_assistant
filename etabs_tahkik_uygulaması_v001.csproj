@@ -83,7 +83,7 @@
     <Compile Include="goreli_kat_otelemesi.cs" />
     <Compile Include="ikinci_mertebe.cs" />
     <Compile Include="kolon_eksenel_yuk_kontrolu.cs" />
-    <Compile Include="kiris_kesme_guvenligi.cs" />
+    <Compile Include="kiris_kesme.cs" />
     <Compile Include="kiris_eksenel_yuk.cs" />
     <Compile Include="perde_kesme.cs" />
     <Compile Include="kolon_donesi.cs" />
