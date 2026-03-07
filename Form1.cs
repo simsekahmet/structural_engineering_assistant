@@ -385,6 +385,7 @@ namespace EtabsTools
             this.MinimumSize = new Size(1000, 700);
             this.StartPosition = FormStartPosition.CenterScreen;
             this.BackColor = colorBackground;
+            this.ForeColor = Color.FromArgb(45, 55, 72); // Soft siyah/gri font global uygulama
             this.Font = new Font("Segoe UI", 9f);
 
             // 1. ÜST PANEL

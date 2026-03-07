@@ -438,7 +438,8 @@ namespace EtabsTools
                 Location = new Point(15, 35),
                 BaseColor = Color.FromArgb(255, 204, 204),
                 BorderRadius = 12,
-                EnableCenterAnimation = true
+                EnableCenterAnimation = true,
+                Font = new Font("Segoe UI", 9f, FontStyle.Regular)
             };
             btnGetFrame.Click += BtnGetFrameAssignment_Click;
             pnlFrameData.Controls.Add(btnGetFrame);
@@ -454,7 +455,8 @@ namespace EtabsTools
                 Location = new Point(15, 35),
                 BaseColor = Color.FromArgb(255, 204, 204),
                 BorderRadius = 12,
-                EnableCenterAnimation = true
+                EnableCenterAnimation = true,
+                Font = new Font("Segoe UI", 9f, FontStyle.Regular)
             };
             btnGetElem.Click += BtnKolonGetValues_Click;
             pnlElemData.Controls.Add(btnGetElem);

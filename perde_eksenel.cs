@@ -746,7 +746,7 @@ namespace EtabsTools
 
                 if (denom > 0)
                 {
-                    ratio = data.p_val / denom;
+                    ratio = Math.Abs(data.p_val) / denom;
                     status = ratio <= limit ? "OK" : "NOT OK";
                 }
 
@@ -758,7 +758,7 @@ namespace EtabsTools
                     fck = fck,
                     b = bw,
                     d = lw,
-                    P = data.p_val,
+                    P = Math.Abs(data.p_val),
                     Ac = Ac,
                     ratio = ratio,
                     status = status
