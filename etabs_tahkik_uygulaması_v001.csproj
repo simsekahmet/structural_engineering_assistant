@@ -86,6 +86,7 @@
     <Compile Include="kiris_kesme.cs" />
     <Compile Include="kiris_eksenel_yuk.cs" />
     <Compile Include="perde_kesme.cs" />
+    <Compile Include="perde_eksenel.cs" />
     <Compile Include="kolon_donesi.cs" />
     <Compile Include="kolon_dwg_export.cs" />
     <Compile Include="perde_donesi.cs" />

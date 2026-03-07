@@ -357,6 +357,7 @@ namespace EtabsTools
         private KirisKesmeUI _kirisKesmeUI;
         private KirisEksenelYukUI _kirisEksenelUI;
         private PerdeKesmeUI _perdeKesmeUI;
+        private PerdeEksenelUI _perdeEksenelUI;
 
         // YENİ MODÜLLER (DONE)
         private KolonDonesiUI _kolonDonesiUI;
@@ -510,6 +511,13 @@ namespace EtabsTools
             _kirisEksenelUI = new KirisEksenelYukUI(this, () => _sapModel, (p, i, c) => CreateNavigationPanel(i, c), GoToPage, colorBackground);
             _kirisEksenelUI.Initialize(pageKirisEksenel);
 
+            // 15: Perde Eksenel Yük
+            TabPage pagePerdeEksenel = new TabPage("Perde Eksenel Yük Kontrolü");
+            pagePerdeEksenel.Tag = 15;
+            pagePerdeEksenel.BackColor = colorBackground;
+            mainTabControl.TabPages.Add(pagePerdeEksenel);
+            _perdeEksenelUI = new PerdeEksenelUI(this, () => _sapModel, (p, i, c) => CreateNavigationPanel(i, c));
+            _perdeEksenelUI.Initialize(pagePerdeEksenel);
 
 
             // --- DONE ASİSTANI (9-14) ---
@@ -650,13 +658,13 @@ namespace EtabsTools
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 2,
-                RowCount = 4,
+                RowCount = 5,
                 Padding = new Padding(20)
             };
             tlpLeft.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
             tlpLeft.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
-            // 4 satır eşit yükseklik
-            for (int i = 0; i < 4; i++) tlpLeft.RowStyles.Add(new RowStyle(SizeType.Percent, 25F));
+            // 5 satır eşit yükseklik
+            for (int i = 0; i < 5; i++) tlpLeft.RowStyles.Add(new RowStyle(SizeType.Percent, 20F));
 
             AddButtonToGrid(tlpLeft, CreateDashButton("Tasarım Spektrumu", 1, tabColors[1]), 0, 0);
             AddButtonToGrid(tlpLeft, CreateDashButton("Artırım Hesabı", 2, tabColors[2]), 0, 1);
@@ -666,6 +674,7 @@ namespace EtabsTools
             AddButtonToGrid(tlpLeft, CreateDashButton("Perde Kesme Kontrolü", 6, tabColors[6]), 2, 1);
             AddButtonToGrid(tlpLeft, CreateDashButton("Kiriş Kesme Güvenliği", 7, tabColors[7]), 3, 0);
             AddButtonToGrid(tlpLeft, CreateDashButton("Kiriş Eksenel Yük", 8, tabColors[8]), 3, 1);
+            AddButtonToGrid(tlpLeft, CreateDashButton("Perde Eksenel Yük", 15, tabColors[15]), 4, 0);
 
             tlpContent.Controls.Add(tlpLeft, 0, 1);
 
@@ -675,13 +684,13 @@ namespace EtabsTools
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 2,
-                RowCount = 4, 
+                RowCount = 5, 
                 Padding = new Padding(20)
             };
             tlpRight.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
             tlpRight.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
-            // 4 satır eşit yükseklik
-            for (int i = 0; i < 4; i++) tlpRight.RowStyles.Add(new RowStyle(SizeType.Percent, 25F));
+            // 5 satır eşit yükseklik
+            for (int i = 0; i < 5; i++) tlpRight.RowStyles.Add(new RowStyle(SizeType.Percent, 20F));
 
             AddButtonToGrid(tlpRight, CreateDashButton("Kolon Donesi", 9, tabColors[9]), 0, 0);
             AddButtonToGrid(tlpRight, CreateDashButton("Perde Donesi", 10, tabColors[10]), 0, 1);
@@ -899,7 +908,8 @@ namespace EtabsTools
             Color.FromArgb(255, 230, 204), // 11: Kiriş Donesi
             Color.FromArgb(225, 213, 233), // 12: Döşeme Donesi
             Color.FromArgb(255, 204, 204), // 13: BAP Donesi
-            Color.FromArgb(204, 229, 255)  // 14: Temel Donesi
+            Color.FromArgb(204, 229, 255), // 14: Temel Donesi
+            Color.FromArgb(226, 235, 240)  // 15: Perde Eksenel Yük Kontrolü (Açık Gri Mavi Tonları)
         };
 
         private Panel CreateNavigationPanel(int currentTabIndex, string context = "ETABS")
