@@ -1,0 +1,11 @@
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+.vs/
+*.user
+*.suo
+*.dbmdl
+*.jfm
+*.pnc
+*.exe
+*.dll

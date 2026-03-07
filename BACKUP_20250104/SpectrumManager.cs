@@ -1,0 +1,283 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.IO;
+using System.Linq;
+using System.Windows.Forms;
+using System.Windows.Forms.DataVisualization.Charting;
+
+namespace EtabsTools
+{
+    public class SpectrumResult
+    {
+        public List<double> Periods { get; set; }
+        public List<double> Accelerations { get; set; }
+        public string FilePath { get; set; }
+    }
+
+    public class SpectrumManager
+    {
+        public double SDS { get; set; }
+        public double SD1 { get; set; }
+        public double R { get; set; }
+        public double D { get; set; }
+        public double I { get; set; }
+
+        public SpectrumManager(double sds, double sd1, double r, double d, double i)
+        {
+            SDS = sds; SD1 = sd1; R = r; D = d; I = i;
+        }
+
+        public SpectrumResult Calculate(string saveFolder = null)
+        {
+            double TA = 0.2 * SD1 / SDS, TB = SD1 / SDS;
+
+            var TList = new List<double> { 0.0, TA / 3, TA / 2, TA };
+            for (double t = TA + 0.01; t <= TB; t += 0.01) TList.Add(Math.Round(t, 3));
+            TList.Add(TB);
+            for (double t = TB + 0.05; t <= 8.0; t += 0.05) TList.Add(Math.Round(t, 3));
+            TList = TList.Distinct().OrderBy(t => t).ToList();
+
+            var SaRList = TList.Select(T =>
+            {
+                double Se = T <= TA ? SDS * (0.4 + 0.6 * T / TA) : T <= TB ? SDS : T <= 6.0 ? SD1 / T : SD1 * 6 / (T * T);
+                double Reff = T <= TB ? D + ((R / I) - D) * (T / TB) : R / I;
+                return 9.81 * (Se / Reff);
+            }).ToList();
+
+            string fileName = $"R{R}_D{D}_I{I}.txt";
+            string folder = saveFolder ?? Path.GetTempPath();
+            string filePath = Path.Combine(folder, fileName);
+
+            using (var sw = new StreamWriter(filePath))
+                for (int i = 0; i < TList.Count; i++)
+                    sw.WriteLine($"{TList[i]:0.000}\t{SaRList[i]:0.0000}");
+
+            return new SpectrumResult { Periods = TList, Accelerations = SaRList, FilePath = filePath };
+        }
+    }
+
+    /// <summary>
+    /// Tasarım Spektrumu UI modülü - Form1'den ayrı yönetilir
+    /// </summary>
+    public class TasarimSpektrumuUI
+    {
+        private Form _parentForm;
+        private Func<int, Panel> _createNavigationPanel;
+        private Action<int> _goToPage;
+        private Color _bgColor;
+
+        // UI Components
+        private TextBox txtSDS, txtSD1, txtR, txtD, txtI;
+        private Chart chartSpectrum;
+        private Label lblSpectrumStatus;
+        private ScrollableDataPanel scrollableDataPanel;
+
+        // Result - diğer modüller tarafından erişilebilir
+        public SpectrumResult SavedSpectrumResult { get; private set; }
+
+        // Göreli Kat Ötelemesi modülü için SDS/SD1 erişimi
+        public TextBox TxtSDS => txtSDS;
+        public TextBox TxtSD1 => txtSD1;
+        public TextBox TxtR => txtR;
+        public TextBox TxtD => txtD;
+        public TextBox TxtI => txtI;
+
+        public TasarimSpektrumuUI(Form parent, Func<int, Panel> createNavPanel, Action<int> goToPage, Color bgColor)
+        {
+            _parentForm = parent;
+            _createNavigationPanel = createNavPanel;
+            _goToPage = goToPage;
+            _bgColor = bgColor;
+        }
+
+        public void Initialize(TabPage page)
+        {
+            // Ana layout: 3 satırlı - başlık, içerik, navigasyon
+            TableLayoutPanel mainLayout = new TableLayoutPanel();
+            mainLayout.Dock = DockStyle.Fill;
+            mainLayout.RowCount = 3;
+            mainLayout.ColumnCount = 1;
+            mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 60F)); // Başlık
+            mainLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F)); // İçerik
+            mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 60F)); // Navigasyon
+
+            // --- SAYFA BAŞLIĞI ---
+            Label lblPageTitle = Form1.CreateHeaderLabel("Tasarım Spektrumu");
+            mainLayout.Controls.Add(lblPageTitle, 0, 0);
+
+            // --- İÇERİK PANELİ ---
+            TableLayoutPanel tlp = new TableLayoutPanel();
+            tlp.Dock = DockStyle.Fill;
+            tlp.ColumnCount = 3;
+            tlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 35F)); // Parametre paneli
+            tlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 180F)); // Veri paneli
+            tlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 65F)); // Grafik paneli
+            tlp.Padding = new Padding(20, 10, 20, 10);
+
+            // --- SOL TARAFTAKİ INPUT GRUBU (RoundedPanel) ---
+            RoundedPanel pnlInput = new RoundedPanel
+            {
+                Title = "TBDY 2018 Parametreleri",
+                Anchor = AnchorStyles.None,
+                Size = new Size(320, 350),
+                BorderRadius = 25
+            };
+
+            int startY = 50;
+            int gapY = 45;
+            int labelX = 50;
+            int textX = 100;
+
+            pnlInput.Controls.Add(CreateLabel("SDS:", labelX, startY));
+            txtSDS = CreateTextBox(textX, startY); pnlInput.Controls.Add(txtSDS);
+
+            pnlInput.Controls.Add(CreateLabel("SD1:", labelX, startY + gapY));
+            txtSD1 = CreateTextBox(textX, startY + gapY); pnlInput.Controls.Add(txtSD1);
+
+            pnlInput.Controls.Add(CreateLabel("R:", labelX, startY + gapY * 2));
+            txtR = CreateTextBox(textX, startY + gapY * 2); pnlInput.Controls.Add(txtR);
+
+            pnlInput.Controls.Add(CreateLabel("D:", labelX, startY + gapY * 3));
+            txtD = CreateTextBox(textX, startY + gapY * 3); pnlInput.Controls.Add(txtD);
+
+            pnlInput.Controls.Add(CreateLabel("I:", labelX, startY + gapY * 4));
+            txtI = CreateTextBox(textX, startY + gapY * 4); pnlInput.Controls.Add(txtI);
+
+            SmoothButton btnCalculate = new SmoothButton
+            {
+                Text = "Hesapla ve Kaydet",
+                Size = new Size(220, 50),
+                Location = new Point(50, 280),
+                BaseColor = Color.SeaGreen,
+                BorderRadius = 20
+            };
+            btnCalculate.Click += BtnCalculateSpectrum_Click;
+            pnlInput.Controls.Add(btnCalculate);
+
+            tlp.Controls.Add(pnlInput, 0, 0);
+
+            // --- ORTA VERİ PANELİ (ScrollableDataPanel) ---
+            scrollableDataPanel = new ScrollableDataPanel
+            {
+                Anchor = AnchorStyles.None,
+                Size = new Size(160, 350),
+                BorderRadius = 25
+            };
+            tlp.Controls.Add(scrollableDataPanel, 1, 0);
+
+            // --- SAĞ TARAFTAKİ GRAFİK PANELİ (RoundedPanel içinde) ---
+            Panel pnlRight = new Panel { Dock = DockStyle.Fill };
+            RoundedPanel pnlChartContainer = new RoundedPanel
+            {
+                Title = "",
+                Anchor = AnchorStyles.None,
+                BorderRadius = 25,
+                BackColor = Color.WhiteSmoke,
+                Padding = new Padding(10)
+            };
+            pnlRight.Resize += (s, ev) => {
+                int w = (int)(pnlRight.Width * 0.95);
+                int h = (int)(pnlRight.Height * 0.9);
+                if (w > 0 && h > 0) {
+                    pnlChartContainer.Size = new Size(w, h);
+                    pnlChartContainer.Location = new Point((pnlRight.Width - w) / 2, (pnlRight.Height - h) / 2);
+                }
+            };
+
+            chartSpectrum = new Chart();
+            chartSpectrum.Dock = DockStyle.Fill;
+            chartSpectrum.BackColor = Color.WhiteSmoke;
+
+            ChartArea area = new ChartArea("MainArea");
+            area.AxisX.Title = "Periyot (s)";
+            area.AxisY.Title = "SaR";
+            area.AxisX.TitleFont = new Font("Segoe UI", 11, FontStyle.Bold);
+            area.AxisY.TitleFont = new Font("Segoe UI", 11, FontStyle.Bold);
+            area.AxisX.MajorGrid.LineColor = Color.LightGray;
+            area.AxisY.MajorGrid.LineColor = Color.LightGray;
+            area.AxisX.LabelStyle.Format = "0.0";
+            area.AxisX.Minimum = 0;
+            area.AxisX.Maximum = 6;
+            chartSpectrum.ChartAreas.Add(area);
+
+            Legend legend = new Legend("Legend1") { Docking = Docking.Top };
+            chartSpectrum.Legends.Add(legend);
+
+            // Hover ile periyot ve ivme gösterimi
+            chartSpectrum.GetToolTipText += (s, ev) => {
+                if (ev.HitTestResult.ChartElementType == ChartElementType.DataPoint && chartSpectrum.Series.Count > 0) {
+                    var dp = chartSpectrum.Series[0].Points[ev.HitTestResult.PointIndex];
+                    ev.Text = $"T = {dp.XValue:0.000} s\nSaR = {dp.YValues[0]:0.0000} m/s²";
+                }
+            };
+
+            lblSpectrumStatus = new Label
+            {
+                Text = "",
+                AutoSize = true,
+                Dock = DockStyle.Bottom,
+                Font = new Font("Segoe UI", 9, FontStyle.Italic),
+                ForeColor = Color.Blue,
+                Padding = new Padding(0, 5, 0, 0)
+            };
+
+            pnlChartContainer.Controls.Add(chartSpectrum);
+            pnlRight.Controls.Add(pnlChartContainer);
+
+            tlp.Controls.Add(pnlRight, 2, 0);
+
+            mainLayout.Controls.Add(tlp, 0, 1);
+
+            // --- ALT NAVİGASYON PANELİ ---
+            Panel navContainer = _createNavigationPanel(1); // 1 = Tasarım Spektrumu tab index
+            mainLayout.Controls.Add(navContainer, 0, 2);
+
+            page.Controls.Add(mainLayout);
+        }
+
+        private void BtnCalculateSpectrum_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                double valSDS = double.Parse(txtSDS.Text), valSD1 = double.Parse(txtSD1.Text);
+                double valR = double.Parse(txtR.Text), valD = double.Parse(txtD.Text), valI = double.Parse(txtI.Text);
+
+                if (valSDS == 0 || valSD1 == 0 || valR == 0 || valI == 0) { MessageBox.Show("Sıfırdan farklı değer giriniz."); return; }
+
+                // Kayıt klasörü: Uygulamanın çalıştığı klasör
+                string saveFolder = Application.StartupPath;
+
+                var manager = new SpectrumManager(valSDS, valSD1, valR, valD, valI);
+                var result = manager.Calculate(saveFolder);
+                
+                // Spektrum sonucunu artırım hesabı için kaydet
+                SavedSpectrumResult = result;
+
+                chartSpectrum.Series.Clear();
+                var series = new Series("Tasarım Spektrumu (SaR)") { ChartType = SeriesChartType.Line, BorderWidth = 3, Color = Color.Crimson };
+                for (int i = 0; i < result.Periods.Count; i++) series.Points.AddXY(result.Periods[i], result.Accelerations[i]);
+                chartSpectrum.Series.Add(series);
+
+                // Veri panelini güncelle
+                scrollableDataPanel.SetData(result.Periods, result.Accelerations);
+
+                lblSpectrumStatus.Text = $"Dosya kaydedildi: {result.FilePath}";
+                lblSpectrumStatus.ForeColor = Color.Green;
+                MessageBox.Show($"Spektrum hesaplandı ve kaydedildi:\n{result.FilePath}", "Başarılı", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex) { MessageBox.Show("Hata: " + ex.Message); }
+        }
+
+        private Label CreateLabel(string text, int x, int y)
+        {
+            return new Label { Text = text, Location = new Point(x, y), AutoSize = true, Font = new Font("Segoe UI", 10, FontStyle.Bold) };
+        }
+
+        private TextBox CreateTextBox(int x, int y)
+        {
+            return new TextBox { Location = new Point(x, y), Width = 100, Text = "0" };
+        }
+    }
+}
