@@ -316,7 +316,8 @@ namespace EtabsTools
             RoundedPanel pnlParams = new RoundedPanel
             {
                 Title = "Hesap Parametreleri",
-                Dock = DockStyle.Fill,
+                Dock = DockStyle.Top,
+                Height = 340, // tlpLeft RowStyle'daki karşılık
                 BorderRadius = 20,
                 Margin = new Padding(0, 0, 10, 5),
                 TitleFont = new Font("Segoe UI", 14, FontStyle.Bold) // Font boyutu büyütüldü

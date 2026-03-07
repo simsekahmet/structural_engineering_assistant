@@ -183,22 +183,24 @@ namespace EtabsTools
             pnlLeftScroll.Controls.Add(pnlInput);
             tlp.Controls.Add(pnlLeftScroll, 0, 0);
 
-            // --- ORTA VERİ PANELİ (ScrollableDataPanel) ---
+            // --- ORTA VERİ PANELİ (Scrollable Wrapper) ---
+            Panel pnlMidScroll = new Panel { Dock = DockStyle.Fill, AutoScroll = true };
             scrollableDataPanel = new ScrollableDataPanel
             {
-                Anchor = AnchorStyles.None,
+                Dock = DockStyle.Top,
                 Size = new Size(160, 360), // ESKİ BOYUT
                 BorderRadius = 15,
                 Margin = new Padding(0, 0, 15, 0)
             };
-            tlp.Controls.Add(scrollableDataPanel, 1, 0);
+            pnlMidScroll.Controls.Add(scrollableDataPanel);
+            tlp.Controls.Add(pnlMidScroll, 1, 0);
 
             // --- SAĞ TARAFTAKİ GRAFİK PANELİ (RoundedPanel içinde) ---
             Panel pnlRight = new Panel { Dock = DockStyle.Fill };
             RoundedPanel pnlChartContainer = new RoundedPanel
             {
                 Title = "",
-                Anchor = AnchorStyles.None,
+                Dock = DockStyle.Top,
                 BorderRadius = 15,
                 BackColor = Color.FromArgb(250, 252, 255), // Çok hafif buz mavisi-beyaz karışımı
                 Padding = new Padding(15)
