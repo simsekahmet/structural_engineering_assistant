@@ -249,7 +249,7 @@ namespace EtabsTools
                 BaseColor = Color.FromArgb(225, 213, 233), // Soft Purple
                 BorderRadius = 12,
                 EnableCenterAnimation = true,
-                Font = new Font("Segoe UI Semibold", 9f, FontStyle.Regular)
+                Font = new Font("Segoe UI Semibold", 10f)
             };
             btnLoadCombosIkinci.Click += BtnGetCombosIkinci_Click;
 
@@ -358,7 +358,8 @@ namespace EtabsTools
                 Location = new Point(15, 5),
                 BaseColor = Color.FromArgb(225, 213, 233),
                 BorderRadius = 15,
-                EnableCenterAnimation = true
+                EnableCenterAnimation = true,
+                Font = new Font("Segoe UI Semibold", 10f)
             };
             btnCalculate.Click += BtnCalculateIkinciMertebe_Click;
             pnlButton.Controls.Add(btnCalculate);
@@ -370,7 +371,8 @@ namespace EtabsTools
                 Location = new Point(155, 5),
                 BaseColor = Color.FromArgb(235, 240, 245),
                 BorderRadius = 15,
-                EnableCenterAnimation = true
+                EnableCenterAnimation = true,
+                Font = new Font("Segoe UI Semibold", 10f)
             };
             btnSave.Click += BtnSaveIkinciMertebe_Click;
             pnlButton.Controls.Add(btnSave);

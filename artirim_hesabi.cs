@@ -101,7 +101,7 @@ namespace EtabsTools
                 BorderRadius = 15,
                 Margin = new Padding(0, 0, 15, 0),
                 TitleFont = new Font("Segoe UI Semibold", 13f),
-                Height = 650 // Sabit yükseklik verilerek scroll oluşması sağlanır
+                Height = 950 // Artırılmış yükseklik ile daha fazla scroll alanı sağlanır
             };
 
             int labelX = 25;

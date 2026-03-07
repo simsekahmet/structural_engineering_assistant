@@ -482,13 +482,13 @@ namespace EtabsTools
 
             SmoothButton btnExcel = new SmoothButton
             {
-                Text = "EXCEL",
-                Size = new Size(120, 40),
+                Text = "Excel'e Aktar",
+                Size = new Size(145, 40),
                 Location = new Point(145, 5),
                 BaseColor = Color.FromArgb(204, 255, 204), // Açık Yeşil
                 BorderRadius = 15,
                 EnableCenterAnimation = true,
-                Font = new Font("Segoe UI Semibold", 9f, FontStyle.Regular)
+                Font = new Font("Segoe UI Semibold", 9.5f, FontStyle.Regular)
             };
             btnExcel.Click += (s, ev) => {
                 if (_lastKolonResults == null || _lastKolonResults.Count == 0)
