@@ -543,10 +543,9 @@ namespace EtabsTools
                 string unique = tableData[baseIndex + idxUnique];
                 string loadCase = tableData[baseIndex + idxCase];
 
-                double v2 = Math.Abs(Convert.ToDouble(tableData[baseIndex + idxV2]));
-
-                bool matchedCombo = combos.Any(c => string.Equals(loadCase, c, StringComparison.OrdinalIgnoreCase));
-                if (!matchedCombo) continue;
+                double v2 = 0;
+                double.TryParse(tableData[baseIndex + idxV2].Replace(",", "."), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out v2);
+                v2 = Math.Abs(v2);
 
                 string key = story + "_" + label;
 
