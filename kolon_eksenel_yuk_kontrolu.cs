@@ -210,7 +210,7 @@ namespace EtabsTools
                 {
                     Story = force.Story,       // Force tablosundaki Story
                     Column = force.Column,     // Force tablosundaki Column Adı
-                    UniqueName = force.UniqueName,
+                    UniqueName = string.IsNullOrEmpty(force.UniqueName) ? frame.UniqueName : force.UniqueName,
                     LoadCase = force.LoadCase, // Force tablosundaki Kombinasyon
                     Location = force.Location, // Force tablosundaki Station
                     Nd = AbsNd,                // İSTEK: Mutlak değer yazdır
@@ -1170,7 +1170,12 @@ namespace EtabsTools
             if (_lastKolonResults == null || _lastKolonResults.Count == 0) return;
 
             // Benzersiz kolon adlarını (FrameObj objelerini) yakalamak için Status/IsOK parametresini baz al
-            var notOkColumns = _lastKolonResults.Where(r => !r.IsOK).Select(r => _kolonFrameAssignments.FirstOrDefault(f => f.Label == r.Column && f.Story == r.Story)?.UniqueName).Where(uid => !string.IsNullOrEmpty(uid)).Distinct().ToList();
+            var notOkColumns = _lastKolonResults
+                .Where(r => !r.IsOK)
+                .Select(r => r.UniqueName)
+                .Where(uid => !string.IsNullOrEmpty(uid))
+                .Distinct()
+                .ToList();
 
             if (notOkColumns.Count == 0)
             {
