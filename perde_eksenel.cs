@@ -63,25 +63,6 @@ namespace EtabsTools
                 Location = new Point(20, 20)
             };
             pnlHeader.Controls.Add(lblHeader);
-
-            // Geri butonu
-            SmoothButton btnBack = new SmoothButton
-            {
-                Text = "← ANA SAYFA",
-                Font = new Font("Segoe UI", 10, FontStyle.Bold),
-                Size = new Size(130, 40),
-                Location = new Point(pnlHeader.Width - 160, 15),
-                Anchor = AnchorStyles.Top | AnchorStyles.Right,
-                BaseColor = Color.FromArgb(231, 76, 60),
-                BorderRadius = 15,
-                ForeColor = Color.White
-            };
-            btnBack.Click += (s, ev) =>
-            {
-                var parentTab = page.Parent as TabControl;
-                if (parentTab != null) parentTab.SelectedIndex = 0;
-            };
-            pnlHeader.Controls.Add(btnBack);
             mainLayout.Controls.Add(pnlHeader, 0, 0);
 
             // =============== BODY ===============
@@ -110,7 +91,7 @@ namespace EtabsTools
                 ColumnCount = 1,
                 RowCount = 3
             };
-            tlpLeft.RowStyles.Add(new RowStyle(SizeType.Absolute, 280F));
+            tlpLeft.RowStyles.Add(new RowStyle(SizeType.Absolute, 320F)); // Artırıldı ki taşmasın
             tlpLeft.RowStyles.Add(new RowStyle(SizeType.Absolute, 120F));
             tlpLeft.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
 
@@ -145,7 +126,7 @@ namespace EtabsTools
 
             SmoothButton btnLoadCombos = new SmoothButton
             {
-                Text = "ETABS'tan Çek",
+                Text = "Getir",
                 Size = new Size(130, 30),
                 Location = new Point(15, 195),
                 BaseColor = Color.FromArgb(52, 152, 219),
@@ -157,7 +138,7 @@ namespace EtabsTools
 
             SmoothButton btnSelectCombos = new SmoothButton
             {
-                Text = "Ekle ->",
+                Text = "Seç",
                 Size = new Size(130, 30),
                 Location = new Point(15, 235),
                 BaseColor = Color.FromArgb(46, 204, 113),
@@ -179,24 +160,13 @@ namespace EtabsTools
             {
                 Location = new Point(15, 35),
                 Width = 155,
-                Height = 180,
+                Height = 230, // Yüksekliği Temizle butonunun alanına kadar uzatalım
                 AutoScroll = true,
                 BackColor = Color.White,
                 BorderStyle = BorderStyle.FixedSingle
             };
             pnlSelectedCombos.Controls.Add(pnlWallSelectedCombos);
             
-            SmoothButton btnClearCombos = new SmoothButton
-            {
-                Text = "Temizle",
-                Size = new Size(130, 30),
-                Location = new Point(15, 235),
-                BaseColor = Color.FromArgb(231, 76, 60),
-                BorderRadius = 10,
-                Font = new Font("Segoe UI", 9)
-            };
-            btnClearCombos.Click += (s, e) => { _wallSelectedCombos.Clear(); pnlWallSelectedCombos.Controls.Clear(); };
-            pnlSelectedCombos.Controls.Add(btnClearCombos);
             tlpCombos.Controls.Add(pnlSelectedCombos, 1, 0);
             tlpLeft.Controls.Add(tlpCombos, 0, 0);
 
@@ -482,7 +452,7 @@ namespace EtabsTools
             }
             else
             {
-                dgvWallResults.Rows[rowIndex].DefaultCellStyle.BackColor = Color.White;
+                dgvWallResults.Rows[rowIndex].DefaultCellStyle.BackColor = Color.LightGreen;
                 dgvWallResults.Rows[rowIndex].DefaultCellStyle.ForeColor = Color.Black;
                 dgvWallResults.Rows[rowIndex].DefaultCellStyle.Font = new Font("Segoe UI", 9, FontStyle.Regular);
             }
@@ -785,7 +755,7 @@ namespace EtabsTools
 
                 if (denom > 0)
                 {
-                    ratio = Math.Abs(data.p_val) / denom;
+                    ratio = data.p_val / denom;
                     status = ratio <= limit ? "OK" : "NOT OK";
                 }
 
@@ -797,7 +767,7 @@ namespace EtabsTools
                     fck = fck,
                     b = bw,
                     d = lw,
-                    P = Math.Abs(data.p_val),
+                    P = data.p_val,
                     Ac = Ac,
                     ratio = ratio,
                     status = status
@@ -845,6 +815,19 @@ namespace EtabsTools
                     ws.Cells[row, 8].Value = r.Ac;
                     ws.Cells[row, 9].Value = r.ratio;
                     ws.Cells[row, 10].Value = r.status;
+
+                    if (r.status == "OK")
+                    {
+                        ws.Cells[row, 1, row, 10].Style.Fill.PatternType = ExcelFillStyle.Solid;
+                        ws.Cells[row, 1, row, 10].Style.Fill.BackgroundColor.SetColor(Color.LightGreen);
+                    }
+                    else if (r.status == "NOT OK")
+                    {
+                        ws.Cells[row, 1, row, 10].Style.Fill.PatternType = ExcelFillStyle.Solid;
+                        ws.Cells[row, 1, row, 10].Style.Fill.BackgroundColor.SetColor(Color.FromArgb(255, 200, 200));
+                        ws.Cells[row, 1, row, 10].Style.Font.Color.SetColor(Color.DarkRed);
+                        ws.Cells[row, 1, row, 10].Style.Font.Bold = true;
+                    }
 
                     row++;
                 }

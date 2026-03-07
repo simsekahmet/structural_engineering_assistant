@@ -423,10 +423,23 @@ namespace EtabsTools
             mainTabControl.ItemSize = new Size(0, 1);
             mainTabControl.SizeMode = TabSizeMode.Fixed;
 
+            // Şimşek Sembolü (Program Amblemi)
+            Label lblLogo = new Label
+            {
+                Text = "⚡",
+                Font = new Font("Segoe UI", 24f),
+                ForeColor = Color.FromArgb(100, 180, 180, 180), // Hafif silik gri
+                AutoSize = true,
+                Location = new Point(pnlHeader.Width - 60, 20),
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                BackColor = Color.Transparent
+            };
+
             pnlHeader.Controls.Add(btnConnect);
             pnlHeader.Controls.Add(lblConnectionStatus);
             pnlHeader.Controls.Add(lblModelName);
             pnlHeader.Controls.Add(lblLockStatus);
+            pnlHeader.Controls.Add(lblLogo);
 
             // 0: Dashboard
             TabPage pageHome = new TabPage("Dashboard");

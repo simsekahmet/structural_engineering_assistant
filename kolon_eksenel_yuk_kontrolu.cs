@@ -379,7 +379,7 @@ namespace EtabsTools
                 BaseColor = Color.FromArgb(255, 204, 204), // Soft Pink
                 BorderRadius = 12,
                 EnableCenterAnimation = true,
-                Font = new Font("Segoe UI Semibold", 9f, FontStyle.Regular)
+                Font = new Font("Segoe UI", 9f, FontStyle.Regular) // Inceleştirildi
             };
             btnKolonLoadCombos.Click += BtnKolonLoadCombos_Click;
             pnlCombosLeft.Controls.Add(btnKolonLoadCombos);
