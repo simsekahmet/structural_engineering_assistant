@@ -10,41 +10,45 @@ using OfficeOpenXml.Style;
 namespace EtabsTools
 {
     // Veri Sınıfları
-    public class KirisEksenelBeamData
+    public class KirisKesmeBeamData
     {
         public string Story { get; set; }
         public string Label { get; set; }
         public string Unique { get; set; }
         public string Case { get; set; }
-        public double P { get; set; }
+        public double Vd { get; set; }
         public string Section { get; set; }
-        public double B { get; set; }
-        public double D { get; set; }
+        public double B_m { get; set; }
+        public double H_m { get; set; }
     }
 
-    public class KirisEksenelBeamSectionData
+    public class KirisKesmeSectionData
     {
-        public double H { get; set; }
-        public double B { get; set; }
+        public double H_m { get; set; }
+        public double B_m { get; set; }
     }
 
-    public class BeamResult
+    public class KirisKesmeResult
     {
         public string Story { get; set; }
         public string Label { get; set; }
         public string Unique { get; set; }
         public string Case { get; set; }
         public string Section { get; set; }
-        public double B { get; set; }
-        public double D { get; set; }
-        public double Ac { get; set; }
-        public double Capacity { get; set; }
-        public double P { get; set; }
-        public double Ratio { get; set; }
+        public double B { get; set; } // cm
+        public double H { get; set; } // cm
+        public double D { get; set; } // cm
+        public double Vd { get; set; }
+        
+        public int N { get; set; } // Etriye Kolu
+        public int Phi { get; set; } // Çap mm
+        public double S { get; set; } // Aralık cm
+
+        public double Vr { get; set; }
         public string Status { get; set; }
     }
 
-    public class KirisEksenelYukUI
+    public class KirisKesmeUI
     {
         private Form1 _form;
         private Func<cSapModel> _getSapModel;
@@ -57,19 +61,20 @@ namespace EtabsTools
         // UI Kontrolleri
         private ListBox lstCombosBeam;
         private FlowLayoutPanel pnlBeamSelectedCombos;
-        private TextBox txtFck;
+        private TextBox txtFck, txtFyk, txtDprime;
+        private CheckBox chkUseVc;
         private DataGridView dgvBeamResults;
         private Label lblBeamStatus;
 
         // Hesaplama Verileri
         private List<string> _beamSelectedCombos = new List<string>();
-        private Dictionary<string, KirisEksenelBeamData> _beamData = new Dictionary<string, KirisEksenelBeamData>();
-        private Dictionary<string, KirisEksenelBeamSectionData> _beamSectionData = new Dictionary<string, KirisEksenelBeamSectionData>();
-        private List<BeamResult> _lastBeamResults = new List<BeamResult>();
+        private Dictionary<string, KirisKesmeBeamData> _beamData = new Dictionary<string, KirisKesmeBeamData>();
+        private Dictionary<string, KirisKesmeSectionData> _beamSectionData = new Dictionary<string, KirisKesmeSectionData>();
+        private List<KirisKesmeResult> _lastBeamResults = new List<KirisKesmeResult>();
 
-        public KirisEksenelYukUI(Form1 form, Func<cSapModel> getSapModel,
-                                 Func<Panel, int, string, Panel> createNavigationPanel,
-                                 Action<int> goToPage, Color colorBackground)
+        public KirisKesmeUI(Form1 form, Func<cSapModel> getSapModel,
+                            Func<Panel, int, string, Panel> createNavigationPanel,
+                            Action<int> goToPage, Color colorBackground)
         {
             _form = form;
             _getSapModel = getSapModel;
@@ -93,7 +98,7 @@ namespace EtabsTools
             mainLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
             mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 60F));
 
-            Label header = Form1.CreateHeaderLabel("Kiriş Eksenel Yük Kontrolü");
+            Label header = Form1.CreateHeaderLabel("Kiriş Kesme Güvenliği Kontrolü");
             mainLayout.Controls.Add(header, 0, 0);
 
             TableLayoutPanel tlp = new TableLayoutPanel
@@ -117,7 +122,7 @@ namespace EtabsTools
                 ColumnCount = 1
             };
             tlpLeft.RowStyles.Add(new RowStyle(SizeType.Absolute, 215F));
-            tlpLeft.RowStyles.Add(new RowStyle(SizeType.Absolute, 100F));
+            tlpLeft.RowStyles.Add(new RowStyle(SizeType.Absolute, 180F));
             tlpLeft.RowStyles.Add(new RowStyle(SizeType.Absolute, 60F));
 
             // --- Kombinasyon Seçimi (Üst Sol) ---
@@ -208,10 +213,25 @@ namespace EtabsTools
                 Margin = new Padding(0, 5, 10, 5)
             };
 
-            pnlParams.Controls.Add(new Label { Text = "Beton Dayanımı (fck):", Location = new Point(15, 45), AutoSize = true, Font = new Font("Segoe UI", 10) });
-            txtFck = new TextBox { Location = new Point(155, 42), Width = 60, Text = "30", Font = new Font("Segoe UI", 10) };
+            int startY = 40, gapY = 30, lblX = 15, txtX = 150;
+
+            pnlParams.Controls.Add(new Label { Text = "Beton Dayanımı (fck):", Location = new Point(lblX, startY), AutoSize = true, Font = new Font("Segoe UI", 10) });
+            txtFck = new TextBox { Location = new Point(txtX, startY - 3), Width = 50, Text = "30", Font = new Font("Segoe UI", 10) };
             pnlParams.Controls.Add(txtFck);
-            pnlParams.Controls.Add(new Label { Text = "MPa", Location = new Point(220, 45), AutoSize = true, Font = new Font("Segoe UI", 10) });
+            pnlParams.Controls.Add(new Label { Text = "MPa", Location = new Point(txtX + 55, startY), AutoSize = true, Font = new Font("Segoe UI", 9) });
+
+            pnlParams.Controls.Add(new Label { Text = "Donatı Akma (fyk):", Location = new Point(lblX, startY + gapY), AutoSize = true, Font = new Font("Segoe UI", 10) });
+            txtFyk = new TextBox { Location = new Point(txtX, startY + gapY - 3), Width = 50, Text = "420", Font = new Font("Segoe UI", 10) };
+            pnlParams.Controls.Add(txtFyk);
+            pnlParams.Controls.Add(new Label { Text = "MPa", Location = new Point(txtX + 55, startY + gapY), AutoSize = true, Font = new Font("Segoe UI", 9) });
+
+            pnlParams.Controls.Add(new Label { Text = "Paspayı (d'):", Location = new Point(lblX, startY + gapY * 2), AutoSize = true, Font = new Font("Segoe UI", 10) });
+            txtDprime = new TextBox { Location = new Point(txtX, startY + gapY * 2 - 3), Width = 50, Text = "5", Font = new Font("Segoe UI", 10) };
+            pnlParams.Controls.Add(txtDprime);
+            pnlParams.Controls.Add(new Label { Text = "cm", Location = new Point(txtX + 55, startY + gapY * 2), AutoSize = true, Font = new Font("Segoe UI", 9) });
+
+            chkUseVc = new CheckBox { Text = "Vc (Beton Kesme Katkısı) Kullanılsın", Location = new Point(lblX, startY + gapY * 3), AutoSize = true, Checked = true, Font = new Font("Segoe UI", 9) };
+            pnlParams.Controls.Add(chkUseVc);
 
             tlpLeft.Controls.Add(pnlParams, 0, 1);
 
@@ -228,7 +248,7 @@ namespace EtabsTools
                 EnableCenterAnimation = true,
                 Font = new Font("Segoe UI Semibold", 10f)
             };
-            btnCalculate.Click += BtnCalculateBeamAxial_Click;
+            btnCalculate.Click += BtnCalculate_Click;
             pnlButton.Controls.Add(btnCalculate);
 
             SmoothButton btnExcel = new SmoothButton
@@ -241,7 +261,7 @@ namespace EtabsTools
                 EnableCenterAnimation = true,
                 Font = new Font("Segoe UI Semibold", 9.5f)
             };
-            btnExcel.Click += BtnExcelExportBeamAxial_Click;
+            btnExcel.Click += BtnExcelExport_Click;
             pnlButton.Controls.Add(btnExcel);
 
             tlpLeft.Controls.Add(pnlButton, 0, 2);
@@ -267,7 +287,7 @@ namespace EtabsTools
                 RowHeadersVisible = false,
                 AllowUserToAddRows = false,
                 AllowUserToDeleteRows = false,
-                ReadOnly = false, // Tablo genel olarak düzenlenebilir, sadece B ve D açık olacak
+                ReadOnly = false, // Tablo genel interaktif
                 AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
                 Font = new Font("Segoe UI", 9),
                 ScrollBars = ScrollBars.Both,
@@ -281,28 +301,28 @@ namespace EtabsTools
                 DefaultCellStyle = new DataGridViewCellStyle { Alignment = DataGridViewContentAlignment.MiddleCenter }
             };
 
-            dgvBeamResults.Columns.Add("Story", "Story");
-            dgvBeamResults.Columns.Add("Label", "Beam");
-            dgvBeamResults.Columns.Add("Case", "Load Case");
-            dgvBeamResults.Columns.Add("Section", "Section");
+            dgvBeamResults.Columns.Add("Story", "Kat");
+            dgvBeamResults.Columns.Add("Label", "Kiriş");
+            dgvBeamResults.Columns.Add("Section", "Kesit");
+            dgvBeamResults.Columns.Add("Vd", "Vd (kN)");
             dgvBeamResults.Columns.Add("B", "b(cm)");
+            dgvBeamResults.Columns.Add("H", "h(cm)");
             dgvBeamResults.Columns.Add("D", "d(cm)");
-            dgvBeamResults.Columns.Add("Ac", "Ac");
-            dgvBeamResults.Columns.Add("Capacity", "Ac*fck");
-            dgvBeamResults.Columns.Add("P", "P (kN)");
-            dgvBeamResults.Columns.Add("Ratio", "Ratio");
+            dgvBeamResults.Columns.Add("N", "Etriye (Kolu)");
+            dgvBeamResults.Columns.Add("Phi", "Etriye (Çap mm)");
+            dgvBeamResults.Columns.Add("S", "Aralık (s cm)");
+            dgvBeamResults.Columns.Add("Vr", "Vr (kN)");
             dgvBeamResults.Columns.Add("Status", "Durum");
 
-            // Sadece B ve D sütunları düzenlenebilir olsun
+            // Sadece N, Phi, S sütunları düzenlenebilir olsun
             foreach (DataGridViewColumn col in dgvBeamResults.Columns)
             {
-                if (col.Name != "B" && col.Name != "D")
+                if (col.Name != "N" && col.Name != "Phi" && col.Name != "S")
                 {
                     col.ReadOnly = true;
                 }
             }
 
-            // CellValueChanged eventi interaktif formüller için eklendi
             dgvBeamResults.CellValueChanged += DgvBeamResults_CellValueChanged;
 
             lblBeamStatus = new Label
@@ -392,9 +412,9 @@ namespace EtabsTools
         }
 
         // ----------------------------------------------------
-        // ETABS VERİ ÇEKME & HESAPLAMA (BEAM LOGIC)
+        // ETABS VERİ ÇEKME & HESAPLAMA (BEAM SHEAR LOGIC)
         // ----------------------------------------------------
-        private void BtnCalculateBeamAxial_Click(object sender, EventArgs e)
+        private void BtnCalculate_Click(object sender, EventArgs e)
         {
             if (SapModel == null)
             {
@@ -408,9 +428,9 @@ namespace EtabsTools
                 return;
             }
 
-            if (!double.TryParse(txtFck.Text, out double fck) || fck <= 0)
+            if (!double.TryParse(txtFck.Text, out double fck) || !double.TryParse(txtFyk.Text, out double fyk) || !double.TryParse(txtDprime.Text, out double dprime))
             {
-                ToastForm.ShowToast("Geçerli bir fck değeri giriniz.", _form, 2000);
+                ToastForm.ShowToast("Lütfen fck, fyk ve d' parametrelerini sayısal giriniz.", _form, 2000);
                 return;
             }
 
@@ -422,7 +442,7 @@ namespace EtabsTools
             {
                 FetchBeamForces(_beamSelectedCombos);
                 
-                _lastBeamResults = PerformCalculation(fck);
+                _lastBeamResults = PerformCalculation(fck, fyk, dprime, chkUseVc.Checked);
                 UpdateBeamResultsDGV();
 
                 lblBeamStatus.Text = $"Hesaplandı. Toplam Kiriş Sayısı: {_lastBeamResults.Count}";
@@ -471,7 +491,7 @@ namespace EtabsTools
             int idxLabel = Array.IndexOf(fieldsKeysRet, "Beam");
             int idxUnique = Array.IndexOf(fieldsKeysRet, "UniqueName");
             int idxCase = Array.IndexOf(fieldsKeysRet, "OutputCase");
-            int idxP = Array.IndexOf(fieldsKeysRet, "P");
+            int idxV2 = Array.IndexOf(fieldsKeysRet, "V2");
 
             int fieldCount = fieldsKeysRet.Length;
 
@@ -484,28 +504,30 @@ namespace EtabsTools
                 string unique = tableData[baseIndex + idxUnique];
                 string loadCase = tableData[baseIndex + idxCase];
 
-                double p = Convert.ToDouble(tableData[baseIndex + idxP]);
+                double v2 = Math.Abs(Convert.ToDouble(tableData[baseIndex + idxV2]));
 
                 if (!combos.Contains(loadCase))
                     continue;
 
-                if (!_beamData.ContainsKey(unique))
+                string key = story + "_" + label;
+
+                if (!_beamData.ContainsKey(key))
                 {
-                    _beamData[unique] = new KirisEksenelBeamData
+                    _beamData[key] = new KirisKesmeBeamData
                     {
                         Story = story,
                         Label = label,
                         Unique = unique,
                         Case = loadCase,
-                        P = Math.Abs(p)
+                        Vd = v2
                     };
                 }
                 else
                 {
-                    if (Math.Abs(p) > _beamData[unique].P)
+                    if (v2 > _beamData[key].Vd)
                     {
-                        _beamData[unique].P = Math.Abs(p);
-                        _beamData[unique].Case = loadCase;
+                        _beamData[key].Vd = v2;
+                        _beamData[key].Case = loadCase;
                     }
                 }
             }
@@ -525,73 +547,96 @@ namespace EtabsTools
 
                 if (!_beamSectionData.ContainsKey(prop))
                 {
-                    double t3 = 0, t2 = 0; 
+                    double t3 = 0, t2 = 0;
                     string fileName = "", matProp = "", notes = "", guid = "";
                     int color = 0;
                     SapModel.PropFrame.GetRectangle(prop, ref fileName, ref matProp, ref t3, ref t2, ref color, ref notes, ref guid);
 
-                    _beamSectionData[prop] = new KirisEksenelBeamSectionData
+                    _beamSectionData[prop] = new KirisKesmeSectionData
                     {
-                        H = t3,
-                        B = t2
+                        H_m = t3,
+                        B_m = t2
                     };
                 }
 
-                beam.B = _beamSectionData[prop].B * 100;
-                beam.D = _beamSectionData[prop].H * 100;
+                beam.B_m = _beamSectionData[prop].B_m;
+                beam.H_m = _beamSectionData[prop].H_m;
             }
         }
 
-        private List<BeamResult> PerformCalculation(double fck)
+        private List<KirisKesmeResult> PerformCalculation(double fck, double fyk, double d_prime, bool use_vc)
         {
-            List<BeamResult> results = new List<BeamResult>();
-            double limit = 0.1;
+            List<KirisKesmeResult> results = new List<KirisKesmeResult>();
+
+            double fyd = fyk / 1.15;
+            double fctd = 0.35 * Math.Sqrt(fck) / 1.5;
+            double dprime_m = d_prime / 100.0;
 
             foreach (var beam in _beamData.Values)
             {
-                double Ac = beam.B * beam.D;
-                double capacity = Ac * fck / 10.0;
-                double ratio = beam.P / capacity;
+                double b = beam.B_m; // meters
+                double h = beam.H_m; // meters
+                double Vd = beam.Vd;
 
-                string status = ratio <= limit ? "OK" : "KOLON GİBİ DONATILACAK";
+                double d = h - dprime_m;
 
-                results.Add(new BeamResult
+                double Vrmax = 0.85 * b * h * Math.Sqrt(fck) * 1000;
+                double Vc = use_vc ? 0.65 * fctd * b * d * 1000 : 0;
+                double Vcr = 0.8 * Vc;
+
+                // Default initial stirrup parameters
+                int n = 2;
+                int phi = 10;
+                double s = 10;
+
+                double Asw_s = n * Math.PI * Math.Pow(phi / 10.0, 2) / 4 / s;
+                double Vw = Asw_s * (d * 100) * fyd * 0.1;
+                double Vr = Vw + Vcr;
+
+                if (Vr > Vrmax) Vr = Vrmax; // Vr cannot exceed Vrmax
+
+                string status = Vd <= Vr ? "OK" : "NOT OK";
+
+                results.Add(new KirisKesmeResult
                 {
                     Story = beam.Story,
                     Label = beam.Label,
                     Unique = beam.Unique,
                     Case = beam.Case,
                     Section = beam.Section,
-                    B = beam.B,
-                    D = beam.D,
-                    Ac = Ac,
-                    Capacity = capacity,
-                    P = beam.P,
-                    Ratio = ratio,
+                    B = b * 100, // to cm
+                    H = h * 100, // to cm
+                    D = d * 100, // to cm
+                    Vd = Vd,
+                    N = n,
+                    Phi = phi,
+                    S = s,
+                    Vr = Vr,
                     Status = status
                 });
             }
 
-            return results.OrderByDescending(x => x.Ratio).ToList();
+            return results.OrderByDescending(x => x.Vd).ToList();
         }
 
         private void UpdateBeamResultsDGV()
         {
-            dgvBeamResults.CellValueChanged -= DgvBeamResults_CellValueChanged; // Geçici kapat
+            dgvBeamResults.CellValueChanged -= DgvBeamResults_CellValueChanged;
             dgvBeamResults.Rows.Clear();
             foreach (var res in _lastBeamResults)
             {
                 int rowIndex = dgvBeamResults.Rows.Add(
                     res.Story,
                     res.Label,
-                    res.Case,
                     res.Section,
+                    res.Vd.ToString("0.##"),
                     res.B.ToString("0.##"),
+                    res.H.ToString("0.##"),
                     res.D.ToString("0.##"),
-                    res.Ac.ToString("0.##"),
-                    res.Capacity.ToString("0.##"),
-                    res.P.ToString("0.##"),
-                    res.Ratio.ToString("0.###"),
+                    res.N,
+                    res.Phi,
+                    res.S.ToString("0.##"),
+                    res.Vr.ToString("0.##"),
                     res.Status
                 );
 
@@ -602,53 +647,61 @@ namespace EtabsTools
 
         private void DgvBeamResults_CellValueChanged(object sender, DataGridViewCellEventArgs e)
         {
-            if (e.RowIndex >= 0 && (dgvBeamResults.Columns[e.ColumnIndex].Name == "B" || dgvBeamResults.Columns[e.ColumnIndex].Name == "D"))
+            if (e.RowIndex >= 0 && 
+                (dgvBeamResults.Columns[e.ColumnIndex].Name == "N" || 
+                 dgvBeamResults.Columns[e.ColumnIndex].Name == "Phi" || 
+                 dgvBeamResults.Columns[e.ColumnIndex].Name == "S"))
             {
                 var row = dgvBeamResults.Rows[e.RowIndex];
-                if (row.Cells["B"].Value == null || row.Cells["D"].Value == null) return;
+                if (row.Cells["N"].Value == null || row.Cells["Phi"].Value == null || row.Cells["S"].Value == null) return;
 
-                if (double.TryParse(row.Cells["B"].Value.ToString(), out double b) &&
-                    double.TryParse(row.Cells["D"].Value.ToString(), out double d))
+                if (int.TryParse(row.Cells["N"].Value.ToString(), out int n) &&
+                    int.TryParse(row.Cells["Phi"].Value.ToString(), out int phi) &&
+                    double.TryParse(row.Cells["S"].Value.ToString(), out double s))
                 {
-                    if (!double.TryParse(txtFck.Text, out double fck) || fck <= 0) fck = 30;
+                    if (s <= 0) s = 10; // Prevent div by zero
 
-                    double p = Convert.ToDouble(row.Cells["P"].Value);
-                    double limit = 0.1;
+                    // Fetch inputs
+                    if (!double.TryParse(txtFck.Text, out double fck)) fck = 30;
+                    if (!double.TryParse(txtFyk.Text, out double fyk)) fyk = 420;
+                    bool useVc = chkUseVc.Checked;
 
-                    // Formüller
-                    double ac = b * d;
-                    double capacity = (ac * fck) / 10.0;
-                    double ratio = capacity != 0 ? p / capacity : 0;
-                    string status = ratio <= limit ? "OK" : "KOLON GİBİ DONATILACAK";
+                    double fyd = fyk / 1.15;
+                    double fctd = 0.35 * Math.Sqrt(fck) / 1.5;
 
-                    // DGV Güncellemesi
+                    double vd = Convert.ToDouble(row.Cells["Vd"].Value);
+                    double b = Convert.ToDouble(row.Cells["B"].Value) / 100.0; // cm to m
+                    double h = Convert.ToDouble(row.Cells["H"].Value) / 100.0; // cm to m
+                    double d = Convert.ToDouble(row.Cells["D"].Value) / 100.0; // cm to m
+
+                    double Vrmax = 0.85 * b * h * Math.Sqrt(fck) * 1000;
+                    double Vc = useVc ? 0.65 * fctd * b * d * 1000 : 0;
+                    double Vcr = 0.8 * Vc;
+
+                    double Asw_s = n * Math.PI * Math.Pow(phi / 10.0, 2) / 4 / s;
+                    double Vw = Asw_s * (d * 100) * fyd * 0.1;
+                    
+                    double vr = Vw + Vcr;
+                    if (vr > Vrmax) vr = Vrmax; // Max limit
+
+                    string status = vd <= vr ? "OK" : "NOT OK";
+
                     dgvBeamResults.CellValueChanged -= DgvBeamResults_CellValueChanged;
-                    row.Cells["Ac"].Value = ac.ToString("0.##");
-                    row.Cells["Capacity"].Value = capacity.ToString("0.##");
-                    row.Cells["Ratio"].Value = ratio.ToString("0.###");
+                    row.Cells["Vr"].Value = vr.ToString("0.##");
                     row.Cells["Status"].Value = status;
                     
-                    // Renk Güncellemesi
                     UpdateDgvRowColor(e.RowIndex, status);
 
                     dgvBeamResults.CellValueChanged += DgvBeamResults_CellValueChanged;
 
-                    // Arka plandaki listeyi güncelle
-                    string unique = row.Cells["Unique"]?.Value?.ToString();
-                    if (string.IsNullOrEmpty(unique))
+                    if (e.RowIndex < _lastBeamResults.Count)
                     {
-                        // Unique name kolonunu sonradan eklemediysek, listeden satır indeksine göre bulalım.
-                        // Sonuçlar DGV'ye _lastBeamResults listesi sırasıyla eklendiğinden index aynıdır.
-                        if (e.RowIndex < _lastBeamResults.Count)
-                        {
-                            var item = _lastBeamResults[e.RowIndex];
-                            item.B = b;
-                            item.D = d;
-                            item.Ac = ac;
-                            item.Capacity = capacity;
-                            item.Ratio = ratio;
-                            item.Status = status;
-                        }
+                        var item = _lastBeamResults[e.RowIndex];
+                        item.N = n;
+                        item.Phi = phi;
+                        item.S = s;
+                        item.Vr = vr;
+                        item.Status = status;
                     }
                 }
                 else
@@ -677,7 +730,7 @@ namespace EtabsTools
         // ----------------------------------------------------
         // EXCEL RAPORU
         // ----------------------------------------------------
-        private void BtnExcelExportBeamAxial_Click(object sender, EventArgs e)
+        private void BtnExcelExport_Click(object sender, EventArgs e)
         {
             if (_lastBeamResults == null || _lastBeamResults.Count == 0)
             {
@@ -686,13 +739,14 @@ namespace EtabsTools
             }
 
             if (!double.TryParse(txtFck.Text, out double fck)) fck = 30;
+            if (!double.TryParse(txtFyk.Text, out double fyk)) fyk = 420;
 
-            SaveFileDialog sfd = new SaveFileDialog { Filter = "Excel Dosyası|*.xlsx", Title = "Excel Kaydet", FileName = "Kiriş_Eksenel_Yük_Raporu.xlsx" };
+            SaveFileDialog sfd = new SaveFileDialog { Filter = "Excel Dosyası|*.xlsx", Title = "Excel Kaydet", FileName = "Kiriş_Kesme_Raporu.xlsx" };
             if (sfd.ShowDialog() == DialogResult.OK)
             {
                 try
                 {
-                    ExportExcel(sfd.FileName, fck, 0.1);
+                    ExportExcel(sfd.FileName, fck, fyk, chkUseVc.Checked);
                     ToastForm.ShowToast("Excel dosyası kaydedildi.", _form, 2000);
                     System.Diagnostics.Process.Start(sfd.FileName);
                 }
@@ -703,17 +757,17 @@ namespace EtabsTools
             }
         }
 
-        public void ExportExcel(string path, double fck, double limit)
+        public void ExportExcel(string path, double fck, double fyk, bool useVc)
         {
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
             using (var package = new ExcelPackage())
             {
-                var ws = package.Workbook.Worksheets.Add("Kiriş Eksenel Raporu");
+                var ws = package.Workbook.Worksheets.Add("Kiriş Kesme Raporu");
 
                 // TITLE
-                ws.Cells[1, 1, 1, 13].Merge = true;
-                ws.Cells[1, 1].Value = "KİRİŞ EKSENEL YÜK KONTROLÜ";
+                ws.Cells[1, 1, 1, 12].Merge = true;
+                ws.Cells[1, 1].Value = "KİRİŞ KESME GÜVENLİĞİ KONTROLÜ";
                 ws.Cells[1, 1].Style.Font.Size = 14;
                 ws.Cells[1, 1].Style.Font.Bold = true;
                 ws.Cells[1, 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
@@ -721,19 +775,18 @@ namespace EtabsTools
                 ws.Cells[1, 1].Style.Fill.BackgroundColor.SetColor(Color.FromArgb(204, 255, 204));
 
                 // Parametreler
-                ws.Cells[2, 1].Value = "fck";
+                ws.Cells[2, 1].Value = "fck:";
                 ws.Cells[2, 2].Value = fck;
-
-                ws.Cells[2, 12].Value = "Sınır Oran";
-                ws.Cells[2, 13].Value = limit;
-                ws.Cells[2, 13].Style.Fill.PatternType = ExcelFillStyle.Solid;
-                ws.Cells[2, 13].Style.Fill.BackgroundColor.SetColor(Color.LightYellow);
+                ws.Cells[2, 3].Value = "fyk:";
+                ws.Cells[2, 4].Value = fyk;
+                ws.Cells[2, 5].Value = "Vc:";
+                ws.Cells[2, 6].Value = useVc ? "Var" : "Yok";
 
                 // Başlıklar
                 string[] headers =
                 {
-                    "Story","Beam","Unique Name","fck","Load Case",
-                    "Section","b(cm)","d(cm)","Ac","Ac*fck","P","ratio","Durum"
+                    "Story","Beam","Section","Vd (kN)","b(cm)","h(cm)","d(cm)",
+                    "Kolu (n)","Çap (mm)","Aralık (s)","Vr (kN)","Durum"
                 };
 
                 for (int i = 0; i < headers.Length; i++)
@@ -747,42 +800,49 @@ namespace EtabsTools
 
                 int row = 4;
 
+                double fyd = fyk / 1.15;
+                double fctd = 0.35 * Math.Sqrt(fck) / 1.5;
+
                 foreach (var item in _lastBeamResults)
                 {
                     ws.Cells[row, 1].Value = item.Story;
                     ws.Cells[row, 2].Value = item.Label;
-                    ws.Cells[row, 3].Value = item.Unique;
+                    ws.Cells[row, 3].Value = item.Section;
+                    ws.Cells[row, 4].Value = item.Vd;
 
-                    ws.Cells[row, 4].Formula = "$B$2"; // Dinamik fck
+                    ws.Cells[row, 5].Value = item.B;
+                    ws.Cells[row, 6].Value = item.H;
+                    ws.Cells[row, 7].Value = item.D;
+
+                    ws.Cells[row, 8].Value = item.N;
+                    ws.Cells[row, 9].Value = item.Phi;
+                    ws.Cells[row, 10].Value = item.S;
+
+                    // Formül ile Excel'de Vr Hesabı
+                    // Asw/s = (H * PI * (I/10)^2)/4 / J => (H4 * 3.14159 * (I4/10)^2)/4 / J4
+                    // Vw = Asw/s * d * fyd * 0.1 => (...) * G4 * fyd * 0.1
+                    // Vc = 0.65 * fctd * b_m * d_m * 1000 => 0.65 * fctd * (E4/100) * (G4/100) * 1000
                     
-                    ws.Cells[row, 5].Value = item.Case;
-                    ws.Cells[row, 6].Value = item.Section;
+                    double VcComponent = useVc ? (0.65 * fctd * (item.B / 100.0) * (item.D / 100.0) * 1000 * 0.8) : 0;
 
-                    ws.Cells[row, 7].Value = item.B;
-                    ws.Cells[row, 8].Value = item.D;
-
-                    ws.Cells[row, 9].Formula = $"G{row}*H{row}"; // Ac = b*d
-                    ws.Cells[row, 10].Formula = $"(I{row}*D{row})/10"; // Kapasite = Ac*fck/10
-
-                    ws.Cells[row, 11].Value = item.P;
-
-                    ws.Cells[row, 12].Formula = $"IF(J{row}<>0,K{row}/J{row},0)"; // ratio = P / Kapasite
-
-                    // Durum Formülü: Dinamik Limit (M2) referanslı
-                    ws.Cells[row, 13].Formula = $"IF(L{row}<=$M$2,\"OK\",\"KOLON GİBİ DONATILACAK\")";
+                    // Vr formülü
+                    ws.Cells[row, 11].Formula = $"((H{row}*3.14159265*(I{row}/10)^2)/4/J{row})*G{row}*{fyd.ToString(System.Globalization.CultureInfo.InvariantCulture)}*0.1 + {VcComponent.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+                    
+                    // Durum
+                    ws.Cells[row, 12].Formula = $"IF(D{row}<=K{row},\"OK\", \"NOT OK\")";
 
                     row++;
                 }
 
-                // Conditional Formatting (Color Scale for Ratio)
-                var ratioRange = ws.Cells[$"L4:L{row - 1}"];
-                var condScale = ratioRange.ConditionalFormatting.AddThreeColorScale();
+                // Conditional Formatting (Color Scale for Vd)
+                var vdRange = ws.Cells[$"D4:D{row - 1}"];
+                var condScale = vdRange.ConditionalFormatting.AddThreeColorScale();
                 condScale.LowValue.Color = Color.LightGreen;
                 condScale.MiddleValue.Color = Color.Yellow;
                 condScale.HighValue.Color = Color.Salmon;
 
                 // Conditional Formatting (Status)
-                var statusRange = ws.Cells[$"M4:M{row - 1}"];
+                var statusRange = ws.Cells[$"L4:L{row - 1}"];
                 var condOk = statusRange.ConditionalFormatting.AddEqual();
                 condOk.Formula = "\"OK\"";
                 condOk.Style.Font.Color.Color = Color.Green;
@@ -793,7 +853,7 @@ namespace EtabsTools
                 condNotOk.Style.Font.Bold = true;
 
                 // Border
-                var modelTable = ws.Cells[3, 1, row - 1, 13];
+                var modelTable = ws.Cells[3, 1, row - 1, 12];
                 modelTable.Style.Border.Top.Style = ExcelBorderStyle.Thin;
                 modelTable.Style.Border.Left.Style = ExcelBorderStyle.Thin;
                 modelTable.Style.Border.Right.Style = ExcelBorderStyle.Thin;
