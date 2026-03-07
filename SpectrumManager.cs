@@ -200,7 +200,6 @@ namespace EtabsTools
             RoundedPanel pnlChartContainer = new RoundedPanel
             {
                 Title = "",
-                Dock = DockStyle.Top,
                 BorderRadius = 15,
                 BackColor = Color.FromArgb(250, 252, 255), // Çok hafif buz mavisi-beyaz karışımı
                 Padding = new Padding(15)

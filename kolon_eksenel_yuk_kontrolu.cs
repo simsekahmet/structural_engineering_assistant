@@ -480,24 +480,11 @@ namespace EtabsTools
             btnCalculate.Click += BtnCalculateKolonEksenel_Click;
             pnlCalcBtn.Controls.Add(btnCalculate);
 
-            SmoothButton btnSave = new SmoothButton
-            {
-                Text = "KAYDET",
-                Size = new Size(110, 40),
-                Location = new Point(145, 5),
-                BaseColor = Color.FromArgb(235, 240, 245),
-                BorderRadius = 15,
-                EnableCenterAnimation = true,
-                Font = new Font("Segoe UI Semibold", 9f, FontStyle.Regular)
-            };
-            btnSave.Click += BtnSaveKolonEksenel_Click;
-            pnlCalcBtn.Controls.Add(btnSave);
-
             SmoothButton btnExcel = new SmoothButton
             {
                 Text = "EXCEL",
-                Size = new Size(110, 40),
-                Location = new Point(265, 5),
+                Size = new Size(120, 40),
+                Location = new Point(145, 5),
                 BaseColor = Color.FromArgb(204, 255, 204), // Açık Yeşil
                 BorderRadius = 15,
                 EnableCenterAnimation = true,
@@ -1334,13 +1321,23 @@ namespace EtabsTools
                     ws.Cells[1, 1].Style.Font.Size = 14;
                     ws.Cells[1, 1].Style.Font.Bold = true;
                     ws.Cells[1, 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-                    ws.Cells[2, 15].Value = "PARAMETRELER";
-                    ws.Cells[2, 15].Style.Font.Bold = true;
-                    ws.Cells[3, 15].Value = "fck";
-                    ws.Cells[3, 15].Style.Font.Bold = true;
-                    ws.Cells[3, 16].Value = fck;
-                    ws.Cells[2, 12].Value = "Sınır";
-                    ws.Cells[3, 12].Value = limit;
+
+                    // PARAMETRELER (Sağ Taraf - P ve Q Sütunları)
+                    ws.Cells[1, 15].Value = "RAPOR PARAMETRELERİ";
+                    ws.Cells[1, 15, 1, 16].Merge = true;
+                    ws.Cells[1, 15].Style.Font.Bold = true;
+                    ws.Cells[1, 15].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                    ws.Cells[1, 15].Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    ws.Cells[1, 15].Style.Fill.BackgroundColor.SetColor(Color.FromArgb(240, 240, 240));
+
+                    ws.Cells[2, 15].Value = "Beton Sınıfı (fck):";
+                    ws.Cells[2, 16].Value = fck;
+                    ws.Cells[3, 15].Value = "Eksenel Yük Sınırı:";
+                    ws.Cells[3, 16].Value = limit;
+                    ws.Cells[2, 16].Style.Font.Bold = true;
+                    ws.Cells[3, 16].Style.Font.Bold = true;
+                    ws.Cells[3, 16].Style.Font.Color.SetColor(Color.DarkBlue);
+
                     string[] headers = { "Story","Column","Unique Name","fck","Load Case","Section","b (cm)","d (cm)","Ac (cm2)","Ac*fck (kN)","P (kN)","Oran","Durum" };
                     for (int i = 0; i < headers.Length; i++) {
                         var cell = ws.Cells[3, i + 1];
@@ -1350,6 +1347,7 @@ namespace EtabsTools
                         cell.Style.Fill.BackgroundColor.SetColor(Color.LightGray);
                         cell.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
                     }
+
                     int startRow = 4;
                     for (int i = 0; i < data.Count; i++) {
                         var r = startRow + i;
@@ -1357,30 +1355,50 @@ namespace EtabsTools
                         ws.Cells[r, 1].Value = item.Story;
                         ws.Cells[r, 2].Value = item.Column;
                         ws.Cells[r, 3].Value = item.UniqueName;
-                        ws.Cells[r, 4].Formula = "$P$3";
+                        
+                        // fck formülü -> P2 (16. sütun)
+                        ws.Cells[r, 4].Formula = "$P$2";
+
                         ws.Cells[r, 5].Value = item.LoadCase;
                         ws.Cells[r, 6].Value = item.Section;
                         ws.Cells[r, 7].Value = item.B == 0 ? null : (object)item.B;
                         ws.Cells[r, 8].Value = item.D;
+
+                        // Ac (9. sütun - I)
                         ws.Cells[r, 9].Formula = $"IF(G{r}=\"\", PI()*POWER(H{r},2)/4, G{r}*H{r})";
+
+                        // Ac*fck (10. sütun - J) -> (I{r} * D{r}) / 10
                         ws.Cells[r, 10].Formula = $"(I{r}*D{r})/10";
+
+                        // P (11. sütun - K)
                         ws.Cells[r, 11].Value = item.Nd;
+
+                        // Oran (12. sütun - L) -> K / J
                         ws.Cells[r, 12].Formula = $"IF(J{r}<>0, K{r}/J{r}, 0)";
-                        ws.Cells[r, 13].Formula = $"IF(L{r}<>0, IF(L{r}<=L$3, \"OK\", \"NOT OK\"), \"HATA\")";
+
+                        // Durum (13. sütun - M) -> L <= P3 (Limit)
+                        ws.Cells[r, 13].Formula = $"IF(L{r}<=$P$3, \"OK\", \"NOT OK\")";
                     }
+
                     int lastRow = startRow + data.Count - 1;
                     if (data.Count > 0) {
-                        var notOk = ws.ConditionalFormatting.AddEqual(ws.Cells[$"M{startRow}:M{lastRow}"]);
+                        var range = ws.Cells[$"M{startRow}:M{lastRow}"];
+                        var notOk = ws.ConditionalFormatting.AddEqual(range);
                         notOk.Formula = "\"NOT OK\"";
                         notOk.Style.Fill.BackgroundColor.Color = Color.LightPink;
-                        var ok = ws.ConditionalFormatting.AddEqual(ws.Cells[$"M{startRow}:M{lastRow}"]);
+                        notOk.Style.Font.Bold = true;
+
+                        var ok = ws.ConditionalFormatting.AddEqual(range);
                         ok.Formula = "\"OK\"";
                         ok.Style.Fill.BackgroundColor.Color = Color.LightGreen;
+
+                        // Renk ölçeği Oran sütununa (L)
                         var colorScale = ws.ConditionalFormatting.AddThreeColorScale(ws.Cells[$"L{startRow}:L{lastRow}"]);
                         colorScale.LowValue.Color = Color.LightGreen;
                         colorScale.MiddleValue.Color = Color.Yellow;
                         colorScale.HighValue.Color = Color.Red;
                     }
+
                     ws.Cells.AutoFitColumns();
                     package.SaveAs(new FileInfo(path));
                 }

@@ -149,9 +149,9 @@ namespace EtabsTools
 
         protected override void OnResize(EventArgs e)
         {
-            base.OnResize(e);
             if (this.Width > 0 && this.Height > 0)
             {
+                base.OnResize(e);
                 RectangleF rect = new RectangleF(0, 0, this.Width, this.Height);
                 using (GraphicsPath path = GetRoundPath(rect, BorderRadius))
                 {
