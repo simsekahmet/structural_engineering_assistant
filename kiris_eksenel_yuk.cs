@@ -118,7 +118,7 @@ namespace EtabsTools
             };
             tlpLeft.RowStyles.Add(new RowStyle(SizeType.Absolute, 215F));
             tlpLeft.RowStyles.Add(new RowStyle(SizeType.Absolute, 100F));
-            tlpLeft.RowStyles.Add(new RowStyle(SizeType.Absolute, 60F));
+            tlpLeft.RowStyles.Add(new RowStyle(SizeType.Absolute, 100F));
 
             // --- Kombinasyon Seçimi (Üst Sol) ---
             TableLayoutPanel tlpCombos = new TableLayoutPanel
@@ -711,6 +711,7 @@ namespace EtabsTools
             {
                 SapModel.FrameObj.SetSelected(uniqueName, true);
             }
+            SapModel.View.RefreshView(0, false);
 
             ToastForm.ShowToast($"{notOkBeams.Count} kolon gibi donatılacak kiriş modelde seçildi.", _form, 3000);
         }

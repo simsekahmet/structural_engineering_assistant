@@ -1118,10 +1118,18 @@ namespace EtabsTools
                     }
                 }
 
-                int failCount = results.Count(r => !r.IsOK);
+                // Benzersiz (unique) kolon sayısını buluyoruz
+                var uniqueFailColumns = results
+                    .Where(r => !r.IsOK)
+                    .Select(r => $"{r.Column} ({r.Story})")
+                    .Distinct()
+                    .ToList();
+
+                int failCount = uniqueFailColumns.Count;
+
                 if (failCount > 0)
                 {
-                    lblKolonStatus.Text = $"❌ {failCount} kolon limiti aşıyor!";
+                    lblKolonStatus.Text = $"❌ {failCount} adet kolon limiti aşıyor!";
                     lblKolonStatus.ForeColor = Color.Red;
                 }
                 else
@@ -1176,6 +1184,7 @@ namespace EtabsTools
             {
                 sapModel.FrameObj.SetSelected(uniqueName, true);
             }
+            sapModel.View.RefreshView(0, false);
 
             ToastForm.ShowToast($"{notOkColumns.Count} adet sınırı aşan kolon modelde seçildi.", _form, 3000);
         }
