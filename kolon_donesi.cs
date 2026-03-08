@@ -260,6 +260,10 @@ namespace EtabsTools
             pnlPlanView.OnColumnClick += OnColumnClicked;
             pnlPlanView.OnColumnsSelected += OnMultipleColumnsSelected;
             pnlPlanView.OnRebarChangeRequested += (cols, newRebar) => ApplyRebarChange(cols, newRebar);
+            
+            // Paneli sağdaki kapsayıcıya ekle (Eksik olduğu için ekranda görünmüyordu)
+            pnlRight.Controls.Add(pnlPlanView);
+
             pnlLeftScroll.Controls.Add(pnlLeft);
             tlpContent.Controls.Add(pnlLeftScroll, 0, 0);
             tlpContent.Controls.Add(pnlRight, 1, 0);
