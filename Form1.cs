@@ -427,8 +427,8 @@ namespace EtabsTools
             // Şimşek Sembolü (Program Amblemi)
             Label lblLogo = new Label
             {
-                Text = "🗲",
-                Font = new Font("Segoe UI Light", 28f),
+                Text = "↯",
+                Font = new Font("Segoe UI", 32f, FontStyle.Regular),
                 ForeColor = Color.FromArgb(100, 150, 150, 150), // Hafif silik gri
                 AutoSize = true,
                 Location = new Point(pnlHeader.Width - 60, 15),
