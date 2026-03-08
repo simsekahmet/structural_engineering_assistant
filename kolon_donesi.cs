@@ -227,6 +227,7 @@ namespace EtabsTools
                 BorderRadius = 8,
                 Font = new Font("Segoe UI", 12, FontStyle.Bold)
             };
+            btnDown.Click += (s, e) => ChangeStory(-1);
 
             pnlRight.Controls.Add(btnUp);
             pnlRight.Controls.Add(btnDown);
@@ -582,6 +583,13 @@ namespace EtabsTools
             }
         }
 
+        private class StackInfo
+        {
+            public List<ColumnRebarData> Group = new List<ColumnRebarData>();
+            public Dictionary<string, string> StorySections = new Dictionary<string, string>();
+            public string TypeLabel;
+        }
+
         private void GenerateColumnTypes()
         {
             // Plan lokasyonlarına (X,Y) göre kolonları grupla.
@@ -608,34 +616,64 @@ namespace EtabsTools
                 }
             }
 
-            // Tip atama mantığı
-            int typeCounter = 1;
-            var assignedSignatures = new Dictionary<string, string>(); // benzersiz imza -> Tip Adı
-
+            // Tip atama mantığı: Alt küme / Kapsama mantığı (Subset Matching)
+            // Eğer daha kısa bir kolon, daha uzun bir kolonun kendi katlarındaki özellikleriyle birebir örtüşüyorsa
+            // (yani uzun kolonun bir "alt kümesi/prefix"i ise), uzun kolonun tip numarasını alır.
+            var stackInfos = new List<StackInfo>();
             foreach (var grp in groups)
             {
-                // Düşey hattaki tüm kolonlar aynı "Tip" ismini almalı (tüm katlar boyunca).
-                // 40x90 ile 90x40 aynı tip sayılsın diye Min ve Max boyutları baz alıyoruz ve açıyı yoksayıyoruz.
-                // Kolon daralıyorsa bu "daralan" durumun bütünü o Tip'in (stackSig) karakteristiğini oluşturur.
-                
-                var localSigs = grp.Select(c => {
-                    double minDim = Math.Min(c.Width, c.Depth);
-                    double maxDim = Math.Max(c.Width, c.Depth);
-                    return $"{Math.Round(minDim*100)}x{Math.Round(maxDim*100)}_{c.Shape}_{c.RebarLabel}";
-                }).Distinct().OrderBy(s => s).ToList();
-
-                // Tüm düşey grubun tek bir imzası olur
-                string stackSig = string.Join("|", localSigs);
-
-                if (!assignedSignatures.ContainsKey(stackSig))
+                var info = new StackInfo { Group = grp };
+                foreach (var col in grp)
                 {
-                    assignedSignatures[stackSig] = $"T{typeCounter++}";
+                    double minDim = Math.Min(col.Width, col.Depth);
+                    double maxDim = Math.Max(col.Width, col.Depth);
+                    string sig = $"{Math.Round(minDim*100)}x{Math.Round(maxDim*100)}_{col.Shape}_{col.RebarLabel}";
+                    info.StorySections[col.Story] = sig;
                 }
-                
-                string typeLabel = assignedSignatures[stackSig];
-                foreach(var col in grp)
+                stackInfos.Add(info);
+            }
+
+            // En çok kata (en fazla veriye) sahip olanlar önce değerlendirilmeli
+            stackInfos = stackInfos.OrderByDescending(s => s.StorySections.Count).ToList();
+
+            int typeCounter = 1;
+            var definedTypes = new List<StackInfo>();
+
+            foreach (var info in stackInfos)
+            {
+                StackInfo matchedType = null;
+                foreach (var definedType in definedTypes)
                 {
-                    col.TypeLabel = typeLabel;
+                    bool isMatch = true;
+                    foreach (var kvp in info.StorySections)
+                    {
+                        // Katı yoksa veya o kattaki özellikleri farklıysa eşleşme iptal
+                        if (!definedType.StorySections.ContainsKey(kvp.Key) || definedType.StorySections[kvp.Key] != kvp.Value)
+                        {
+                            isMatch = false;
+                            break;
+                        }
+                    }
+                    if (isMatch)
+                    {
+                        matchedType = definedType;
+                        break;
+                    }
+                }
+
+                if (matchedType != null)
+                {
+                    info.TypeLabel = matchedType.TypeLabel;
+                }
+                else
+                {
+                    info.TypeLabel = $"T{typeCounter++}";
+                    definedTypes.Add(info); // Yeni bir kök tip tanımlandı
+                }
+
+                foreach (var col in info.Group)
+                {
+                    col.TypeLabel = info.TypeLabel;
                 }
             }
         }
