@@ -424,23 +424,45 @@ namespace EtabsTools
             mainTabControl.ItemSize = new Size(0, 1);
             mainTabControl.SizeMode = TabSizeMode.Fixed;
 
-            // Şimşek Sembolü (Program Amblemi)
-            Label lblLogo = new Label
+            // Şimşek Sembolü (Program Amblemi - Vektörel Özel Çizim)
+            Panel pnlLogo = new Panel
             {
-                Text = "↯",
-                Font = new Font("Segoe UI", 32f, FontStyle.Regular),
-                ForeColor = Color.FromArgb(100, 150, 150, 150), // Hafif silik gri
-                AutoSize = true,
+                Size = new Size(30, 45),
                 Location = new Point(pnlHeader.Width - 60, 15),
                 Anchor = AnchorStyles.Top | AnchorStyles.Right,
                 BackColor = Color.Transparent
+            };
+            pnlLogo.Paint += (s, e) =>
+            {
+                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+
+                // Daha ince ve elit dikey zikzak şimşek çizimi (ok ucu yok)
+                PointF[] lightningPoints = new PointF[]
+                {
+                    new PointF(20, 0),    // Tepe
+                    new PointF(5, 20),    // Sol çıkıntı
+                    new PointF(15, 20),   // Orta sağ dönüş
+                    new PointF(8, 45),    // Sivri alt uç (ok yok, sadece ince bitiş)
+                    new PointF(24, 18),   // Sağ dış girinti
+                    new PointF(13, 18),   // Orta sol bağlantı
+                    new PointF(20, 0)     // Tepeye dönüş
+                };
+
+                using (GraphicsPath path = new GraphicsPath())
+                {
+                    path.AddPolygon(lightningPoints);
+                    using (SolidBrush brush = new SolidBrush(Color.FromArgb(120, 160, 160, 160))) // Şık, transparan gri
+                    {
+                        e.Graphics.FillPath(brush, path);
+                    }
+                }
             };
 
             pnlHeader.Controls.Add(btnConnect);
             pnlHeader.Controls.Add(lblConnectionStatus);
             pnlHeader.Controls.Add(lblModelName);
             pnlHeader.Controls.Add(lblLockStatus);
-            pnlHeader.Controls.Add(lblLogo);
+            pnlHeader.Controls.Add(pnlLogo);
 
             // 0: Dashboard
             TabPage pageHome = new TabPage("Dashboard");
