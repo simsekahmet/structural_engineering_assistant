@@ -424,37 +424,33 @@ namespace EtabsTools
             mainTabControl.ItemSize = new Size(0, 1);
             mainTabControl.SizeMode = TabSizeMode.Fixed;
 
-            // Şimşek Sembolü (Program Amblemi - Vektörel Özel Çizim)
+            // Şimşek Sembolü (Sade/Kurumsal vektörel amblem)
             Panel pnlLogo = new Panel
             {
-                Size = new Size(30, 45),
-                Location = new Point(pnlHeader.Width - 60, 15),
+                Size = new Size(36, 50),
+                Location = new Point(pnlHeader.Width - 70, 13),
                 Anchor = AnchorStyles.Top | AnchorStyles.Right,
                 BackColor = Color.Transparent
             };
             pnlLogo.Paint += (s, e) =>
             {
                 e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-
-                // Daha ince ve elit dikey zikzak şimşek çizimi (ok ucu yok)
-                PointF[] lightningPoints = new PointF[]
+                PointF[] boltPoints = new PointF[]
                 {
-                    new PointF(20, 0),    // Tepe
-                    new PointF(5, 20),    // Sol çıkıntı
-                    new PointF(15, 20),   // Orta sağ dönüş
-                    new PointF(8, 45),    // Sivri alt uç (ok yok, sadece ince bitiş)
-                    new PointF(24, 18),   // Sağ dış girinti
-                    new PointF(13, 18),   // Orta sol bağlantı
-                    new PointF(20, 0)     // Tepeye dönüş
+                    new PointF(20, 8),
+                    new PointF(12, 24),
+                    new PointF(18, 24),
+                    new PointF(14, 41),
+                    new PointF(25, 22),
+                    new PointF(18, 22)
                 };
-
-                using (GraphicsPath path = new GraphicsPath())
+                using (var boltPath = new GraphicsPath())
+                using (var boltBrush = new SolidBrush(Color.FromArgb(76, 96, 124)))
+                using (var boltPen = new Pen(Color.FromArgb(63, 82, 108), 1.0f))
                 {
-                    path.AddPolygon(lightningPoints);
-                    using (SolidBrush brush = new SolidBrush(Color.FromArgb(120, 160, 160, 160))) // Şık, transparan gri
-                    {
-                        e.Graphics.FillPath(brush, path);
-                    }
+                    boltPath.AddPolygon(boltPoints);
+                    e.Graphics.FillPath(boltBrush, boltPath);
+                    e.Graphics.DrawPath(boltPen, boltPath);
                 }
             };
 
