@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.ComTypes;
 using System.Text;
 using System.Text.Json;
 
@@ -38,6 +39,7 @@ internal sealed class AgentApplicationContext : ApplicationContext
     {
         AgentLog.Write("Application context initializing.");
         _dispatcher.CreateControl();
+        _ = _dispatcher.Handle;
         AgentLog.Write("UI dispatcher created.");
 
         var menu = new ContextMenuStrip();
@@ -137,10 +139,16 @@ internal sealed class EtabsConnection : IDisposable
             if (etabsType is null)
                 return EtabsSnapshot.NotConnected("ETABS COM API is not registered. Install ETABS 22 or later.");
 
-            var classId = etabsType.GUID;
-            var result = NativeMethods.GetActiveObject(ref classId, IntPtr.Zero, out var activeObject);
-            if (result != 0 || activeObject is null)
-                return EtabsSnapshot.NotConnected("No running ETABS instance was found.");
+            var activeObject = TryGetFromRunningObjectTable();
+            activeObject ??= TryGetFromEtabsHelper();
+
+            if (activeObject is null)
+            {
+                var classId = etabsType.GUID;
+                var result = NativeMethods.GetActiveObject(ref classId, IntPtr.Zero, out activeObject);
+                if (result != 0 || activeObject is null)
+                    return EtabsSnapshot.NotConnected("No running ETABS instance was found.");
+            }
 
             _etabsObject = activeObject;
             _sapModel = _etabsObject.SapModel;
@@ -158,6 +166,92 @@ internal sealed class EtabsConnection : IDisposable
     public EtabsSnapshot ReadCurrent() =>
         TryRead(out var snapshot) ? snapshot : EtabsSnapshot.NotConnected("Not connected.");
 
+    private static object? TryGetFromRunningObjectTable()
+    {
+        IRunningObjectTable? runningObjectTable = null;
+        IEnumMoniker? monikerEnumerator = null;
+        IBindCtx? bindContext = null;
+
+        try
+        {
+            if (NativeMethods.GetRunningObjectTable(0, out runningObjectTable) != 0)
+                return null;
+
+            runningObjectTable.EnumRunning(out monikerEnumerator);
+            monikerEnumerator.Reset();
+
+            if (NativeMethods.CreateBindCtx(0, out bindContext) != 0)
+                return null;
+
+            var monikers = new IMoniker[1];
+            while (monikerEnumerator.Next(1, monikers, IntPtr.Zero) == 0)
+            {
+                try
+                {
+                    monikers[0].GetDisplayName(bindContext, null, out var displayName);
+                    if (string.IsNullOrWhiteSpace(displayName) ||
+                        !displayName.Contains("ETABS", StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    runningObjectTable.GetObject(monikers[0], out var candidate);
+                    if (candidate is null) continue;
+
+                    try
+                    {
+                        dynamic etabs = candidate;
+                        dynamic model = etabs.SapModel;
+                        _ = (string?)model.GetModelFilename();
+                        return candidate;
+                    }
+                    catch (Exception ex)
+                    {
+                        AgentLog.Write($"ROT ETABS candidate rejected: {ex}");
+                        Release(candidate);
+                    }
+                }
+                catch { }
+                finally
+                {
+                    Release(monikers[0]);
+                }
+            }
+        }
+        catch (Exception ex) { AgentLog.Write($"ROT scan failed: {ex}"); }
+        finally
+        {
+            Release(bindContext);
+            Release(monikerEnumerator);
+            Release(runningObjectTable);
+        }
+
+        return null;
+    }
+
+    private static object? TryGetFromEtabsHelper()
+    {
+        object? helper = null;
+        try
+        {
+            var helperType = Type.GetTypeFromProgID("ETABSv1.Helper", throwOnError: false);
+            if (helperType is null) return null;
+
+            helper = Activator.CreateInstance(helperType);
+            if (helper is null) return null;
+
+            dynamic dynamicHelper = helper;
+            return dynamicHelper.GetObject("CSI.ETABS.API.ETABSObject");
+        }
+        catch (Exception ex)
+        {
+            AgentLog.Write($"ETABS Helper failed: {ex}");
+            return null;
+        }
+        finally
+        {
+            Release(helper);
+        }
+    }
+
     private bool TryRead(out EtabsSnapshot snapshot)
     {
         snapshot = EtabsSnapshot.NotConnected("Not connected.");
@@ -169,7 +263,7 @@ internal sealed class EtabsConnection : IDisposable
             var filename = (string?)_sapModel.GetModelFilename();
             var modelName = string.IsNullOrWhiteSpace(filename) ? "Untitled ETABS model" : Path.GetFileName(filename);
             var isLocked = (bool)_sapModel.GetModelIsLocked();
-            snapshot = new EtabsSnapshot(true, true, modelName, filename, isLocked, null, "0.3.0");
+            snapshot = new EtabsSnapshot(true, true, modelName, filename, isLocked, null, "0.3.1");
             return true;
         }
         catch
@@ -341,13 +435,19 @@ internal sealed record EtabsSnapshot(
     string AgentVersion)
 {
     public static EtabsSnapshot NotConnected(string error) =>
-        new(true, false, null, null, null, error, "0.3.0");
+        new(true, false, null, null, null, error, "0.3.1");
 }
 
 internal static class NativeMethods
 {
     [DllImport("oleaut32.dll", PreserveSig = true)]
     internal static extern int GetActiveObject(ref Guid classId, IntPtr reserved, [MarshalAs(UnmanagedType.IUnknown)] out object? value);
+
+    [DllImport("ole32.dll", PreserveSig = true)]
+    internal static extern int GetRunningObjectTable(uint reserved, out IRunningObjectTable runningObjectTable);
+
+    [DllImport("ole32.dll", PreserveSig = true)]
+    internal static extern int CreateBindCtx(uint reserved, out IBindCtx bindContext);
 }
 
 internal static class AgentLog
