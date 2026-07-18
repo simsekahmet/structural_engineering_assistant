@@ -1,6 +1,6 @@
 const moduleDefinitions = [
   { id: 'spectrum', key: 'spectrum', icon: '⌁', categoryKey: 'category.analysis', ready: true },
-  { id: 'increment', key: 'increment', icon: '↟', categoryKey: 'category.analysis' },
+  { id: 'increment', key: 'increment', icon: '↟', categoryKey: 'category.analysis', ready: true },
   { id: 'drift', key: 'drift', icon: '↔', categoryKey: 'category.analysis', ready: true },
   { id: 'pdelta', key: 'pdelta', icon: 'ϑ', categoryKey: 'category.analysis', ready: true },
   { id: 'column-axial', key: 'columnAxial', icon: '▥', categoryKey: 'category.memberChecks' },
@@ -100,7 +100,27 @@ const translations = {
     'spectrum.summary.peak': 'Peak SaR', 'spectrum.summary.points': 'Points',
     'spectrum.status.pending': 'Enter parameters and calculate to see the spectrum.',
     'spectrum.status.done': 'Design spectrum calculated.',
-    'spectrum.error.invalid': 'SDS, SD1, R and I must be greater than zero.'
+    'spectrum.error.invalid': 'SDS, SD1, R and I must be greater than zero.',
+    'increment.params.title': 'Calculation Parameters', 'increment.params.mt': 'Total mass Mt (ton)',
+    'increment.params.hn': 'Building height Hn (m)', 'increment.params.ct': 'Ct (0.07)',
+    'increment.params.tx': 'Period Tx (s)', 'increment.params.vtx': 'Modal Vt-X (kN)',
+    'increment.params.ty': 'Period Ty (s)', 'increment.params.vty': 'Modal Vt-Y (kN)',
+    'increment.fetch': 'Fetch', 'increment.combos.hint': 'Select combinations; the first one containing X or Y is used for each direction\'s base shear.',
+    'increment.direction.x': 'X Direction', 'increment.direction.y': 'Y Direction',
+    'increment.calculate': '{direction} DIRECTION — CALCULATE',
+    'increment.modal.mode': 'Mode',
+    'increment.result.period': '{direction} period used', 'increment.result.beta': 'Scaling factor β',
+    'increment.status.pending': 'Not calculated yet.',
+    'increment.status.massFetched': 'Total structural mass fetched.',
+    'increment.status.periodFetchedX': 'X direction period fetched.', 'increment.status.periodFetchedY': 'Y direction period fetched.',
+    'increment.status.vtFetchedX': 'X direction base shear fetched.', 'increment.status.vtFetchedY': 'Y direction base shear fetched.',
+    'increment.status.calculated': '{direction} direction scaling factor calculated.',
+    'increment.warning.periodCapped': 'WARNING: period ({period}s) > Tmax ({tMax}s); Tmax was used.',
+    'increment.error.noSpectrum': 'Calculate the Design Spectrum first.',
+    'increment.error.invalidInputs': 'Mt, period and Vt must all be greater than zero.',
+    'increment.error.noModal': 'No modal data found (Case = Modal-Ust). Run analysis first.',
+    'increment.error.noComboForDirection': 'No selected combination contains "{direction}".',
+    'increment.error.noStoryForces': 'No Story Forces data found for {combo}.'
   },
   tr: {
     'brand.subtitle': 'ETABS tahkik ve raporlama platformu',
@@ -186,7 +206,27 @@ const translations = {
     'spectrum.summary.peak': 'Tepe SaR', 'spectrum.summary.points': 'Nokta',
     'spectrum.status.pending': 'Parametreleri girip hesaplayın; spektrum burada görünecek.',
     'spectrum.status.done': 'Tasarım spektrumu hesaplandı.',
-    'spectrum.error.invalid': 'SDS, SD1, R ve I sıfırdan büyük olmalıdır.'
+    'spectrum.error.invalid': 'SDS, SD1, R ve I sıfırdan büyük olmalıdır.',
+    'increment.params.title': 'Hesap Parametreleri', 'increment.params.mt': 'Yapı Toplam Kütlesi Mt (ton)',
+    'increment.params.hn': 'Bina Yüksekliği Hn (m)', 'increment.params.ct': 'Ct (0.07)',
+    'increment.params.tx': 'Periyot Tx (s)', 'increment.params.vtx': 'Modal Vt-X (kN)',
+    'increment.params.ty': 'Periyot Ty (s)', 'increment.params.vty': 'Modal Vt-Y (kN)',
+    'increment.fetch': 'Getir', 'increment.combos.hint': 'Kombinasyonları seçin; her yön için adında X veya Y geçen ilk kombinasyon taban kesme kuvveti için kullanılır.',
+    'increment.direction.x': 'X Yönü', 'increment.direction.y': 'Y Yönü',
+    'increment.calculate': '{direction} YÖNÜ HESAPLA',
+    'increment.modal.mode': 'Mod',
+    'increment.result.period': 'Kullanılan {direction} periyodu', 'increment.result.beta': 'Artırım Katsayısı β',
+    'increment.status.pending': 'Henüz hesaplanmadı.',
+    'increment.status.massFetched': 'Yapı toplam kütlesi çekildi.',
+    'increment.status.periodFetchedX': 'X yönü periyot değeri çekildi.', 'increment.status.periodFetchedY': 'Y yönü periyot değeri çekildi.',
+    'increment.status.vtFetchedX': 'X yönü taban kesme kuvveti çekildi.', 'increment.status.vtFetchedY': 'Y yönü taban kesme kuvveti çekildi.',
+    'increment.status.calculated': '{direction} yönü artırım katsayısı hesaplandı.',
+    'increment.warning.periodCapped': 'UYARI: periyot ({period}s) > Tmax ({tMax}s); hesapta Tmax kullanıldı.',
+    'increment.error.noSpectrum': 'Önce Tasarım Spektrumu sayfasından spektrum hesaplayınız.',
+    'increment.error.invalidInputs': 'Mt, periyot ve Vt değerleri sıfırdan büyük olmalıdır.',
+    'increment.error.noModal': 'Modal veri bulunamadı (Case = Modal-Ust). Önce analiz çalıştırın.',
+    'increment.error.noComboForDirection': 'Seçili kombinasyonlar arasında "{direction}" içeren yok.',
+    'increment.error.noStoryForces': '{combo} için Story Forces verisi bulunamadı.'
   }
 };
 
@@ -205,6 +245,7 @@ const defaultResultsPanelHtml = $('#resultsPanel').innerHTML;
 // Module id -> renderer. Populated with function declarations (hoisted), used by setActiveView.
 const moduleRenderers = {
   spectrum: renderSpectrumModule,
+  increment: renderIncrementModule,
   drift: renderDriftModule,
   pdelta: renderPdeltaModule
 };
@@ -1122,6 +1163,329 @@ function downloadSpectrumTxt() {
   a.download = `R${r}_D${d}_I${i}.txt`;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+// ---------------------------------------------------------------------------
+// Scaling Calculation (Artırım Hesabı) — ported from ArtirimHesabiUI (C#).
+// β = 0.9 · max(SaR(T)·mt, 0.04·SDS·g·I·mt) / Vt ; Tmax = Hn^0.75 · Ct · 1.4
+// Depends on the Design Spectrum module's shared spectrumState (SDS, I, SaR curve).
+// ---------------------------------------------------------------------------
+
+const incrementState = {
+  mt: 0, hn: 0, ct: 0.07,
+  bodrum: false, bodrumKat: 0,
+  combos: [], selected: [],
+  tx: 0, vtX: 0, ty: 0, vtY: 0,
+  modalTopX: [], modalTopY: [],
+  resultX: null, resultY: null
+};
+
+async function incrementFetchCombos() {
+  const btn = $('#incFetchCombos');
+  btn.disabled = true;
+  try {
+    const res = await fetchAgentJson('/api/etabs/combinations');
+    if (!res.etabsConnected) throw new Error(res.error || t('drift.error.notConnected'));
+    incrementState.combos = res.names;
+    incrementPopulateComboSelect();
+    log(t('drift.combos.fetched', { count: incrementState.combos.length }), 'ok');
+  } catch (error) {
+    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function incrementPopulateComboSelect() {
+  const select = $('#incComboSelect');
+  if (!select) return;
+  select.innerHTML = incrementState.combos
+    .map(name => `<option value="${name}" ${incrementState.selected.includes(name) ? 'selected' : ''}>${name}</option>`)
+    .join('');
+  select.addEventListener('change', () => {
+    incrementState.selected = [...select.selectedOptions].map(o => o.value);
+  });
+}
+
+async function incrementFetchMass() {
+  const btn = $('#incFetchMt');
+  btn.disabled = true;
+  try {
+    const [massRes, storiesRes] = await Promise.all([
+      fetchAgentJson(`/api/etabs/table?name=${encodeURIComponent('Mass Summary by Story')}`),
+      fetchAgentJson('/api/etabs/stories')
+    ]);
+    if (!massRes.etabsConnected) throw new Error(massRes.error || t('drift.error.notConnected'));
+
+    const excluded = new Set(['base']);
+    if (incrementState.bodrum && incrementState.bodrumKat > 0) {
+      const basement = determineBasementStories(storiesRes.stories || [], incrementState.bodrumKat);
+      basement.forEach(name => excluded.add(name.toLowerCase()));
+    }
+
+    const f = massRes.fields;
+    const sIdx = tableIndex(f, 'Story'), uxIdx = tableIndex(f, 'UX', 'MassX');
+    let total = 0;
+    for (const row of massRes.rows) {
+      const story = row[sIdx];
+      if (!story || excluded.has(story.toLowerCase())) continue;
+      total += parseFloat(row[uxIdx]) || 0;
+    }
+    incrementState.mt = total;
+    $('#incMt').value = total.toFixed(2);
+    log(t('increment.status.massFetched'), 'ok');
+  } catch (error) {
+    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function incrementFetchPeriod(direction) {
+  const btn = $(direction === 'X' ? '#incFetchTx' : '#incFetchTy');
+  btn.disabled = true;
+  try {
+    const res = await fetchAgentJson(`/api/etabs/table?name=${encodeURIComponent('Modal Participating Mass Ratios')}`);
+    if (!res.etabsConnected) throw new Error(res.error || t('drift.error.notConnected'));
+
+    const f = res.fields;
+    const caseIdx = tableIndex(f, 'Case', 'OutputCase');
+    const modeIdx = tableIndex(f, 'Mode', 'StepNum');
+    const periodIdx = tableIndex(f, 'Period');
+    const uIdx = tableIndex(f, direction === 'X' ? 'UX' : 'UY');
+
+    const modal = res.rows
+      .filter(row => (row[caseIdx] || '').toLowerCase() === 'modal-ust')
+      .map(row => ({ mode: row[modeIdx], period: parseFloat(row[periodIdx]) || 0, ratio: parseFloat(row[uIdx]) || 0 }));
+
+    if (modal.length === 0) throw new Error(t('increment.error.noModal'));
+
+    // Dedupe by mode (defensive; matches the desktop's GroupBy(Mode).First()), then take the top 2 by ratio.
+    const byMode = new Map();
+    for (const m of modal) if (!byMode.has(m.mode)) byMode.set(m.mode, m);
+    const top2 = [...byMode.values()].sort((a, b) => b.ratio - a.ratio).slice(0, 2);
+    const best = top2[0];
+
+    if (direction === 'X') {
+      incrementState.tx = best.period;
+      incrementState.modalTopX = top2;
+      $('#incTx').value = best.period.toFixed(3);
+    } else {
+      incrementState.ty = best.period;
+      incrementState.modalTopY = top2;
+      $('#incTy').value = best.period.toFixed(3);
+    }
+    incrementRenderModalInfo(direction);
+    log(t(direction === 'X' ? 'increment.status.periodFetchedX' : 'increment.status.periodFetchedY'), 'ok');
+  } catch (error) {
+    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function incrementRenderModalInfo(direction) {
+  const el = $(direction === 'X' ? '#incModalInfoX' : '#incModalInfoY');
+  if (!el) return;
+  const top = direction === 'X' ? incrementState.modalTopX : incrementState.modalTopY;
+  const col = direction === 'X' ? 'UX' : 'UY';
+  el.textContent = top.map(m => `${t('increment.modal.mode')} ${m.mode}: T=${m.period.toFixed(3)}s, ${col}=${m.ratio.toFixed(4)}`).join(' · ');
+}
+
+async function incrementFetchVt(direction) {
+  const btn = $(direction === 'X' ? '#incFetchVtX' : '#incFetchVtY');
+  const dirFilter = direction === 'X' ? 'X' : 'Y';
+  const matchingCombo = incrementState.selected.find(c => c.toUpperCase().includes(dirFilter));
+  if (!matchingCombo) {
+    log(t('increment.error.noComboForDirection', { direction }), 'error');
+    return;
+  }
+
+  btn.disabled = true;
+  try {
+    const res = await fetchAgentJson(`/api/etabs/table?name=${encodeURIComponent('Story Forces')}&combos=${encodeURIComponent(matchingCombo)}`);
+    if (!res.etabsConnected) throw new Error(res.error || t('drift.error.notConnected'));
+
+    const f = res.fields;
+    const sIdx = tableIndex(f, 'Story'), caseIdx = tableIndex(f, 'OutputCase', 'LoadCase', 'Case');
+    const locIdx = tableIndex(f, 'Location'), vxIdx = tableIndex(f, 'VX'), vyIdx = tableIndex(f, 'VY');
+
+    const perStory = [];
+    for (const row of res.rows) {
+      const caseVal = row[caseIdx] || '';
+      const loc = row[locIdx] || '';
+      const caseMatch = caseVal === matchingCombo || caseVal.toUpperCase().includes(matchingCombo.toUpperCase());
+      if (caseMatch && loc.toLowerCase() === 'bottom') {
+        perStory.push({ story: row[sIdx], vx: parseFloat(row[vxIdx]) || 0, vy: parseFloat(row[vyIdx]) || 0 });
+      }
+    }
+    if (perStory.length === 0) throw new Error(t('increment.error.noStoryForces', { combo: matchingCombo }));
+
+    perStory.reverse(); // table order is top->bottom; desktop reverses to bottom->top
+    const bodrumKat = incrementState.bodrum ? incrementState.bodrumKat : 0;
+    const targetRow = Math.min(bodrumKat, perStory.length - 1);
+    const target = perStory[targetRow];
+    const vt = Math.abs(direction === 'X' ? target.vx : target.vy);
+
+    if (direction === 'X') { incrementState.vtX = vt; $('#incVtX').value = vt.toFixed(2); }
+    else { incrementState.vtY = vt; $('#incVtY').value = vt.toFixed(2); }
+    log(t(direction === 'X' ? 'increment.status.vtFetchedX' : 'increment.status.vtFetchedY'), 'ok');
+  } catch (error) {
+    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function incrementCalculate(direction) {
+  if (spectrumState.periods.length === 0) {
+    log(t('increment.error.noSpectrum'), 'error');
+    return;
+  }
+
+  const mt = incrementState.mt;
+  const t0 = direction === 'X' ? incrementState.tx : incrementState.ty;
+  const vt = direction === 'X' ? incrementState.vtX : incrementState.vtY;
+  if (mt <= 0 || t0 <= 0 || vt <= 0) {
+    log(t('increment.error.invalidInputs'), 'error');
+    return;
+  }
+
+  const hn = incrementState.hn, ct = incrementState.ct;
+  let period = t0, warning = '';
+  if (hn > 0 && ct > 0) {
+    const tMax = Math.pow(hn, 0.75) * ct * 1.4;
+    if (period > tMax) {
+      warning = t('increment.warning.periodCapped', { period: period.toFixed(3), tMax: tMax.toFixed(3) });
+      period = tMax;
+    }
+  }
+
+  const g = 9.81;
+  const sae = spectrumSaAt(period);
+  const sds = spectrumState.sds, i = spectrumState.i;
+  const wt = sae * mt;
+  const vtMax = 0.04 * sds * g * i * mt;
+  const vtHesap = Math.max(wt, vtMax);
+  const beta = 0.9 * vtHesap / vt;
+
+  const result = { period, warning, sae, wt, vtMax, beta };
+  if (direction === 'X') incrementState.resultX = result; else incrementState.resultY = result;
+  incrementRenderResult(direction);
+  recordLastCheck('increment');
+  log(t('increment.status.calculated', { direction }), 'ok');
+}
+
+function incrementRenderResult(direction) {
+  const el = $(direction === 'X' ? '#incResultX' : '#incResultY');
+  if (!el) return;
+  const result = direction === 'X' ? incrementState.resultX : incrementState.resultY;
+  if (!result) { el.textContent = t('increment.status.pending'); return; }
+  el.innerHTML = `
+    <p>${t('increment.result.period', { direction })}: <strong>${result.period.toFixed(3)} s</strong></p>
+    ${result.warning ? `<p class="increment-warning">${result.warning}</p>` : ''}
+    <p>SAE: <strong>${result.sae.toFixed(4)} m/s²</strong></p>
+    <p>Wt: <strong>${result.wt.toFixed(2)} kN</strong></p>
+    <p>VTmax: <strong>${result.vtMax.toFixed(2)} kN</strong></p>
+    <p class="increment-beta">${t('increment.result.beta')}: <strong>${result.beta.toFixed(3)}</strong></p>`;
+}
+
+function renderIncrementModule() {
+  renderIncrementSetupPanel();
+  renderIncrementResultsPanel();
+}
+
+function renderIncrementSetupPanel() {
+  const panel = $('#setupPanel');
+  panel.innerHTML = `
+    <div class="panel-heading compact"><div><span class="step-number">1</span><div><h2>${t('increment.params.title')}</h2><p>${t('moduleData.description')}</p></div></div></div>
+    <div class="field-grid">
+      <label class="field-checkbox"><input type="checkbox" id="incBodrum"> ${t('drift.params.basement')}</label>
+      <div class="field"><label>${t('drift.params.basementCount')}</label><input type="number" min="0" id="incBodrumKat"></div>
+      <div class="field"><label>${t('increment.params.mt')}</label><input type="number" step="any" id="incMt"></div>
+      <div class="field"><label>&nbsp;</label><button class="button button-secondary" type="button" id="incFetchMt">${t('increment.fetch')}</button></div>
+      <div class="field"><label>${t('increment.params.hn')}</label><input type="number" step="any" id="incHn"></div>
+      <div class="field"><label>${t('increment.params.ct')}</label><input type="number" step="any" id="incCt"></div>
+    </div>
+    <div class="combo-picker">
+      <div class="combo-picker-heading"><h3>${t('drift.combos.title')}</h3>
+        <button class="button button-secondary" type="button" id="incFetchCombos">${t('drift.combos.fetch')}</button>
+      </div>
+      <select class="combo-select" id="incComboSelect" multiple></select>
+      <p class="combo-hint">${t('increment.combos.hint')}</p>
+    </div>
+    <div class="increment-direction">
+      <h3 class="increment-direction-title x">${t('increment.direction.x')}</h3>
+      <div class="field-grid two">
+        <div class="field"><label>${t('increment.params.tx')}</label><input type="number" step="any" id="incTx"></div>
+        <div class="field"><label>&nbsp;</label><button class="button button-secondary" type="button" id="incFetchTx">${t('increment.fetch')}</button></div>
+        <div class="field"><label>${t('increment.params.vtx')}</label><input type="number" step="any" id="incVtX"></div>
+        <div class="field"><label>&nbsp;</label><button class="button button-secondary" type="button" id="incFetchVtX">${t('increment.fetch')}</button></div>
+      </div>
+      <p class="increment-modal-info" id="incModalInfoX"></p>
+      <button class="button button-primary full-width" type="button" id="incCalcX">${t('increment.calculate', { direction: 'X' })}</button>
+    </div>
+    <div class="increment-direction">
+      <h3 class="increment-direction-title y">${t('increment.direction.y')}</h3>
+      <div class="field-grid two">
+        <div class="field"><label>${t('increment.params.ty')}</label><input type="number" step="any" id="incTy"></div>
+        <div class="field"><label>&nbsp;</label><button class="button button-secondary" type="button" id="incFetchTy">${t('increment.fetch')}</button></div>
+        <div class="field"><label>${t('increment.params.vty')}</label><input type="number" step="any" id="incVtY"></div>
+        <div class="field"><label>&nbsp;</label><button class="button button-secondary" type="button" id="incFetchVtY">${t('increment.fetch')}</button></div>
+      </div>
+      <p class="increment-modal-info" id="incModalInfoY"></p>
+      <button class="button button-primary full-width" type="button" id="incCalcY">${t('increment.calculate', { direction: 'Y' })}</button>
+    </div>`;
+
+  const bind = (id, key, isInt = false) => {
+    const el = $('#' + id, panel);
+    el.value = incrementState[key];
+    el.addEventListener('input', () => { incrementState[key] = (isInt ? parseInt(el.value, 10) : parseFloat(el.value)) || 0; });
+  };
+  bind('incMt', 'mt');
+  bind('incHn', 'hn');
+  bind('incCt', 'ct');
+  bind('incBodrumKat', 'bodrumKat', true);
+
+  const bodrum = $('#incBodrum', panel);
+  const bodrumKat = $('#incBodrumKat', panel);
+  bodrum.checked = incrementState.bodrum;
+  bodrumKat.disabled = !bodrum.checked;
+  bodrum.addEventListener('change', () => {
+    incrementState.bodrum = bodrum.checked;
+    bodrumKat.disabled = !bodrum.checked;
+  });
+
+  incrementPopulateComboSelect();
+  $('#incFetchCombos', panel).addEventListener('click', incrementFetchCombos);
+  $('#incFetchMt', panel).addEventListener('click', incrementFetchMass);
+  $('#incFetchTx', panel).addEventListener('click', () => incrementFetchPeriod('X'));
+  $('#incFetchTy', panel).addEventListener('click', () => incrementFetchPeriod('Y'));
+  $('#incFetchVtX', panel).addEventListener('click', () => incrementFetchVt('X'));
+  $('#incFetchVtY', panel).addEventListener('click', () => incrementFetchVt('Y'));
+  $('#incCalcX', panel).addEventListener('click', () => incrementCalculate('X'));
+  $('#incCalcY', panel).addEventListener('click', () => incrementCalculate('Y'));
+
+  incrementRenderModalInfo('X');
+  incrementRenderModalInfo('Y');
+}
+
+function renderIncrementResultsPanel() {
+  const panel = $('#resultsPanel');
+  panel.innerHTML = `
+    <div class="panel-heading compact"><div><span class="step-number">2</span><div><h2>${t('results.title')}</h2><p>${t('results.description')}</p></div></div></div>
+    <div class="increment-results">
+      <div class="increment-result-block">
+        <h3 class="increment-direction-title x">${t('increment.direction.x')}</h3>
+        <div id="incResultX">${t('increment.status.pending')}</div>
+      </div>
+      <div class="increment-result-block">
+        <h3 class="increment-direction-title y">${t('increment.direction.y')}</h3>
+        <div id="incResultY">${t('increment.status.pending')}</div>
+      </div>
+    </div>`;
+  if (incrementState.resultX) incrementRenderResult('X');
+  if (incrementState.resultY) incrementRenderResult('Y');
 }
 
 moduleGrid.addEventListener('click', event => {

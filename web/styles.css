@@ -213,6 +213,18 @@ dialog form { padding: 20px; }.dialog-heading, .dialog-heading > div { display: 
 .spectrum-svg .spectrum-line { fill: none; stroke: var(--red); stroke-width: 2.5; stroke-linejoin: round; }
 
 .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; padding: 14px 17px; }
+.field-grid.two { padding: 8px 0 0; }
+.field-grid .button { width: 100%; height: 32px; }
+.increment-direction { margin: 4px 17px 14px; padding: 12px 14px; border: 1px solid var(--border-soft); border-radius: 12px; background: var(--surface-muted); }
+.increment-direction-title { margin: 0 0 6px; font-size: 12px; }
+.increment-direction-title.x { color: #4299e1; }
+.increment-direction-title.y { color: #48bb78; }
+.increment-modal-info { margin: 8px 0; color: var(--muted); font-size: 9.5px; min-height: 12px; }
+.increment-results { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 14px 17px; }
+.increment-result-block { padding: 12px 14px; border: 1px solid var(--border-soft); border-radius: 12px; background: var(--surface-muted); }
+.increment-result-block p { margin: 0 0 6px; font-size: 11px; color: var(--text); }
+.increment-result-block .increment-beta { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border-soft); font-size: 13px; }
+.increment-warning { color: var(--amber); font-weight: 700; }
 .field { display: flex; flex-direction: column; gap: 4px; }
 .field label { color: var(--muted); font-size: 9px; text-transform: uppercase; letter-spacing: .04em; }
 .field input { height: 32px; padding: 0 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-muted); color: var(--text); }
