@@ -68,7 +68,8 @@
         <a class="nav-item" href="#foundation-schedule" data-view="foundation-schedule"><span class="nav-icon">▰</span><span data-i18n="module.foundationSchedule.title">Foundation Schedule</span></a>
       </nav>
       <div class="sidebar-footer">
-        <span class="version-badge" data-i18n="version">v0.2 · bilingual preview</span>
+        <span class="version-badge" id="versionBadge">v1.0.0</span>
+        <p class="footer-note"><strong data-i18n="about.note.label">Important:</strong> <span data-i18n="about.note.text">Engineering results must be reviewed and approved by the responsible structural engineer.</span></p>
       </div>
     </aside>
 
@@ -91,7 +92,7 @@
             <span class="stat-icon">✓</span><div><small data-i18n="stat.readyModules">Interface modules</small><strong>14</strong><span data-i18n="stat.migrationDefined">Calculation engines not migrated yet</span></div>
           </article>
           <article class="stat-card accent-green">
-            <span class="stat-icon">◎</span><div><small data-i18n="stat.lastCheck">Last check</small><strong>—</strong><span data-i18n="stat.noCheck">No check has been run</span></div>
+            <span class="stat-icon">◎</span><div><small data-i18n="stat.lastCheck">Last check</small><strong id="lastCheckStat">—</strong><span id="lastCheckSub" data-i18n="stat.noCheck">No check has been run</span></div>
           </article>
           <article class="stat-card accent-amber">
             <span class="stat-icon">⇩</span><div><small data-i18n="stat.reports">Reports</small><strong>0</strong><span data-i18n="stat.reportTypes">Excel / PDF outputs</span></div>
@@ -110,7 +111,7 @@
           <aside class="panel activity-panel">
             <div class="panel-heading compact"><div><span class="step-number">2</span><div><h2 data-i18n="workflow.title">Workflow</h2><p data-i18n="workflow.description">Local ETABS connection status</p></div></div></div>
             <ol class="workflow-list">
-              <li class="current"><span>1</span><div><strong data-i18n="workflow.open.title">Open ETABS</strong><small data-i18n="workflow.open.text">Load the model to be checked.</small></div></li>
+              <li><span>1</span><div><strong data-i18n="workflow.open.title">Open ETABS</strong><small data-i18n="workflow.open.text">Load the model to be checked.</small></div></li>
               <li><span>2</span><div><strong data-i18n="workflow.agent.title">Run the local bridge</strong><small data-i18n="workflow.agent.text">The Windows agent provides COM API access.</small></div></li>
               <li><span>3</span><div><strong data-i18n="workflow.connect.title">Connect the web interface</strong><small data-i18n="workflow.connect.text">Use the connection button above.</small></div></li>
               <li><span>4</span><div><strong data-i18n="workflow.check.title">Run a check</strong><small data-i18n="workflow.check.text">Review and export the results.</small></div></li>
@@ -118,14 +119,6 @@
             <button class="button button-secondary full-width" id="connectionHelp" type="button" data-i18n="action.viewArchitecture">View connection architecture</button>
           </aside>
         </div>
-
-        <section class="panel terminal-panel">
-          <div class="terminal-heading"><div><span class="terminal-dot red"></span><span class="terminal-dot amber"></span><span class="terminal-dot green"></span><strong>Terminal</strong></div><button id="clearTerminal" type="button" data-i18n="action.clear">Clear</button></div>
-          <div class="terminal" id="terminal" aria-live="polite">
-            <p><time>09:00:00</time><span class="ok">✓</span> <span data-i18n="terminal.ready">Web interface ready.</span></p>
-            <p><time>09:00:01</time><span class="info">i</span> <span data-i18n="terminal.waiting">Waiting for the Windows bridge to connect to ETABS.</span></p>
-          </div>
-        </section>
 
         <section class="panel about-panel" aria-labelledby="aboutTitle">
           <div class="panel-heading">
@@ -135,7 +128,7 @@
             <article class="about-card">
               <span class="about-icon">01</span>
               <h3 data-i18n="about.purpose.title">Engineering workspace</h3>
-              <p data-i18n="about.purpose.text">Structural Engineering Assistant brings ETABS checks, member schedules, results, and exports into one bilingual web interface.</p>
+              <p data-i18n="about.purpose.text">Structural Engineering Assistant brings ETABS checks, member schedules, results, and exports into one web interface.</p>
             </article>
             <article class="about-card">
               <span class="about-icon">02</span>
@@ -144,8 +137,8 @@
             </article>
             <article class="about-card">
               <span class="about-icon">03</span>
-              <h3 data-i18n="about.status.title">Current preview</h3>
-              <p data-i18n="about.status.text">The bilingual interface is available now. ETABS connectivity and calculation engines are the next implementation stage and are not active in this preview.</p>
+              <h3 data-i18n="about.status.title">Current version</h3>
+              <p data-i18n="about.status.text">The interface and ETABS connection agent are available, and engineering checks run against the active model through the local bridge.</p>
             </article>
           </div>
           <div class="about-note"><strong data-i18n="about.note.label">Important:</strong> <span data-i18n="about.note.text">Engineering results must be reviewed and approved by the responsible structural engineer.</span></div>
@@ -174,13 +167,11 @@
             </div>
           </section>
         </div>
-        <section class="panel terminal-panel">
-          <div class="terminal-heading"><div><span class="terminal-dot red"></span><span class="terminal-dot amber"></span><span class="terminal-dot green"></span><strong data-i18n="moduleLog.title">Module Log</strong></div></div>
-          <div class="terminal"><p><time>—</time><span class="info">i</span> <span data-i18n="moduleLog.ready">Module shell is ready for web migration.</span></p></div>
-        </section>
       </section>
     </main>
   </div>
+
+  <div class="toast-stack" id="toastStack" aria-live="polite" aria-atomic="false"></div>
 
   <dialog id="architectureDialog">
     <form method="dialog">

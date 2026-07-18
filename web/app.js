@@ -43,9 +43,9 @@ const translations = {
     'terminal.etabsNotFound': 'The Windows agent is online, but no open ETABS model was found.',
     'terminal.notFound': 'Local bridge not found. Install and run the Windows agent, then try again.',
     'about.title': 'About the Platform', 'about.subtitle': 'Purpose, architecture, and current implementation status',
-    'about.purpose.title': 'Engineering workspace', 'about.purpose.text': 'Structural Engineering Assistant brings ETABS checks, member schedules, results, and exports into one bilingual web interface.',
+    'about.purpose.title': 'Engineering workspace', 'about.purpose.text': 'Structural Engineering Assistant brings ETABS checks, member schedules, results, and exports into one web interface.',
     'about.connection.title': 'Local ETABS bridge', 'about.connection.text': 'Because browsers cannot access the ETABS COM API directly, a secure Windows agent will connect this interface to the model open on your computer.',
-    'about.status.title': 'Current version', 'about.status.text': 'The bilingual interface and ETABS connection agent are available. Engineering calculation modules are being migrated incrementally.',
+    'about.status.title': 'Current version', 'about.status.text': 'The interface and ETABS connection agent are available, and engineering checks run against the active model through the local bridge.',
     'about.note.label': 'Important:', 'about.note.text': 'Engineering results must be reviewed and approved by the responsible structural engineer.',
     'moduleData.title': 'Model Data', 'moduleData.description': 'Dataset to be read from the ETABS model',
     'moduleData.waiting': 'Waiting for ETABS connection', 'moduleData.note': 'Module inputs will be retrieved securely from the active ETABS model through the local bridge.',
@@ -115,9 +115,9 @@ const translations = {
     'terminal.etabsNotFound': 'Windows agent çalışıyor ancak açık bir ETABS modeli bulunamadı.',
     'terminal.notFound': 'Yerel köprü bulunamadı. Windows agent kurulup çalıştırıldıktan sonra yeniden deneyin.',
     'about.title': 'Platform Hakkında', 'about.subtitle': 'Amaç, mimari ve güncel uygulama durumu',
-    'about.purpose.title': 'Mühendislik çalışma alanı', 'about.purpose.text': 'Structural Engineering Assistant; ETABS tahkiklerini, eleman donelerini, sonuçları ve dışa aktarımları çift dilli tek bir web arayüzünde birleştirir.',
-    'about.connection.title': 'Yerel ETABS köprüsü', 'about.connection.text': 'Tarayıcılar ETABS COM API’ye doğrudan erişemediği için güvenli bir Windows agent bu arayüzü bilgisayarınızda açık olan modele bağlayacaktır.',
-    'about.status.title': 'Mevcut sürüm', 'about.status.text': 'Çift dilli arayüz ve ETABS bağlantı agent’ı kullanılabilir. Mühendislik hesap modülleri kademeli olarak taşınmaktadır.',
+    'about.purpose.title': 'Mühendislik çalışma alanı', 'about.purpose.text': 'Structural Engineering Assistant; ETABS tahkiklerini, eleman donelerini, sonuçları ve dışa aktarımları tek bir web arayüzünde birleştirir.',
+    'about.connection.title': 'Yerel ETABS köprüsü', 'about.connection.text': 'Tarayıcılar ETABS COM API’ye doğrudan erişemediği için güvenli bir Windows agent bu arayüzü bilgisayarınızda açık olan modele bağlar.',
+    'about.status.title': 'Mevcut sürüm', 'about.status.text': 'Arayüz ve ETABS bağlantı agent’ı kullanılabilir; mühendislik tahkikleri yerel köprü üzerinden aktif model üzerinde çalışır.',
     'about.note.label': 'Önemli:', 'about.note.text': 'Mühendislik sonuçları sorumlu inşaat mühendisi tarafından kontrol edilmeli ve onaylanmalıdır.',
     'moduleData.title': 'Model Verisi', 'moduleData.description': 'ETABS modelinden okunacak veri seti',
     'moduleData.waiting': 'ETABS bağlantısı bekleniyor', 'moduleData.note': 'Modül girdileri, yerel köprü üzerinden aktif ETABS modelinden güvenli biçimde alınacak.',
@@ -167,7 +167,7 @@ const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 const moduleGrid = $('#moduleGrid');
 const dashboard = $('#dashboard');
 const moduleView = $('#moduleView');
-const terminal = $('#terminal');
+const toastStack = $('#toastStack');
 let currentLanguage = localStorage.getItem('sea-language') === 'tr' ? 'tr' : 'en';
 
 const AGENT_BASE = 'http://127.0.0.1:5218';
@@ -190,14 +190,44 @@ function renderModules() {
   moduleGrid.classList.toggle('expanded', expanded);
 }
 
-function timestamp() {
-  return new Intl.DateTimeFormat(currentLanguage === 'tr' ? 'tr-TR' : 'en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(new Date());
+// Top-right toast notifications. Kept the name log() so existing call sites are unchanged.
+function log(message, type = 'info') {
+  if (!toastStack) return;
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  const symbol = type === 'ok' ? '✓' : type === 'error' ? '!' : 'i';
+  toast.innerHTML = `<span class="toast-icon">${symbol}</span><p></p>`;
+  toast.querySelector('p').textContent = message;
+  toast.addEventListener('click', () => dismissToast(toast));
+  toastStack.appendChild(toast);
+  requestAnimationFrame(() => toast.classList.add('show'));
+  setTimeout(() => dismissToast(toast), type === 'error' ? 6500 : 4000);
 }
 
-function log(message, type = 'info') {
-  const symbol = type === 'ok' ? '✓' : type === 'error' ? '!' : 'i';
-  terminal.insertAdjacentHTML('beforeend', `<p><time>${timestamp()}</time><span class="${type}">${symbol}</span> ${message}</p>`);
-  terminal.scrollTop = terminal.scrollHeight;
+function dismissToast(toast) {
+  if (!toast.isConnected) return;
+  toast.classList.remove('show');
+  setTimeout(() => toast.remove(), 350);
+}
+
+// Dashboard "Last check" stat card.
+function recordLastCheck(moduleKey) {
+  localStorage.setItem('sea-last-check', JSON.stringify({ key: moduleKey, at: Date.now() }));
+  renderLastCheck();
+}
+
+function renderLastCheck() {
+  const stat = $('#lastCheckStat');
+  const sub = $('#lastCheckSub');
+  const raw = localStorage.getItem('sea-last-check');
+  if (!stat || !sub || !raw) return;
+  try {
+    const { key, at } = JSON.parse(raw);
+    stat.textContent = t(`module.${key}.title`);
+    sub.removeAttribute('data-i18n');
+    sub.textContent = new Intl.DateTimeFormat(currentLanguage === 'tr' ? 'tr-TR' : 'en-GB',
+      { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }).format(new Date(at));
+  } catch { /* ignore malformed record */ }
 }
 
 function updateShowAllLabel() {
@@ -222,6 +252,7 @@ function applyLanguage(language) {
   $('#languageToggle').setAttribute('aria-pressed', String(currentLanguage === 'tr'));
   renderModules();
   updateShowAllLabel();
+  renderLastCheck();
   setActiveView(location.hash.slice(1) || 'dashboard');
 }
 
@@ -547,6 +578,7 @@ async function runDriftCheck() {
     const result = calculateDriftItems(filtered, driftState.params);
     driftState.lastResult = result;
     renderDriftResultsTable(result);
+    recordLastCheck('drift');
     log(t(result.allPassed ? 'drift.status.passed' : 'drift.status.failed'), result.allPassed ? 'ok' : 'error');
   } catch (error) {
     log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
@@ -586,7 +618,6 @@ $$('[data-back-dashboard]').forEach(button => button.addEventListener('click', (
 $('#connectButton').addEventListener('click', connectToEtabs);
 $$('[data-connect]').forEach(button => button.addEventListener('click', connectToEtabs));
 $('#connectionHelp').addEventListener('click', () => $('#architectureDialog').showModal());
-$('#clearTerminal').addEventListener('click', () => { terminal.innerHTML = `<p><time>${timestamp()}</time><span class="info">i</span> ${t('terminal.cleared')}</p>`; });
 
 $('#showAllModules').addEventListener('click', () => {
   moduleGrid.classList.toggle('expanded');
