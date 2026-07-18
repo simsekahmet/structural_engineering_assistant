@@ -22,7 +22,7 @@ const translations = {
     'model.activeTitle': 'Active ETABS model', 'model.active': 'Active model', 'model.waiting': 'Waiting for connection',
     'action.connect': 'Connect to ETABS', 'action.clear': 'Clear', 'action.showAll': 'Show all →', 'action.showLess': 'Show less ↑',
     'action.viewArchitecture': 'View connection architecture', 'action.dashboard': '← Dashboard', 'action.close': 'Close', 'action.understood': 'Understood',
-    'action.searching': 'Searching for bridge…',
+    'action.searching': 'Searching for bridge…', 'action.downloadAgent': 'Download Windows Agent',
     'nav.general': 'GENERAL', 'nav.analysis': 'ANALYSIS & CHECKS', 'nav.memberChecks': 'MEMBER CHECKS', 'nav.schedules': 'SCHEDULES & OUTPUTS',
     'category.analysis': 'Analysis & Checks', 'category.memberChecks': 'Member Checks', 'category.schedules': 'Schedules & Outputs',
     'version': 'v0.2 · bilingual preview',
@@ -38,13 +38,14 @@ const translations = {
     'workflow.connect.title': 'Connect the web interface', 'workflow.connect.text': 'Use the connection button above.',
     'workflow.check.title': 'Run a check', 'workflow.check.text': 'Review and export the results.',
     'terminal.ready': 'Web interface ready.', 'terminal.waiting': 'Waiting for the Windows bridge to connect to ETABS.',
-    'terminal.cleared': 'Terminal cleared.', 'terminal.searching': 'Searching for the local ETABS bridge at https://localhost:5218.',
+    'terminal.cleared': 'Terminal cleared.', 'terminal.searching': 'Searching for the local ETABS bridge at http://127.0.0.1:5218.',
     'terminal.connected': 'Connected successfully to {model}.',
+    'terminal.etabsNotFound': 'The Windows agent is online, but no open ETABS model was found.',
     'terminal.notFound': 'Local bridge not found. Install and run the Windows agent, then try again.',
     'about.title': 'About the Platform', 'about.subtitle': 'Purpose, architecture, and current implementation status',
     'about.purpose.title': 'Engineering workspace', 'about.purpose.text': 'Structural Engineering Assistant brings ETABS checks, member schedules, results, and exports into one bilingual web interface.',
     'about.connection.title': 'Local ETABS bridge', 'about.connection.text': 'Because browsers cannot access the ETABS COM API directly, a secure Windows agent will connect this interface to the model open on your computer.',
-    'about.status.title': 'Current preview', 'about.status.text': 'The bilingual interface is available now. ETABS connectivity and calculation engines are the next implementation stage and are not active in this preview.',
+    'about.status.title': 'Current version', 'about.status.text': 'The bilingual interface and ETABS connection agent are available. Engineering calculation modules are being migrated incrementally.',
     'about.note.label': 'Important:', 'about.note.text': 'Engineering results must be reviewed and approved by the responsible structural engineer.',
     'moduleData.title': 'Model Data', 'moduleData.description': 'Dataset to be read from the ETABS model',
     'moduleData.waiting': 'Waiting for ETABS connection', 'moduleData.note': 'Module inputs will be retrieved securely from the active ETABS model through the local bridge.',
@@ -53,7 +54,7 @@ const translations = {
     'table.empty': 'Results will appear here after a connection is established.',
     'moduleLog.title': 'Module Log', 'moduleLog.ready': 'Module shell is ready for web migration.',
     'dialog.title': 'ETABS Web Connection', 'dialog.subtitle': 'Recommended secure local bridge architecture', 'architecture.web': 'Web Interface',
-    'dialog.note': 'A browser cannot access COM objects directly. A small signed Windows service forwards only approved commands to the ETABS API and returns results to the web interface as JSON.',
+    'dialog.note': 'A browser cannot access COM objects directly. The local Windows tray agent reads the active ETABS model and returns approved data to the web interface as JSON.',
     'module.spectrum.title': 'Design Spectrum', 'module.spectrum.description': 'Create the horizontal elastic design spectrum using TBDY 2018 parameters and transfer it to the ETABS model.',
     'module.increment.title': 'Scaling Calculation', 'module.increment.description': 'Calculate dynamic scaling factors from modal results and base shear forces.',
     'module.drift.title': 'Interstory Drift', 'module.drift.description': 'Calculate effective interstory drifts and compare them with TBDY 2018 limits.',
@@ -75,7 +76,7 @@ const translations = {
     'model.activeTitle': 'Aktif ETABS modeli', 'model.active': 'Aktif model', 'model.waiting': 'Bağlantı bekleniyor',
     'action.connect': "ETABS'a Bağlan", 'action.clear': 'Temizle', 'action.showAll': 'Tümünü göster →', 'action.showLess': 'Daha az göster ↑',
     'action.viewArchitecture': 'Bağlantı mimarisini görüntüle', 'action.dashboard': '← Dashboard', 'action.close': 'Kapat', 'action.understood': 'Anladım',
-    'action.searching': 'Köprü aranıyor…',
+    'action.searching': 'Köprü aranıyor…', 'action.downloadAgent': 'Windows Agent’ı İndir',
     'nav.general': 'GENEL', 'nav.analysis': 'ANALİZ & KONTROL', 'nav.memberChecks': 'ELEMAN TAHKİKLERİ', 'nav.schedules': 'DONE & ÇIKTILAR',
     'category.analysis': 'Analiz & Kontrol', 'category.memberChecks': 'Eleman Tahkikleri', 'category.schedules': 'Done & Çıktılar',
     'version': 'v0.2 · çift dilli önizleme',
@@ -91,13 +92,14 @@ const translations = {
     'workflow.connect.title': 'Web arayüzünü bağlayın', 'workflow.connect.text': 'Yukarıdaki bağlantı düğmesini kullanın.',
     'workflow.check.title': 'Tahkiki başlatın', 'workflow.check.text': 'Sonuçları tabloda inceleyip dışa aktarın.',
     'terminal.ready': 'Web arayüzü hazır.', 'terminal.waiting': 'ETABS bağlantısı için Windows yerel köprüsü bekleniyor.',
-    'terminal.cleared': 'Terminal temizlendi.', 'terminal.searching': 'Yerel ETABS köprüsü https://localhost:5218 üzerinde aranıyor.',
+    'terminal.cleared': 'Terminal temizlendi.', 'terminal.searching': 'Yerel ETABS köprüsü http://127.0.0.1:5218 üzerinde aranıyor.',
     'terminal.connected': '{model} modeline başarıyla bağlanıldı.',
+    'terminal.etabsNotFound': 'Windows agent çalışıyor ancak açık bir ETABS modeli bulunamadı.',
     'terminal.notFound': 'Yerel köprü bulunamadı. Windows agent kurulup çalıştırıldıktan sonra yeniden deneyin.',
     'about.title': 'Platform Hakkında', 'about.subtitle': 'Amaç, mimari ve güncel uygulama durumu',
     'about.purpose.title': 'Mühendislik çalışma alanı', 'about.purpose.text': 'Structural Engineering Assistant; ETABS tahkiklerini, eleman donelerini, sonuçları ve dışa aktarımları çift dilli tek bir web arayüzünde birleştirir.',
     'about.connection.title': 'Yerel ETABS köprüsü', 'about.connection.text': 'Tarayıcılar ETABS COM API’ye doğrudan erişemediği için güvenli bir Windows agent bu arayüzü bilgisayarınızda açık olan modele bağlayacaktır.',
-    'about.status.title': 'Mevcut önizleme', 'about.status.text': 'Çift dilli arayüz şu anda kullanılabilir. ETABS bağlantısı ve hesap motorları bir sonraki geliştirme aşamasıdır ve bu önizlemede aktif değildir.',
+    'about.status.title': 'Mevcut sürüm', 'about.status.text': 'Çift dilli arayüz ve ETABS bağlantı agent’ı kullanılabilir. Mühendislik hesap modülleri kademeli olarak taşınmaktadır.',
     'about.note.label': 'Önemli:', 'about.note.text': 'Mühendislik sonuçları sorumlu inşaat mühendisi tarafından kontrol edilmeli ve onaylanmalıdır.',
     'moduleData.title': 'Model Verisi', 'moduleData.description': 'ETABS modelinden okunacak veri seti',
     'moduleData.waiting': 'ETABS bağlantısı bekleniyor', 'moduleData.note': 'Modül girdileri, yerel köprü üzerinden aktif ETABS modelinden güvenli biçimde alınacak.',
@@ -106,7 +108,7 @@ const translations = {
     'table.empty': 'Bağlantı kurulduktan sonra sonuçlar burada görüntülenecek.',
     'moduleLog.title': 'Modül Günlüğü', 'moduleLog.ready': 'Modül web uyarlaması için hazırlandı.',
     'dialog.title': 'ETABS Web Bağlantısı', 'dialog.subtitle': 'Önerilen güvenli yerel köprü mimarisi', 'architecture.web': 'Web Arayüzü',
-    'dialog.note': "Tarayıcı COM nesnelerine doğrudan erişemez. Windows'ta çalışan imzalı küçük bir servis yalnızca izin verilen komutları ETABS API'ye iletir ve sonuçları JSON olarak web arayüzüne döndürür.",
+    'dialog.note': "Tarayıcı COM nesnelerine doğrudan erişemez. Yerel Windows tray agent aktif ETABS modelini okur ve izin verilen verileri JSON olarak web arayüzüne döndürür.",
     'module.spectrum.title': 'Tasarım Spektrumu', 'module.spectrum.description': 'TBDY 2018 parametreleriyle yatay elastik tasarım spektrumunu oluşturun ve ETABS modeline aktarın.',
     'module.increment.title': 'Artırım Hesabı', 'module.increment.description': 'Modal sonuçlar ve taban kesme kuvvetleri üzerinden dinamik büyütme katsayılarını hesaplayın.',
     'module.drift.title': 'Göreli Kat Ötelemesi', 'module.drift.description': 'Etkin göreli kat ötelemelerini hesaplayın ve TBDY 2018 sınırlarıyla karşılaştırın.',
@@ -212,9 +214,13 @@ async function connectToEtabs() {
   log(t('terminal.searching'));
 
   try {
-    const response = await fetch('https://localhost:5218/api/health', { headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(3500) });
+    const response = await fetch('http://127.0.0.1:5218/api/health', { headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(5000) });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const data = await response.json();
+    if (!data.etabsConnected) {
+      log(t('terminal.etabsNotFound'), 'error');
+      return;
+    }
     const model = data.modelName || data.model || 'ETABS model';
     $('#connectionDot').classList.add('connected');
     $('#modelName').removeAttribute('data-i18n');

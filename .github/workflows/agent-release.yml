@@ -1,0 +1,35 @@
+name: Build and release Windows agent
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - name: Publish Windows agent
+        shell: pwsh
+        run: dotnet publish agent/StructuralEngineeringAssistant.Agent.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true -p:DebugType=None -p:DebugSymbols=false
+      - name: Upload agent artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: StructuralEngineeringAssistant-Agent
+          path: agent/bin/Release/net8.0-windows/win-x64/publish/StructuralEngineeringAssistant.Agent.exe
+      - name: Create GitHub release
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create $env:GITHUB_REF_NAME agent/bin/Release/net8.0-windows/win-x64/publish/StructuralEngineeringAssistant.Agent.exe --title "Structural Engineering Assistant $env:GITHUB_REF_NAME" --generate-notes
