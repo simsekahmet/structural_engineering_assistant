@@ -236,6 +236,14 @@ dialog form { padding: 20px; }.dialog-heading, .dialog-heading > div { display: 
 .combo-select { width: 100%; min-height: 130px; padding: 6px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-muted); color: var(--text); font-size: 11px; }
 .combo-hint { margin: 8px 0 0; color: var(--muted); font-size: 10px; }
 .panel-actions { padding: 0 17px 17px; }
+.panel-actions.two-up { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.panel-actions.two-up .button { width: 100%; }
+.ca-edit { width: 60px; height: 26px; padding: 0 6px; border: 1px solid var(--border); border-radius: 6px; background: color-mix(in srgb, var(--amber) 10%, var(--surface-muted)); color: var(--text); text-align: center; }
+tr.row-fail { background: color-mix(in srgb, var(--red) 8%, transparent); }
+.column-axial-failed { margin: 0 17px 17px; padding: 12px 14px; border: 1px solid var(--border-soft); border-radius: 12px; background: var(--surface-muted); }
+.column-axial-failed h3 { margin: 0 0 6px; color: var(--primary-dark); font-size: 12px; }
+.column-axial-failed p { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.6; }
+.column-axial-failed p.fail-text { color: var(--red); font-weight: 700; }
 .status-banner { margin: 14px 17px 0; padding: 10px 13px; border-radius: 10px; font-size: 11px; font-weight: 700; text-align: center; }
 .status-banner.ok { color: var(--green); background: color-mix(in srgb, var(--green) 14%, transparent); }
 .status-banner.fail { color: var(--red); background: color-mix(in srgb, var(--red) 14%, transparent); }

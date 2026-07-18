@@ -3,7 +3,7 @@ const moduleDefinitions = [
   { id: 'increment', key: 'increment', icon: '↟', categoryKey: 'category.analysis', ready: true },
   { id: 'drift', key: 'drift', icon: '↔', categoryKey: 'category.analysis', ready: true },
   { id: 'pdelta', key: 'pdelta', icon: 'ϑ', categoryKey: 'category.analysis', ready: true },
-  { id: 'column-axial', key: 'columnAxial', icon: '▥', categoryKey: 'category.memberChecks' },
+  { id: 'column-axial', key: 'columnAxial', icon: '▥', categoryKey: 'category.memberChecks', ready: true },
   { id: 'wall-shear', key: 'wallShear', icon: '▤', categoryKey: 'category.memberChecks' },
   { id: 'wall-axial', key: 'wallAxial', icon: '▯', categoryKey: 'category.memberChecks' },
   { id: 'beam-shear', key: 'beamShear', icon: '═', categoryKey: 'category.memberChecks' },
@@ -76,7 +76,7 @@ const translations = {
     'drift.combos.title': 'Load Combinations', 'drift.combos.fetch': 'Fetch from ETABS',
     'drift.combos.hint': 'Select combinations containing direction (X/Y) and level (UST/ALT), e.g. RSXUST.',
     'drift.combos.fetched': '{count} combinations/cases found.',
-    'drift.calculate': 'Calculate', 'drift.export': 'Download CSV',
+    'drift.calculate': 'Calculate', 'drift.export': 'Download Excel',
     'drift.table.story': 'Story', 'drift.table.combo': 'Combination', 'drift.table.direction': 'Direction',
     'drift.table.drift': 'Drift', 'drift.table.lambdaDrift': 'λδi/hi', 'drift.table.limit': 'Limit', 'drift.table.status': 'Status',
     'drift.table.empty': 'Fetch combinations, select the ones to check, then Calculate.',
@@ -120,7 +120,23 @@ const translations = {
     'increment.error.invalidInputs': 'Mt, period and Vt must all be greater than zero.',
     'increment.error.noModal': 'No modal data found (Case = Modal-Ust). Run analysis first.',
     'increment.error.noComboForDirection': 'No selected combination contains "{direction}".',
-    'increment.error.noStoryForces': 'No Story Forces data found for {combo}.'
+    'increment.error.noStoryForces': 'No Story Forces data found for {combo}.',
+    'columnAxial.params.title': 'Calculation Parameters', 'columnAxial.params.fck': 'fck (N/mm²)', 'columnAxial.params.limit': 'Limit',
+    'columnAxial.combos.hint': 'Select an envelope combination that reports both Max and Min (e.g. ENVE_DESG).',
+    'columnAxial.frame.fetch': 'Fetch Frame Assignment', 'columnAxial.forces.fetch': 'Fetch Element Forces',
+    'columnAxial.calculate': 'Calculate', 'columnAxial.export': 'Export to Excel',
+    'columnAxial.selectFailing': 'Select failing columns in model',
+    'columnAxial.table.column': 'Column', 'columnAxial.table.location': 'Location', 'columnAxial.table.p': 'P (kN)',
+    'columnAxial.table.section': 'Section', 'columnAxial.table.b': 'b (cm)', 'columnAxial.table.d': 'd (cm)',
+    'columnAxial.table.ac': 'Ac (cm²)', 'columnAxial.table.acFck': 'Ac·fck (kN)', 'columnAxial.table.ratio': 'Ratio',
+    'columnAxial.failed.title': 'Columns exceeding the limit', 'columnAxial.failed.none': 'No column exceeds the limit.',
+    'columnAxial.status.pending': 'Not calculated yet.',
+    'columnAxial.status.passed': 'All columns satisfy the limit.',
+    'columnAxial.status.failed': '{count} column(s) exceed the limit!',
+    'columnAxial.status.frameFetched': '{count} column frame assignments fetched.',
+    'columnAxial.status.forcesFetched': '{count} element force rows fetched.',
+    'columnAxial.status.selected': '{count} failing column(s) selected in the model.',
+    'columnAxial.error.noFrameData': 'Fetch Frame Assignment and Element Forces data first.'
   },
   tr: {
     'brand.subtitle': 'ETABS tahkik ve raporlama platformu',
@@ -182,7 +198,7 @@ const translations = {
     'drift.combos.title': 'Yük Kombinasyonları', 'drift.combos.fetch': "ETABS'tan Getir",
     'drift.combos.hint': 'Yön (X/Y) ve seviye (ÜST/ALT) içeren kombinasyonları seçin, örn. RSXUST.',
     'drift.combos.fetched': '{count} kombinasyon/case bulundu.',
-    'drift.calculate': 'Hesapla', 'drift.export': 'CSV İndir',
+    'drift.calculate': 'Hesapla', 'drift.export': 'Excel İndir',
     'drift.table.story': 'Kat', 'drift.table.combo': 'Kombinasyon', 'drift.table.direction': 'Yön',
     'drift.table.drift': 'Drift', 'drift.table.lambdaDrift': 'λδi/hi', 'drift.table.limit': 'Limit', 'drift.table.status': 'Durum',
     'drift.table.empty': 'Kombinasyonları getirin, tahkik edilecekleri seçin, ardından Hesaplayın.',
@@ -226,7 +242,23 @@ const translations = {
     'increment.error.invalidInputs': 'Mt, periyot ve Vt değerleri sıfırdan büyük olmalıdır.',
     'increment.error.noModal': 'Modal veri bulunamadı (Case = Modal-Ust). Önce analiz çalıştırın.',
     'increment.error.noComboForDirection': 'Seçili kombinasyonlar arasında "{direction}" içeren yok.',
-    'increment.error.noStoryForces': '{combo} için Story Forces verisi bulunamadı.'
+    'increment.error.noStoryForces': '{combo} için Story Forces verisi bulunamadı.',
+    'columnAxial.params.title': 'Hesap Parametreleri', 'columnAxial.params.fck': 'fck (N/mm²)', 'columnAxial.params.limit': 'Limit',
+    'columnAxial.combos.hint': 'Hem Max hem Min raporlayan bir zarf (envelope) kombinasyon seçin (örn. ENVE_DESG).',
+    'columnAxial.frame.fetch': 'Frame Assignment Getir', 'columnAxial.forces.fetch': 'Element Forces Getir',
+    'columnAxial.calculate': 'Hesapla', 'columnAxial.export': "Excel'e Aktar",
+    'columnAxial.selectFailing': 'Sınırı Aşan Kolonları Modelde Seç',
+    'columnAxial.table.column': 'Kolon', 'columnAxial.table.location': 'Konum', 'columnAxial.table.p': 'P (kN)',
+    'columnAxial.table.section': 'Kesit', 'columnAxial.table.b': 'b (cm)', 'columnAxial.table.d': 'd (cm)',
+    'columnAxial.table.ac': 'Ac (cm²)', 'columnAxial.table.acFck': 'Ac·fck (kN)', 'columnAxial.table.ratio': 'Oran',
+    'columnAxial.failed.title': 'Sınırı Aşan Kolonlar', 'columnAxial.failed.none': 'Sınırı aşan kolon yok.',
+    'columnAxial.status.pending': 'Henüz hesaplanmadı.',
+    'columnAxial.status.passed': 'Tüm kolonlar limiti sağlıyor.',
+    'columnAxial.status.failed': '{count} adet kolon limiti aşıyor!',
+    'columnAxial.status.frameFetched': '{count} kolon frame assignment verisi çekildi.',
+    'columnAxial.status.forcesFetched': '{count} element force satırı çekildi.',
+    'columnAxial.status.selected': '{count} adet sınırı aşan kolon modelde seçildi.',
+    'columnAxial.error.noFrameData': 'Önce Frame Assignment ve Element Forces verilerini "Getir" ile çekiniz.'
   }
 };
 
@@ -247,7 +279,8 @@ const moduleRenderers = {
   spectrum: renderSpectrumModule,
   increment: renderIncrementModule,
   drift: renderDriftModule,
-  pdelta: renderPdeltaModule
+  pdelta: renderPdeltaModule,
+  'column-axial': renderColumnAxialModule
 };
 
 // Find a column index in an ETABS display table by normalized header name (case/space/dot-insensitive).
@@ -294,8 +327,12 @@ function dismissToast(toast) {
 }
 
 // Dashboard "Last check" stat card.
-function recordLastCheck(moduleKey) {
-  localStorage.setItem('sea-last-check', JSON.stringify({ key: moduleKey, at: Date.now() }));
+// Accepts a module id (e.g. "column-axial"); resolves it to the moduleDefinitions translation
+// key (e.g. "columnAxial") since the two only coincide for the simple analysis modules.
+function recordLastCheck(moduleId) {
+  const module = moduleDefinitions.find(m => m.id === moduleId);
+  const key = module ? module.key : moduleId;
+  localStorage.setItem('sea-last-check', JSON.stringify({ key, at: Date.now() }));
   renderLastCheck();
 }
 
@@ -427,6 +464,39 @@ async function fetchAgentJson(path, timeoutMs = 8000) {
   });
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   return response.json();
+}
+
+async function postAgentJson(path, body, timeoutMs = 8000) {
+  const response = await fetch(`${AGENT_BASE}${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(timeoutMs)
+  });
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  return response.json();
+}
+
+// Downloads a formula-backed Excel report the agent built with EPPlus, saving it under the
+// filename the agent set in Content-Disposition (falls back to fallbackName).
+async function downloadAgentExcel(path, body, fallbackName, timeoutMs = 15000) {
+  const response = await fetch(`${AGENT_BASE}${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(timeoutMs)
+  });
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  const disposition = response.headers.get('Content-Disposition') || '';
+  const match = disposition.match(/filename="([^"]+)"/);
+  const fileName = match ? match[1] : fallbackName;
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 // TBDY 2018 lambda: interpolates between DD-2 and DD-3 spectra depending on Tp vs TA.
@@ -590,7 +660,7 @@ function renderDriftResultsPanel() {
       </table>
     </div>`;
 
-  $('#driftExport', panel).addEventListener('click', exportDriftCsv);
+  $('#driftExport', panel).addEventListener('click', exportDriftExcel);
   if (driftState.lastResult) renderDriftResultsTable(driftState.lastResult);
 }
 
@@ -675,25 +745,24 @@ async function runDriftCheck() {
   }
 }
 
-function exportDriftCsv() {
+async function exportDriftExcel() {
   const result = driftState.lastResult;
   if (!result) return;
-  const sorted = sortDriftItems(result.items);
-  const lines = ['Kat;Kombinasyon;Dogrultu;Drift;LambdaDrift;Limit;Durum'];
-  for (const item of sorted) {
-    lines.push([
-      item.story, item.outputCase, item.direction,
-      item.drift.toFixed(5), item.lambdaDrift.toFixed(5), item.limit.toFixed(5),
-      item.isOk ? 'OK' : 'FAIL'
-    ].join(';'));
+  const btn = $('#driftExport');
+  if (btn) btn.disabled = true;
+  try {
+    const sorted = sortDriftItems(result.items);
+    await downloadAgentExcel('/api/etabs/export/drift', {
+      sdsDD2: driftState.params.sdsDD2, sdsDD3: driftState.params.sdsDD3,
+      sd1DD2: driftState.params.sd1DD2, sd1DD3: driftState.params.sd1DD3,
+      tp: driftState.params.tp, k: driftState.params.k, esnekDerz: driftState.params.esnekDerz,
+      rows: sorted.map(item => ({ story: item.story, combo: item.outputCase, direction: item.direction, drift: item.drift }))
+    }, 'GoreliKat_Sonuc.xlsx');
+  } catch (error) {
+    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+  } finally {
+    if (btn) btn.disabled = false;
   }
-  const blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `GoreliKat_Sonuc_${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
 }
 
 // ---------------------------------------------------------------------------
@@ -922,7 +991,7 @@ function renderPdeltaResultsPanel() {
       </table>
     </div>`;
 
-  $('#pdExport', panel).addEventListener('click', exportPdeltaCsv);
+  $('#pdExport', panel).addEventListener('click', exportPdeltaExcel);
   if (pdeltaState.lastResult) renderPdeltaResultsTable(pdeltaState.lastResult);
 }
 
@@ -982,24 +1051,21 @@ async function runPdeltaCheck() {
   }
 }
 
-function exportPdeltaCsv() {
+async function exportPdeltaExcel() {
   const result = pdeltaState.lastResult;
   if (!result) return;
-  const lines = ['Kat;Kombinasyon;Dogrultu;Vi(kN);Wij(kN);Drift;Theta;Limit;Durum'];
-  for (const item of result.items) {
-    lines.push([
-      item.story, item.loadCase, item.direction,
-      item.vi.toFixed(2), item.wij.toFixed(2), item.driftRatio.toFixed(6),
-      item.theta.toFixed(6), item.limit.toFixed(4), item.ok ? 'OK' : 'FAIL'
-    ].join(';'));
+  const btn = $('#pdExport');
+  if (btn) btn.disabled = true;
+  try {
+    await downloadAgentExcel('/api/etabs/export/pdelta', {
+      ch: pdeltaState.params.ch, r: pdeltaState.params.r, d: pdeltaState.params.d,
+      rows: result.items.map(item => ({ story: item.story, combo: item.loadCase, direction: item.direction, vi: item.vi, wij: item.wij, driftRatio: item.driftRatio }))
+    }, 'IkinciMertebe_Sonuc.xlsx');
+  } catch (error) {
+    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+  } finally {
+    if (btn) btn.disabled = false;
   }
-  const blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `IkinciMertebe_Sonuc_${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
 }
 
 // ---------------------------------------------------------------------------
@@ -1486,6 +1552,426 @@ function renderIncrementResultsPanel() {
     </div>`;
   if (incrementState.resultX) incrementRenderResult('X');
   if (incrementState.resultY) incrementRenderResult('Y');
+}
+
+// ---------------------------------------------------------------------------
+// Column Axial Load (Kolon Eksenel Yük) — ported from KolonEksenelYukManager (C#).
+// Ratio = |P| / (Ac·fck) ; joins Element Forces (Station~0, StepType=Min) to Frame Assignments
+// (Type=Column) by Story+Label. First module with a write-back (select failing columns in the
+// model) and a formula-backed Excel export.
+// ---------------------------------------------------------------------------
+
+const columnAxialState = {
+  fck: 30, limit: 0.40, bodrum: false, bodrumKat: 0,
+  combos: [], selected: [],
+  frameAssignments: [], columnForces: [], stories: [],
+  lastResults: []
+};
+
+function extractStoryNumber(name) {
+  const m = String(name || '').match(/\d+/);
+  return m ? parseInt(m[0], 10) : null;
+}
+
+function columnAxialBasementStories(stories, isBodrum, bodrumKat) {
+  const set = new Set();
+  if (!isBodrum || bodrumKat <= 0 || stories.length === 0) return set;
+  const hasValidElevations = stories.some(s => Math.abs(s.elevation) > 0.001);
+  const sorted = hasValidElevations
+    ? [...stories].sort((a, b) => a.elevation - b.elevation)
+    : [...stories].sort((a, b) => (extractStoryNumber(a.name) ?? 0) - (extractStoryNumber(b.name) ?? 0));
+  for (let i = 0; i < bodrumKat && i < sorted.length; i++) set.add(sorted[i].name.toLowerCase());
+  return set;
+}
+
+function parseSectionDims(sectionName) {
+  const m = String(sectionName || '').match(/(\d+(?:[.,]\d+)?)\s*[xX*]\s*(\d+(?:[.,]\d+)?)/);
+  if (!m) return null;
+  return { b: parseFloat(m[1].replace(',', '.')), d: parseFloat(m[2].replace(',', '.')) };
+}
+
+// Mirrors KolonEksenelYukManager.Calculate 1:1, including the letter-based (not word-based)
+// AH/UH combo filter: it checks whether the load case name contains "A" or "U" anywhere.
+function columnAxialCalculate(forces, assignments, stories, fck, limit, isBodrum, bodrumKat) {
+  const bodrumStories = columnAxialBasementStories(stories, isBodrum, bodrumKat);
+
+  const assignDict = new Map();
+  for (const a of assignments) {
+    const key = `${a.story}||${a.label}`.toLowerCase();
+    if (!assignDict.has(key)) assignDict.set(key, a);
+  }
+
+  const results = [];
+  for (const force of forces) {
+    const key = `${force.story}||${force.column}`.toLowerCase();
+    const frame = assignDict.get(key);
+    if (!frame) continue;
+
+    const dims = parseSectionDims(frame.section);
+    const bCm = dims ? dims.b : 0;
+    const dCm = dims ? dims.d : 0;
+    const acCm2 = bCm * dCm;
+    const acMm2 = acCm2 * 100;
+
+    const isCurrentStoryBodrum = bodrumStories.has(force.story.toLowerCase());
+    const loadCaseUpper = force.loadCase.toUpperCase();
+    const hasA = loadCaseUpper.includes('A');
+    const hasU = loadCaseUpper.includes('U');
+    let hideRow = false;
+    if (isBodrum) {
+      if (isCurrentStoryBodrum) { if (hasU) hideRow = true; }
+      else if (hasA) hideRow = true;
+    } else if (hasA) hideRow = true;
+    if (hideRow) continue;
+
+    const absNd = Math.abs(force.p);
+    const acFckKN = (acMm2 * fck) / 1000;
+    const ratio = acFckKN > 0 ? absNd / acFckKN : 0;
+
+    results.push({
+      story: force.story, column: force.column,
+      uniqueName: force.uniqueName || frame.uniqueName || '',
+      loadCase: force.loadCase, location: force.location,
+      nd: absNd, section: frame.section, b: bCm, d: dCm,
+      ac: acCm2, acFck: acFckKN, limit, fck,
+      ndRatio: ratio, isOk: ratio <= limit
+    });
+  }
+
+  results.sort((x, y) => y.story.localeCompare(x.story) || x.column.localeCompare(y.column) || x.loadCase.localeCompare(y.loadCase));
+  return results;
+}
+
+function renderColumnAxialModule() {
+  renderColumnAxialSetupPanel();
+  renderColumnAxialResultsPanel();
+}
+
+function renderColumnAxialSetupPanel() {
+  const panel = $('#setupPanel');
+  panel.innerHTML = `
+    <div class="panel-heading compact"><div><span class="step-number">1</span><div><h2>${t('columnAxial.params.title')}</h2><p>${t('moduleData.description')}</p></div></div></div>
+    <div class="field-grid">
+      <div class="field"><label>${t('columnAxial.params.fck')}</label><input type="number" step="any" id="caFck"></div>
+      <div class="field"><label>${t('columnAxial.params.limit')}</label><input type="number" step="any" id="caLimit"></div>
+      <label class="field-checkbox"><input type="checkbox" id="caBodrum"> ${t('drift.params.basement')}</label>
+      <div class="field"><label>${t('drift.params.basementCount')}</label><input type="number" min="0" id="caBodrumKat"></div>
+    </div>
+    <div class="combo-picker">
+      <div class="combo-picker-heading"><h3>${t('drift.combos.title')}</h3>
+        <button class="button button-secondary" type="button" id="caFetchCombos">${t('drift.combos.fetch')}</button>
+      </div>
+      <select class="combo-select" id="caComboSelect" multiple></select>
+      <p class="combo-hint">${t('columnAxial.combos.hint')}</p>
+    </div>
+    <div class="panel-actions two-up">
+      <button class="button button-secondary" type="button" id="caFetchFrame">${t('columnAxial.frame.fetch')}</button>
+      <button class="button button-secondary" type="button" id="caFetchForces">${t('columnAxial.forces.fetch')}</button>
+    </div>
+    <div class="panel-actions">
+      <button class="button button-primary full-width" type="button" id="caCalculate">${t('columnAxial.calculate')}</button>
+    </div>
+    <div class="panel-actions two-up">
+      <button class="button button-secondary" type="button" id="caSelectFailing">${t('columnAxial.selectFailing')}</button>
+      <button class="button button-secondary" type="button" id="caExport">${t('columnAxial.export')}</button>
+    </div>`;
+
+  const bind = (id, key, isInt = false) => {
+    const el = $('#' + id, panel);
+    el.value = columnAxialState[key];
+    el.addEventListener('input', () => { columnAxialState[key] = (isInt ? parseInt(el.value, 10) : parseFloat(el.value)) || 0; });
+  };
+  bind('caFck', 'fck');
+  bind('caLimit', 'limit');
+  bind('caBodrumKat', 'bodrumKat', true);
+
+  const bodrum = $('#caBodrum', panel);
+  const bodrumKat = $('#caBodrumKat', panel);
+  bodrum.checked = columnAxialState.bodrum;
+  bodrumKat.disabled = !bodrum.checked;
+  bodrum.addEventListener('change', () => {
+    columnAxialState.bodrum = bodrum.checked;
+    bodrumKat.disabled = !bodrum.checked;
+  });
+
+  columnAxialPopulateComboSelect();
+  $('#caFetchCombos', panel).addEventListener('click', columnAxialFetchCombos);
+  $('#caFetchFrame', panel).addEventListener('click', columnAxialFetchFrameAssignments);
+  $('#caFetchForces', panel).addEventListener('click', columnAxialFetchElementForces);
+  $('#caCalculate', panel).addEventListener('click', runColumnAxialCheck);
+  $('#caSelectFailing', panel).addEventListener('click', columnAxialSelectFailing);
+  $('#caExport', panel).addEventListener('click', columnAxialExportExcel);
+}
+
+function columnAxialPopulateComboSelect() {
+  const select = $('#caComboSelect');
+  if (!select) return;
+  select.innerHTML = columnAxialState.combos
+    .map(name => `<option value="${name}" ${columnAxialState.selected.includes(name) ? 'selected' : ''}>${name}</option>`)
+    .join('');
+  select.addEventListener('change', () => {
+    columnAxialState.selected = [...select.selectedOptions].map(o => o.value);
+  });
+}
+
+function renderColumnAxialResultsPanel() {
+  const panel = $('#resultsPanel');
+  panel.innerHTML = `
+    <div class="panel-heading compact"><div><span class="step-number">2</span><div><h2>${t('results.title')}</h2><p>${t('results.description')}</p></div></div></div>
+    <div class="status-banner pending" id="caStatusBanner">${t('columnAxial.status.pending')}</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>${t('drift.table.story')}</th><th>${t('columnAxial.table.column')}</th><th>${t('drift.table.combo')}</th>
+          <th>${t('columnAxial.table.location')}</th><th>${t('columnAxial.table.p')}</th><th>${t('columnAxial.table.section')}</th>
+          <th>${t('columnAxial.table.b')}</th><th>${t('columnAxial.table.d')}</th>
+          <th>${t('columnAxial.table.ac')}</th><th>${t('columnAxial.table.acFck')}</th>
+          <th>${t('columnAxial.table.ratio')}</th><th>${t('drift.table.limit')}</th><th>${t('drift.table.status')}</th>
+        </tr></thead>
+        <tbody id="caResultsBody"><tr><td colspan="13" class="table-empty">${t('drift.table.empty')}</td></tr></tbody>
+      </table>
+    </div>
+    <div class="column-axial-failed">
+      <h3>${t('columnAxial.failed.title')}</h3>
+      <p id="caFailedList">${t('columnAxial.failed.none')}</p>
+    </div>`;
+  if (columnAxialState.lastResults.length) renderColumnAxialResultsTable();
+}
+
+function renderColumnAxialResultsTable() {
+  const body = $('#caResultsBody');
+  if (!body) return;
+  const results = columnAxialState.lastResults;
+  body.innerHTML = results.length
+    ? results.map((item, i) => `
+        <tr data-index="${i}" class="${item.isOk ? '' : 'row-fail'}">
+          <td>${item.story}</td><td>${item.column}</td><td>${item.loadCase}</td>
+          <td>${item.location}</td><td>${item.nd.toFixed(2)}</td><td>${item.section}</td>
+          <td><input type="number" step="any" class="ca-edit ca-edit-b" data-index="${i}" value="${item.b}"></td>
+          <td><input type="number" step="any" class="ca-edit ca-edit-d" data-index="${i}" value="${item.d}"></td>
+          <td class="ca-ac">${item.ac.toFixed(2)}</td><td class="ca-acfck">${item.acFck.toFixed(2)}</td>
+          <td class="ca-ratio">${item.ndRatio.toFixed(3)}</td><td>${item.limit.toFixed(2)}</td>
+          <td class="ca-status">${item.isOk ? '✅' : '❌'}</td>
+        </tr>`).join('')
+    : `<tr><td colspan="13" class="table-empty">${t('drift.table.empty')}</td></tr>`;
+
+  $$('.ca-edit', body).forEach(input => {
+    input.addEventListener('input', () => columnAxialRecalcRow(parseInt(input.dataset.index, 10)));
+  });
+
+  columnAxialUpdateSummary();
+}
+
+function columnAxialRecalcRow(index) {
+  const item = columnAxialState.lastResults[index];
+  const row = $(`tr[data-index="${index}"]`, $('#caResultsBody'));
+  if (!item || !row) return;
+
+  const b = parseFloat($('.ca-edit-b', row).value) || 0;
+  const d = parseFloat($('.ca-edit-d', row).value) || 0;
+  item.b = b;
+  item.d = d;
+  item.ac = b * d;
+  const acMm2 = item.ac * 100;
+  item.acFck = (acMm2 * columnAxialState.fck) / 1000;
+  item.ndRatio = item.acFck > 0 ? item.nd / item.acFck : 0;
+  item.isOk = item.ndRatio <= columnAxialState.limit;
+
+  $('.ca-ac', row).textContent = item.ac.toFixed(2);
+  $('.ca-acfck', row).textContent = item.acFck.toFixed(2);
+  $('.ca-ratio', row).textContent = item.ndRatio.toFixed(3);
+  $('.ca-status', row).textContent = item.isOk ? '✅' : '❌';
+  row.classList.toggle('row-fail', !item.isOk);
+
+  columnAxialUpdateSummary();
+}
+
+function columnAxialUpdateSummary() {
+  const results = columnAxialState.lastResults;
+  const banner = $('#caStatusBanner');
+  const failedList = $('#caFailedList');
+  if (!banner || !failedList) return;
+
+  const failedLabels = [...new Set(results.filter(r => !r.isOk).map(r => `${r.column} (${r.story})`))].sort();
+  if (failedLabels.length > 0) {
+    banner.textContent = t('columnAxial.status.failed', { count: failedLabels.length });
+    banner.className = 'status-banner fail';
+    failedList.textContent = failedLabels.join(', ');
+    failedList.classList.add('fail-text');
+  } else if (results.length > 0) {
+    banner.textContent = t('columnAxial.status.passed');
+    banner.className = 'status-banner ok';
+    failedList.textContent = t('columnAxial.failed.none');
+    failedList.classList.remove('fail-text');
+  } else {
+    banner.textContent = t('columnAxial.status.pending');
+    banner.className = 'status-banner pending';
+    failedList.textContent = t('columnAxial.failed.none');
+    failedList.classList.remove('fail-text');
+  }
+}
+
+async function columnAxialFetchCombos() {
+  const btn = $('#caFetchCombos');
+  btn.disabled = true;
+  try {
+    const res = await fetchAgentJson('/api/etabs/combinations');
+    if (!res.etabsConnected) throw new Error(res.error || t('drift.error.notConnected'));
+    columnAxialState.combos = res.names;
+    columnAxialPopulateComboSelect();
+    log(t('drift.combos.fetched', { count: columnAxialState.combos.length }), 'ok');
+  } catch (error) {
+    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function columnAxialFetchFrameAssignments() {
+  const btn = $('#caFetchFrame');
+  btn.disabled = true;
+  try {
+    const res = await fetchAgentJson(`/api/etabs/table?name=${encodeURIComponent('Frame Assignments - Summary')}`);
+    if (!res.etabsConnected) throw new Error(res.error || t('drift.error.notConnected'));
+
+    const f = res.fields;
+    const storyIdx = tableIndex(f, 'Story');
+    const labelIdx = tableIndex(f, 'Label');
+    const uniqueIdx = tableIndex(f, 'Unique Name', 'UniqueName');
+    const typeIdx = tableIndex(f, 'Design Type', 'Type');
+    const analysisSectIdx = tableIndex(f, 'AnalysisSect', 'Analysis Section');
+    const designSectIdx = tableIndex(f, 'DesignSect', 'Design Section');
+
+    columnAxialState.frameAssignments = res.rows
+      .filter(row => typeIdx < 0 || (row[typeIdx] || '').toLowerCase().includes('column'))
+      .map(row => {
+        let section = analysisSectIdx >= 0 ? row[analysisSectIdx] : '';
+        if (!section && designSectIdx >= 0) section = row[designSectIdx];
+        return {
+          story: row[storyIdx] || '', label: row[labelIdx] || '',
+          uniqueName: uniqueIdx >= 0 ? row[uniqueIdx] : '',
+          section: section || ''
+        };
+      });
+
+    log(t('columnAxial.status.frameFetched', { count: columnAxialState.frameAssignments.length }), 'ok');
+  } catch (error) {
+    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function columnAxialFetchElementForces() {
+  if (columnAxialState.selected.length === 0) {
+    log(t('drift.error.noCombos'), 'error');
+    return;
+  }
+  const btn = $('#caFetchForces');
+  btn.disabled = true;
+  try {
+    const comboParam = encodeURIComponent(columnAxialState.selected.join(','));
+    const res = await fetchAgentJson(`/api/etabs/table?name=${encodeURIComponent('Element Forces - Columns')}&combos=${comboParam}`);
+    if (!res.etabsConnected) throw new Error(res.error || t('drift.error.notConnected'));
+
+    const f = res.fields;
+    const storyIdx = tableIndex(f, 'Story');
+    const columnIdx = tableIndex(f, 'Column', 'Label');
+    const uniqueIdx = tableIndex(f, 'Unique Name', 'UniqueName');
+    const caseIdx = tableIndex(f, 'OutputCase', 'LoadCase', 'Case');
+    const stepTypeIdx = tableIndex(f, 'StepType');
+    const stationIdx = tableIndex(f, 'Station', 'Location');
+    const pIdx = tableIndex(f, 'P');
+
+    const selectedUpper = columnAxialState.selected.map(c => c.toUpperCase());
+    columnAxialState.columnForces = res.rows
+      .filter(row => {
+        const loadCase = (row[caseIdx] || '').toUpperCase();
+        if (!selectedUpper.includes(loadCase)) return false;
+        const station = parseFloat(row[stationIdx]);
+        if (!Number.isNaN(station) && Math.abs(station) > 0.0001) return false;
+        const stepType = row[stepTypeIdx] || '';
+        return !stepType || stepType.toLowerCase() === 'min';
+      })
+      .map(row => ({
+        story: row[storyIdx] || '', column: row[columnIdx] || '',
+        uniqueName: uniqueIdx >= 0 ? row[uniqueIdx] : '',
+        loadCase: row[caseIdx] || '', location: stationIdx >= 0 ? row[stationIdx] : '0',
+        p: parseFloat(row[pIdx]) || 0
+      }));
+
+    log(t('columnAxial.status.forcesFetched', { count: columnAxialState.columnForces.length }), 'ok');
+  } catch (error) {
+    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function runColumnAxialCheck() {
+  if (columnAxialState.columnForces.length === 0 || columnAxialState.frameAssignments.length === 0) {
+    log(t('columnAxial.error.noFrameData'), 'error');
+    return;
+  }
+  try {
+    if (columnAxialState.stories.length === 0) {
+      const storiesRes = await fetchAgentJson('/api/etabs/stories');
+      if (!storiesRes.etabsConnected) throw new Error(storiesRes.error || t('drift.error.notConnected'));
+      columnAxialState.stories = storiesRes.stories;
+    }
+
+    const results = columnAxialCalculate(
+      columnAxialState.columnForces, columnAxialState.frameAssignments, columnAxialState.stories,
+      columnAxialState.fck, columnAxialState.limit, columnAxialState.bodrum, columnAxialState.bodrumKat
+    );
+    columnAxialState.lastResults = results;
+    renderColumnAxialResultsTable();
+    recordLastCheck('column-axial');
+
+    const failCount = new Set(results.filter(r => !r.isOk).map(r => `${r.column}|${r.story}`)).size;
+    log(failCount > 0 ? t('columnAxial.status.failed', { count: failCount }) : t('columnAxial.status.passed'), failCount > 0 ? 'error' : 'ok');
+  } catch (error) {
+    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+  }
+}
+
+async function columnAxialSelectFailing() {
+  const failing = columnAxialState.lastResults.filter(r => !r.isOk);
+  if (failing.length === 0) {
+    log(t('columnAxial.status.passed'), 'ok');
+    return;
+  }
+  const items = [...new Map(failing.map(r => [`${r.story}|${r.column}`, { story: r.story, label: r.column }])).values()];
+  try {
+    const res = await postAgentJson('/api/etabs/select-frames', { items });
+    if (!res.etabsConnected) throw new Error(res.error || t('drift.error.notConnected'));
+    log(t('columnAxial.status.selected', { count: res.selectedCount }), 'ok');
+  } catch (error) {
+    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+  }
+}
+
+async function columnAxialExportExcel() {
+  const results = columnAxialState.lastResults;
+  if (results.length === 0) {
+    log(t('columnAxial.error.noFrameData'), 'error');
+    return;
+  }
+  const btn = $('#caExport');
+  if (btn) btn.disabled = true;
+  try {
+    await downloadAgentExcel('/api/etabs/export/column-axial', {
+      fck: columnAxialState.fck, limit: columnAxialState.limit,
+      rows: results.map(r => ({
+        story: r.story, column: r.column, uniqueName: r.uniqueName || '', loadCase: r.loadCase,
+        section: r.section, b: r.b, d: r.d, p: r.nd
+      }))
+    }, 'Kolon_Eksenel_Raporu.xlsx');
+  } catch (error) {
+    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+  } finally {
+    if (btn) btn.disabled = false;
+  }
 }
 
 moduleGrid.addEventListener('click', event => {

@@ -4,6 +4,9 @@ using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
 using System.Text;
 using System.Text.Json;
+using OfficeOpenXml;
+using OfficeOpenXml.Style;
+using DrawingColor = System.Drawing.Color;
 
 namespace StructuralEngineeringAssistant.Agent;
 
@@ -63,7 +66,8 @@ internal sealed class AgentApplicationContext : ApplicationContext
             GetCombinationsOnUiThread,
             GetStoriesOnUiThread,
             GetStoryDriftsOnUiThread,
-            GetTableOnUiThread);
+            GetTableOnUiThread,
+            SelectFramesOnUiThread);
         try
         {
             _server.Start();
@@ -122,6 +126,14 @@ internal sealed class AgentApplicationContext : ApplicationContext
             return (TableResult)_dispatcher.Invoke(new Func<string, string[], TableResult>(_etabs.GetTable), tableName, combos);
 
         return _etabs.GetTable(tableName, combos);
+    }
+
+    private SelectResult SelectFramesOnUiThread(IReadOnlyList<FrameKey> items)
+    {
+        if (_dispatcher.InvokeRequired)
+            return (SelectResult)_dispatcher.Invoke(new Func<IReadOnlyList<FrameKey>, SelectResult>(_etabs.SelectFrames), items);
+
+        return _etabs.SelectFrames(items);
     }
 
     private void ShowConnectionResult()
@@ -420,6 +432,70 @@ internal sealed class EtabsConnection : IDisposable
         }
     }
 
+    // Selects the given frame objects (matched by Story + Label) in the ETABS model and
+    // refreshes the active view, so the user can see failing members highlighted. This is the
+    // only write operation the agent performs; everything else is read-only.
+    public SelectResult SelectFrames(IReadOnlyList<FrameKey> items)
+    {
+        if (items.Count == 0)
+            return new SelectResult(true, true, "No items to select.", 0);
+        if (!EnsureModelReady(out var error))
+            return new SelectResult(true, false, error, 0);
+
+        try
+        {
+            var sap = _sapModel!;
+            var frameProp = _sapModelInterface!.GetProperty("FrameObj")!;
+            var frame = frameProp.GetValue(sap)!;
+            var frameType = frameProp.PropertyType;
+
+            var selectObjProp = _sapModelInterface.GetProperty("SelectObj")!;
+            var selectObj = selectObjProp.GetValue(sap)!;
+            selectObjProp.PropertyType.GetMethod("ClearSelection")!.Invoke(selectObj, null);
+
+            var getNameList = frameType.GetMethods().First(m => m.Name == "GetNameList");
+            var nameArgs = new object?[] { 0, null };
+            getNameList.Invoke(frame, nameArgs);
+            var names = (string[]?)nameArgs[1] ?? Array.Empty<string>();
+
+            var getLabel = frameType.GetMethods().First(m => m.Name == "GetLabelFromName");
+            var setSelected = frameType.GetMethods().First(m => m.Name == "SetSelected");
+            var itemTypeDefault = setSelected.GetParameters()[2].DefaultValue;
+
+            int count = 0;
+            foreach (var name in names)
+            {
+                var labelArgs = new object?[] { name, "", "" };
+                getLabel.Invoke(frame, labelArgs);
+                var label = ((string?)labelArgs[1] ?? "").Trim();
+                var story = ((string?)labelArgs[2] ?? "").Trim();
+
+                var match = items.Any(it =>
+                    string.Equals(it.Label.Trim(), label, StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(it.Story.Trim(), story, StringComparison.OrdinalIgnoreCase));
+
+                if (match)
+                {
+                    setSelected.Invoke(frame, new object?[] { name, true, itemTypeDefault });
+                    count++;
+                }
+            }
+
+            var viewProp = _sapModelInterface.GetProperty("View")!;
+            var view = viewProp.GetValue(sap)!;
+            var refreshView = viewProp.PropertyType.GetMethods().First(m => m.Name == "RefreshView");
+            var rvArgs = refreshView.GetParameters().Select(p => p.HasDefaultValue ? p.DefaultValue : (object)0).ToArray();
+            refreshView.Invoke(view, rvArgs);
+
+            return new SelectResult(true, true, null, count);
+        }
+        catch (Exception ex)
+        {
+            AgentLog.Write($"SelectFrames failed: {ex}");
+            return new SelectResult(true, false, ex.Message, 0);
+        }
+    }
+
     // Reuses ConnectAndRead so every data endpoint shares the same connect/reconnect logic
     // and always operates against a live, readable model.
     private bool EnsureModelReady(out string? error)
@@ -618,6 +694,7 @@ internal sealed class LocalBridgeServer : IDisposable
     private readonly Func<StoriesResult> _getStories;
     private readonly Func<string[], StoryDriftsResult> _getStoryDrifts;
     private readonly Func<string, string[], TableResult> _getTable;
+    private readonly Func<IReadOnlyList<FrameKey>, SelectResult> _selectFrames;
     private readonly CancellationTokenSource _cancellation = new();
     private TcpListener? _listener;
 
@@ -626,13 +703,15 @@ internal sealed class LocalBridgeServer : IDisposable
         Func<NameListResult> getCombinations,
         Func<StoriesResult> getStories,
         Func<string[], StoryDriftsResult> getStoryDrifts,
-        Func<string, string[], TableResult> getTable)
+        Func<string, string[], TableResult> getTable,
+        Func<IReadOnlyList<FrameKey>, SelectResult> selectFrames)
     {
         _getSnapshot = getSnapshot;
         _getCombinations = getCombinations;
         _getStories = getStories;
         _getStoryDrifts = getStoryDrifts;
         _getTable = getTable;
+        _selectFrames = selectFrames;
     }
 
     public void Start()
@@ -656,32 +735,18 @@ internal sealed class LocalBridgeServer : IDisposable
         }
     }
 
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+
     private async Task HandleClientAsync(TcpClient client, CancellationToken cancellationToken)
     {
         using (client)
         using (var stream = client.GetStream())
-        using (var reader = new StreamReader(stream, Encoding.ASCII, false, 4096, leaveOpen: true))
         {
             try
             {
-                var requestLine = await reader.ReadLineAsync(cancellationToken);
-                if (string.IsNullOrWhiteSpace(requestLine)) return;
-
-                var parts = requestLine.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                if (parts.Length < 2) return;
-
-                var method = parts[0].ToUpperInvariant();
-                var pathAndQuery = parts[1].Split('?', 2);
-                var path = pathAndQuery[0];
-                var query = pathAndQuery.Length > 1 ? ParseQuery(pathAndQuery[1]) : new Dictionary<string, string>();
-                var headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-                string? line;
-                while (!string.IsNullOrEmpty(line = await reader.ReadLineAsync(cancellationToken)))
-                {
-                    var separator = line.IndexOf(':');
-                    if (separator > 0)
-                        headers[line[..separator].Trim()] = line[(separator + 1)..].Trim();
-                }
+                var request = await ReadHttpRequestAsync(stream, cancellationToken);
+                if (request is null) return;
+                var (method, path, query, headers, body) = request.Value;
 
                 headers.TryGetValue("Origin", out var origin);
                 if (origin is not null && !AllowedOrigins.Contains(origin))
@@ -696,56 +761,164 @@ internal sealed class LocalBridgeServer : IDisposable
                     return;
                 }
 
-                if (method != "GET")
+                if (method == "GET")
                 {
-                    await WriteResponseAsync(stream, 405, "Method Not Allowed", new { error = "Only GET is allowed." }, origin, cancellationToken);
+                    if (path is "/api/health" or "/api/etabs/connect" or "/api/model")
+                    {
+                        await WriteResponseAsync(stream, 200, "OK", _getSnapshot(), origin, cancellationToken);
+                        return;
+                    }
+
+                    if (path == "/api/etabs/combinations")
+                    {
+                        await WriteResponseAsync(stream, 200, "OK", _getCombinations(), origin, cancellationToken);
+                        return;
+                    }
+
+                    if (path == "/api/etabs/stories")
+                    {
+                        await WriteResponseAsync(stream, 200, "OK", _getStories(), origin, cancellationToken);
+                        return;
+                    }
+
+                    if (path == "/api/etabs/story-drifts")
+                    {
+                        query.TryGetValue("combos", out var combosParam);
+                        var names = string.IsNullOrWhiteSpace(combosParam)
+                            ? Array.Empty<string>()
+                            : combosParam.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                        await WriteResponseAsync(stream, 200, "OK", _getStoryDrifts(names), origin, cancellationToken);
+                        return;
+                    }
+
+                    if (path == "/api/etabs/table")
+                    {
+                        query.TryGetValue("name", out var tableName);
+                        query.TryGetValue("combos", out var tableCombos);
+                        var combos = string.IsNullOrWhiteSpace(tableCombos)
+                            ? Array.Empty<string>()
+                            : tableCombos.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                        await WriteResponseAsync(stream, 200, "OK", _getTable(tableName ?? "", combos), origin, cancellationToken);
+                        return;
+                    }
+
+                    await WriteResponseAsync(stream, 404, "Not Found", new { error = "Endpoint not found." }, origin, cancellationToken);
                     return;
                 }
 
-                if (path is "/api/health" or "/api/etabs/connect" or "/api/model")
+                if (method == "POST")
                 {
-                    var snapshot = _getSnapshot();
-                    await WriteResponseAsync(stream, 200, "OK", snapshot, origin, cancellationToken);
+                    var json = Encoding.UTF8.GetString(body);
+
+                    if (path == "/api/etabs/select-frames")
+                    {
+                        var req = JsonSerializer.Deserialize<SelectFramesRequest>(json, JsonOptions);
+                        var items = req?.Items ?? Array.Empty<FrameKey>();
+                        await WriteResponseAsync(stream, 200, "OK", _selectFrames(items), origin, cancellationToken);
+                        return;
+                    }
+
+                    if (path == "/api/etabs/export/column-axial")
+                    {
+                        var req = JsonSerializer.Deserialize<ColumnAxialExportRequest>(json, JsonOptions);
+                        if (req is null) { await WriteResponseAsync(stream, 400, "Bad Request", new { error = "Invalid request body." }, origin, cancellationToken); return; }
+                        var bytes = ColumnAxialExcelReport.Build(req.Fck, req.Limit, req.Rows);
+                        await WriteBinaryResponseAsync(stream, 200, "OK", bytes, "Kolon_Eksenel_Raporu.xlsx", origin, cancellationToken);
+                        return;
+                    }
+
+                    if (path == "/api/etabs/export/drift")
+                    {
+                        var req = JsonSerializer.Deserialize<GoreliKatExportRequest>(json, JsonOptions);
+                        if (req is null) { await WriteResponseAsync(stream, 400, "Bad Request", new { error = "Invalid request body." }, origin, cancellationToken); return; }
+                        var bytes = GoreliKatExcelReport.Build(req.SdsDD2, req.SdsDD3, req.Sd1DD2, req.Sd1DD3, req.Tp, req.K, req.EsnekDerz, req.Rows);
+                        await WriteBinaryResponseAsync(stream, 200, "OK", bytes, "GoreliKat_Sonuc.xlsx", origin, cancellationToken);
+                        return;
+                    }
+
+                    if (path == "/api/etabs/export/pdelta")
+                    {
+                        var req = JsonSerializer.Deserialize<IkinciMertebeExportRequest>(json, JsonOptions);
+                        if (req is null) { await WriteResponseAsync(stream, 400, "Bad Request", new { error = "Invalid request body." }, origin, cancellationToken); return; }
+                        var bytes = IkinciMertebeExcelReport.Build(req.Ch, req.R, req.D, req.Rows);
+                        await WriteBinaryResponseAsync(stream, 200, "OK", bytes, "IkinciMertebe_Sonuc.xlsx", origin, cancellationToken);
+                        return;
+                    }
+
+                    await WriteResponseAsync(stream, 404, "Not Found", new { error = "Endpoint not found." }, origin, cancellationToken);
                     return;
                 }
 
-                if (path == "/api/etabs/combinations")
-                {
-                    await WriteResponseAsync(stream, 200, "OK", _getCombinations(), origin, cancellationToken);
-                    return;
-                }
-
-                if (path == "/api/etabs/stories")
-                {
-                    await WriteResponseAsync(stream, 200, "OK", _getStories(), origin, cancellationToken);
-                    return;
-                }
-
-                if (path == "/api/etabs/story-drifts")
-                {
-                    query.TryGetValue("combos", out var combosParam);
-                    var names = string.IsNullOrWhiteSpace(combosParam)
-                        ? Array.Empty<string>()
-                        : combosParam.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-                    await WriteResponseAsync(stream, 200, "OK", _getStoryDrifts(names), origin, cancellationToken);
-                    return;
-                }
-
-                if (path == "/api/etabs/table")
-                {
-                    query.TryGetValue("name", out var tableName);
-                    query.TryGetValue("combos", out var tableCombos);
-                    var combos = string.IsNullOrWhiteSpace(tableCombos)
-                        ? Array.Empty<string>()
-                        : tableCombos.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-                    await WriteResponseAsync(stream, 200, "OK", _getTable(tableName ?? "", combos), origin, cancellationToken);
-                    return;
-                }
-
-                await WriteResponseAsync(stream, 404, "Not Found", new { error = "Endpoint not found." }, origin, cancellationToken);
+                await WriteResponseAsync(stream, 405, "Method Not Allowed", new { error = "Only GET/POST are allowed." }, origin, cancellationToken);
             }
-            catch { }
+            catch (Exception ex) { AgentLog.Write($"Request handling failed: {ex}"); }
         }
+    }
+
+    // Reads a full HTTP request (request line, headers, and exactly Content-Length body bytes)
+    // directly off the socket as bytes. A StreamReader-based line reader was used previously, but
+    // mixing buffered text reads with a raw byte-count body read risks losing or corrupting bytes
+    // already pulled into the reader's internal buffer — especially for any non-ASCII body content.
+    private static async Task<(string Method, string Path, Dictionary<string, string> Query, Dictionary<string, string> Headers, byte[] Body)?> ReadHttpRequestAsync(
+        NetworkStream stream, CancellationToken cancellationToken)
+    {
+        var buffer = new List<byte>(4096);
+        var chunk = new byte[4096];
+        int headerEnd;
+
+        while ((headerEnd = IndexOfHeaderTerminator(buffer)) < 0)
+        {
+            int read = await stream.ReadAsync(chunk, cancellationToken);
+            if (read == 0) return null;
+            for (int i = 0; i < read; i++) buffer.Add(chunk[i]);
+            if (buffer.Count > 1_000_000) return null; // guard against runaway/garbage input
+        }
+
+        var headerText = Encoding.ASCII.GetString(buffer.GetRange(0, headerEnd).ToArray());
+        var lines = headerText.Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
+        if (lines.Length == 0) return null;
+
+        var requestParts = lines[0].Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (requestParts.Length < 2) return null;
+
+        var method = requestParts[0].ToUpperInvariant();
+        var pathAndQuery = requestParts[1].Split('?', 2);
+        var path = pathAndQuery[0];
+        var query = pathAndQuery.Length > 1 ? ParseQuery(pathAndQuery[1]) : new Dictionary<string, string>();
+
+        var headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        for (int i = 1; i < lines.Length; i++)
+        {
+            var separator = lines[i].IndexOf(':');
+            if (separator > 0) headers[lines[i][..separator].Trim()] = lines[i][(separator + 1)..].Trim();
+        }
+
+        int contentLength = headers.TryGetValue("Content-Length", out var clStr) && int.TryParse(clStr, out var cl) ? cl : 0;
+        var bodyBytes = new byte[contentLength];
+
+        int bodyStart = headerEnd + 4; // skip the blank line ("\r\n\r\n")
+        int alreadyBuffered = Math.Min(buffer.Count - bodyStart, contentLength);
+        if (alreadyBuffered > 0) buffer.CopyTo(bodyStart, bodyBytes, 0, alreadyBuffered);
+
+        int received = alreadyBuffered;
+        while (received < contentLength)
+        {
+            int read = await stream.ReadAsync(bodyBytes.AsMemory(received, contentLength - received), cancellationToken);
+            if (read == 0) break;
+            received += read;
+        }
+
+        return (method, path, query, headers, bodyBytes);
+    }
+
+    private static int IndexOfHeaderTerminator(List<byte> buffer)
+    {
+        for (int i = 0; i + 3 < buffer.Count; i++)
+        {
+            if (buffer[i] == '\r' && buffer[i + 1] == '\n' && buffer[i + 2] == '\r' && buffer[i + 3] == '\n')
+                return i;
+        }
+        return -1;
     }
 
     private static Dictionary<string, string> ParseQuery(string query)
@@ -771,15 +944,46 @@ internal sealed class LocalBridgeServer : IDisposable
     {
         var body = payload is null
             ? Array.Empty<byte>()
-            : JsonSerializer.SerializeToUtf8Bytes(payload, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+            : JsonSerializer.SerializeToUtf8Bytes(payload, JsonOptions);
 
         var header = new StringBuilder()
             .Append($"HTTP/1.1 {statusCode} {reason}\r\n")
             .Append("Content-Type: application/json; charset=utf-8\r\n")
             .Append($"Content-Length: {body.Length}\r\n")
             .Append("Cache-Control: no-store\r\n")
-            .Append("Access-Control-Allow-Methods: GET, OPTIONS\r\n")
+            .Append("Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n")
             .Append("Access-Control-Allow-Headers: Accept, Content-Type\r\n")
+            .Append("Access-Control-Allow-Private-Network: true\r\n")
+            .Append("Connection: close\r\n");
+
+        if (!string.IsNullOrWhiteSpace(origin))
+            header.Append($"Access-Control-Allow-Origin: {origin}\r\nVary: Origin\r\n");
+
+        header.Append("\r\n");
+        var headerBytes = Encoding.ASCII.GetBytes(header.ToString());
+        await stream.WriteAsync(headerBytes, cancellationToken);
+        if (body.Length > 0)
+            await stream.WriteAsync(body, cancellationToken);
+    }
+
+    private static async Task WriteBinaryResponseAsync(
+        NetworkStream stream,
+        int statusCode,
+        string reason,
+        byte[] body,
+        string fileName,
+        string? origin,
+        CancellationToken cancellationToken)
+    {
+        var header = new StringBuilder()
+            .Append($"HTTP/1.1 {statusCode} {reason}\r\n")
+            .Append("Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet\r\n")
+            .Append($"Content-Length: {body.Length}\r\n")
+            .Append($"Content-Disposition: attachment; filename=\"{fileName}\"\r\n")
+            .Append("Cache-Control: no-store\r\n")
+            .Append("Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n")
+            .Append("Access-Control-Allow-Headers: Accept, Content-Type\r\n")
+            .Append("Access-Control-Expose-Headers: Content-Disposition\r\n")
             .Append("Access-Control-Allow-Private-Network: true\r\n")
             .Append("Connection: close\r\n");
 
@@ -817,7 +1021,7 @@ internal sealed record EtabsSnapshot(
 
 internal static class AgentInfo
 {
-    public const string Version = "1.0.0";
+    public const string Version = "1.1.0";
 }
 
 internal sealed record NameListResult(bool AgentOnline, bool EtabsConnected, string? Error, string[] Names);
@@ -831,6 +1035,289 @@ internal sealed record StoryDriftRow(string Story, string OutputCase, string Dir
 internal sealed record StoryDriftsResult(bool AgentOnline, bool EtabsConnected, string? Error, StoryDriftRow[] Rows);
 
 internal sealed record TableResult(bool AgentOnline, bool EtabsConnected, string? Error, string[] Fields, string[][] Rows);
+
+internal sealed record FrameKey(string Story, string Label);
+
+internal sealed record SelectResult(bool AgentOnline, bool EtabsConnected, string? Error, int SelectedCount);
+
+internal sealed record SelectFramesRequest(FrameKey[] Items);
+
+internal sealed record ColumnAxialRowDto(
+    string Story, string Column, string UniqueName, string LoadCase,
+    string Section, double B, double D, double P);
+
+internal sealed record ColumnAxialExportRequest(double Fck, double Limit, ColumnAxialRowDto[] Rows);
+
+// Builds the Kolon Eksenel Yük Excel report exactly as the desktop app's ExportExcel(): raw
+// inputs only (Story/Column/Section/b/d/P), everything else (Ac, Ac*fck, Oran, Durum) is a live
+// Excel formula referencing the fck/limit parameter cells, so the workbook stays editable after
+// download.
+internal static class ColumnAxialExcelReport
+{
+    public static byte[] Build(double fck, double limit, IReadOnlyList<ColumnAxialRowDto> rows)
+    {
+        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+        using var package = new ExcelPackage();
+        var ws = package.Workbook.Worksheets.Add("Kolon Eksenel Raporu");
+
+        ws.Cells[1, 1, 1, 13].Merge = true;
+        ws.Cells[1, 1].Value = "KOLON EKSENEL YÜK KONTROLÜ";
+        ws.Cells[1, 1].Style.Font.Size = 14;
+        ws.Cells[1, 1].Style.Font.Bold = true;
+        ws.Cells[1, 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+        ws.Cells[1, 15].Value = "RAPOR PARAMETRELERİ";
+        ws.Cells[1, 15, 1, 16].Merge = true;
+        ws.Cells[1, 15].Style.Font.Bold = true;
+        ws.Cells[1, 15].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+        ws.Cells[1, 15].Style.Fill.PatternType = ExcelFillStyle.Solid;
+        ws.Cells[1, 15].Style.Fill.BackgroundColor.SetColor(DrawingColor.FromArgb(240, 240, 240));
+
+        ws.Cells[2, 15].Value = "Beton Sınıfı (fck):";
+        ws.Cells[2, 16].Value = fck;
+        ws.Cells[3, 15].Value = "Eksenel Yük Sınırı:";
+        ws.Cells[3, 16].Value = limit;
+        ws.Cells[2, 16].Style.Font.Bold = true;
+        ws.Cells[3, 16].Style.Font.Bold = true;
+        ws.Cells[3, 16].Style.Font.Color.SetColor(DrawingColor.DarkBlue);
+
+        string[] headers = { "Story", "Column", "Unique Name", "fck", "Load Case", "Section", "b (cm)", "d (cm)", "Ac (cm2)", "Ac*fck (kN)", "P (kN)", "Oran", "Durum" };
+        for (int i = 0; i < headers.Length; i++)
+        {
+            var cell = ws.Cells[3, i + 1];
+            cell.Value = headers[i];
+            cell.Style.Font.Bold = true;
+            cell.Style.Fill.PatternType = ExcelFillStyle.Solid;
+            cell.Style.Fill.BackgroundColor.SetColor(DrawingColor.LightGray);
+            cell.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+        }
+
+        const int startRow = 4;
+        for (int i = 0; i < rows.Count; i++)
+        {
+            var r = startRow + i;
+            var item = rows[i];
+            ws.Cells[r, 1].Value = item.Story;
+            ws.Cells[r, 2].Value = item.Column;
+            ws.Cells[r, 3].Value = item.UniqueName;
+            ws.Cells[r, 4].Formula = "$P$2";
+            ws.Cells[r, 5].Value = item.LoadCase;
+            ws.Cells[r, 6].Value = item.Section;
+            ws.Cells[r, 7].Value = item.B == 0 ? null : (object)item.B;
+            ws.Cells[r, 8].Value = item.D;
+            ws.Cells[r, 9].Formula = $"IF(G{r}=\"\", PI()*POWER(H{r},2)/4, G{r}*H{r})";
+            ws.Cells[r, 10].Formula = $"(I{r}*D{r})/10";
+            ws.Cells[r, 11].Value = item.P;
+            ws.Cells[r, 12].Formula = $"IF(J{r}<>0, K{r}/J{r}, 0)";
+            ws.Cells[r, 13].Formula = $"IF(L{r}<=$P$3, \"OK\", \"NOT OK\")";
+        }
+
+        int lastRow = startRow + rows.Count - 1;
+        if (rows.Count > 0)
+        {
+            var range = ws.Cells[$"M{startRow}:M{lastRow}"];
+            var notOk = ws.ConditionalFormatting.AddEqual(range);
+            notOk.Formula = "\"NOT OK\"";
+            notOk.Style.Fill.BackgroundColor.Color = DrawingColor.LightPink;
+            notOk.Style.Font.Bold = true;
+
+            var ok = ws.ConditionalFormatting.AddEqual(range);
+            ok.Formula = "\"OK\"";
+            ok.Style.Fill.BackgroundColor.Color = DrawingColor.LightGreen;
+
+            var colorScale = ws.ConditionalFormatting.AddThreeColorScale(ws.Cells[$"L{startRow}:L{lastRow}"]);
+            colorScale.LowValue.Color = DrawingColor.LightGreen;
+            colorScale.MiddleValue.Color = DrawingColor.Yellow;
+            colorScale.HighValue.Color = DrawingColor.Red;
+        }
+
+        ws.Cells.AutoFitColumns();
+        return package.GetAsByteArray();
+    }
+}
+
+internal sealed record GoreliKatExportRow(string Story, string Combo, string Direction, double Drift);
+
+internal sealed record GoreliKatExportRequest(
+    double SdsDD2, double SdsDD3, double Sd1DD2, double Sd1DD3, double Tp, double K,
+    bool EsnekDerz, GoreliKatExportRow[] Rows);
+
+// Göreli Kat Ötelemesi report: only the raw per-row Drift value and the TBDY parameters are
+// hard values; Lambda, Limit, λ·δi/hi, and Durum are live Excel formulas so the sheet recomputes
+// if the engineer edits SDS/SD1/Tp/k after downloading it — same pattern as the column axial report.
+internal static class GoreliKatExcelReport
+{
+    public static byte[] Build(double sdsDD2, double sdsDD3, double sd1DD2, double sd1DD3, double tp, double k, bool esnekDerz, IReadOnlyList<GoreliKatExportRow> rows)
+    {
+        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+        using var package = new ExcelPackage();
+        var ws = package.Workbook.Worksheets.Add("Goreli Kat Otelemesi");
+
+        ws.Cells[1, 1, 1, 7].Merge = true;
+        ws.Cells[1, 1].Value = "GÖRELİ KAT ÖTELEMESİ TAHKİKİ";
+        ws.Cells[1, 1].Style.Font.Size = 14;
+        ws.Cells[1, 1].Style.Font.Bold = true;
+        ws.Cells[1, 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+        ws.Cells[1, 9].Value = "RAPOR PARAMETRELERİ";
+        ws.Cells[1, 9, 1, 10].Merge = true;
+        ws.Cells[1, 9].Style.Font.Bold = true;
+        ws.Cells[1, 9].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+        ws.Cells[1, 9].Style.Fill.PatternType = ExcelFillStyle.Solid;
+        ws.Cells[1, 9].Style.Fill.BackgroundColor.SetColor(DrawingColor.FromArgb(240, 240, 240));
+
+        void Param(int row, string label, object value)
+        {
+            ws.Cells[row, 9].Value = label;
+            ws.Cells[row, 10].Value = value;
+            ws.Cells[row, 10].Style.Font.Bold = true;
+        }
+        Param(2, "SDS (DD-2):", sdsDD2);
+        Param(3, "SDS (DD-3):", sdsDD3);
+        Param(4, "SD1 (DD-2):", sd1DD2);
+        Param(5, "SD1 (DD-3):", sd1DD3);
+        Param(6, "Tp:", tp);
+        Param(7, "k:", k);
+        Param(8, "Esnek Derz (1=Var):", esnekDerz ? 1 : 0);
+        ws.Cells[9, 9].Value = "TA (=SD1DD2/SDSDD2):";
+        ws.Cells[9, 10].Formula = "IF($J$2=0,0,$J$4/$J$2)";
+        ws.Cells[10, 9].Value = "Lambda:";
+        ws.Cells[10, 10].Formula = "IF($J$2=0,0,IF($J$6<$J$9,$J$3/$J$2,$J$5/$J$4))";
+        ws.Cells[11, 9].Value = "Limit:";
+        ws.Cells[11, 10].Formula = "IF($J$8=1,0.016*$J$7,0.008*$J$7)";
+        ws.Cells[10, 10].Style.Font.Color.SetColor(DrawingColor.DarkBlue);
+        ws.Cells[11, 10].Style.Font.Color.SetColor(DrawingColor.DarkBlue);
+
+        string[] headers = { "Kat", "Kombinasyon", "Yön", "Drift", "λ·δi/hi", "Limit", "Durum" };
+        for (int i = 0; i < headers.Length; i++)
+        {
+            var cell = ws.Cells[3, i + 1];
+            cell.Value = headers[i];
+            cell.Style.Font.Bold = true;
+            cell.Style.Fill.PatternType = ExcelFillStyle.Solid;
+            cell.Style.Fill.BackgroundColor.SetColor(DrawingColor.LightGray);
+            cell.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+        }
+
+        const int startRow = 4;
+        for (int i = 0; i < rows.Count; i++)
+        {
+            var r = startRow + i;
+            var item = rows[i];
+            ws.Cells[r, 1].Value = item.Story;
+            ws.Cells[r, 2].Value = item.Combo;
+            ws.Cells[r, 3].Value = item.Direction;
+            ws.Cells[r, 4].Value = item.Drift;
+            ws.Cells[r, 5].Formula = $"$J$10*D{r}";
+            ws.Cells[r, 6].Formula = "$J$11";
+            ws.Cells[r, 7].Formula = $"IF(E{r}<=F{r},\"OK\",\"NOT OK\")";
+        }
+
+        int lastRow = startRow + rows.Count - 1;
+        if (rows.Count > 0)
+        {
+            var range = ws.Cells[$"G{startRow}:G{lastRow}"];
+            var notOk = ws.ConditionalFormatting.AddEqual(range);
+            notOk.Formula = "\"NOT OK\"";
+            notOk.Style.Fill.BackgroundColor.Color = DrawingColor.LightPink;
+            notOk.Style.Font.Bold = true;
+
+            var ok = ws.ConditionalFormatting.AddEqual(range);
+            ok.Formula = "\"OK\"";
+            ok.Style.Fill.BackgroundColor.Color = DrawingColor.LightGreen;
+        }
+
+        ws.Cells.AutoFitColumns();
+        return package.GetAsByteArray();
+    }
+}
+
+internal sealed record IkinciMertebeExportRow(string Story, string Combo, string Direction, double Vi, double Wij, double DriftRatio);
+
+internal sealed record IkinciMertebeExportRequest(double Ch, double R, double D, IkinciMertebeExportRow[] Rows);
+
+// İkinci Mertebe report: Story Forces / Mass / Drift inputs (Vi, Wij, DriftRatio) are raw values
+// (they come from cumulative per-story ETABS results), while Theta, Limit, and Durum are live
+// Excel formulas referencing the Ch/R/D parameter cells.
+internal static class IkinciMertebeExcelReport
+{
+    public static byte[] Build(double ch, double r, double d, IReadOnlyList<IkinciMertebeExportRow> rows)
+    {
+        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+        using var package = new ExcelPackage();
+        var ws = package.Workbook.Worksheets.Add("Ikinci Mertebe");
+
+        ws.Cells[1, 1, 1, 9].Merge = true;
+        ws.Cells[1, 1].Value = "İKİNCİ MERTEBE ETKİLERİ TAHKİKİ";
+        ws.Cells[1, 1].Style.Font.Size = 14;
+        ws.Cells[1, 1].Style.Font.Bold = true;
+        ws.Cells[1, 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+        ws.Cells[1, 11].Value = "RAPOR PARAMETRELERİ";
+        ws.Cells[1, 11, 1, 12].Merge = true;
+        ws.Cells[1, 11].Style.Font.Bold = true;
+        ws.Cells[1, 11].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+        ws.Cells[1, 11].Style.Fill.PatternType = ExcelFillStyle.Solid;
+        ws.Cells[1, 11].Style.Fill.BackgroundColor.SetColor(DrawingColor.FromArgb(240, 240, 240));
+
+        ws.Cells[2, 11].Value = "Ch:";
+        ws.Cells[2, 12].Value = ch;
+        ws.Cells[3, 11].Value = "R:";
+        ws.Cells[3, 12].Value = r;
+        ws.Cells[4, 11].Value = "D:";
+        ws.Cells[4, 12].Value = d;
+        ws.Cells[2, 12].Style.Font.Bold = true;
+        ws.Cells[3, 12].Style.Font.Bold = true;
+        ws.Cells[4, 12].Style.Font.Bold = true;
+        ws.Cells[5, 11].Value = "Limit (=0.12*D/(Ch*R)):";
+        ws.Cells[5, 12].Formula = "IF($L$2*$L$3=0,0,0.12*$L$4/($L$2*$L$3))";
+        ws.Cells[5, 12].Style.Font.Color.SetColor(DrawingColor.DarkBlue);
+
+        string[] headers = { "Kat", "Kombinasyon", "Yön", "Vi (kN)", "Wij (kN)", "Drift", "Theta (θ)", "Limit", "Durum" };
+        for (int i = 0; i < headers.Length; i++)
+        {
+            var cell = ws.Cells[3, i + 1];
+            cell.Value = headers[i];
+            cell.Style.Font.Bold = true;
+            cell.Style.Fill.PatternType = ExcelFillStyle.Solid;
+            cell.Style.Fill.BackgroundColor.SetColor(DrawingColor.LightGray);
+            cell.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+        }
+
+        const int startRow = 4;
+        for (int i = 0; i < rows.Count; i++)
+        {
+            var r2 = startRow + i;
+            var item = rows[i];
+            ws.Cells[r2, 1].Value = item.Story;
+            ws.Cells[r2, 2].Value = item.Combo;
+            ws.Cells[r2, 3].Value = item.Direction;
+            ws.Cells[r2, 4].Value = item.Vi;
+            ws.Cells[r2, 5].Value = item.Wij;
+            ws.Cells[r2, 6].Value = item.DriftRatio;
+            ws.Cells[r2, 7].Formula = $"IF(D{r2}=0,0,F{r2}*E{r2}/D{r2})";
+            ws.Cells[r2, 8].Formula = "$L$5";
+            ws.Cells[r2, 9].Formula = $"IF(G{r2}<=H{r2},\"OK\",\"NOT OK\")";
+        }
+
+        int lastRow = startRow + rows.Count - 1;
+        if (rows.Count > 0)
+        {
+            var range = ws.Cells[$"I{startRow}:I{lastRow}"];
+            var notOk = ws.ConditionalFormatting.AddEqual(range);
+            notOk.Formula = "\"NOT OK\"";
+            notOk.Style.Fill.BackgroundColor.Color = DrawingColor.LightPink;
+            notOk.Style.Font.Bold = true;
+
+            var ok = ws.ConditionalFormatting.AddEqual(range);
+            ok.Formula = "\"OK\"";
+            ok.Style.Fill.BackgroundColor.Color = DrawingColor.LightGreen;
+        }
+
+        ws.Cells.AutoFitColumns();
+        return package.GetAsByteArray();
+    }
+}
 
 internal static class NativeMethods
 {
