@@ -719,7 +719,7 @@ internal sealed record EtabsSnapshot(
 
 internal static class AgentInfo
 {
-    public const string Version = "0.3.3";
+    public const string Version = "0.4.0";
 }
 
 internal sealed record NameListResult(bool AgentOnline, bool EtabsConnected, string? Error, string[] Names);

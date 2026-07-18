@@ -8,7 +8,7 @@
     <PlatformTarget>x64</PlatformTarget>
     <AssemblyName>StructuralEngineeringAssistant.Agent</AssemblyName>
     <RootNamespace>StructuralEngineeringAssistant.Agent</RootNamespace>
-    <Version>0.3.3</Version>
+    <Version>0.4.0</Version>
     <Authors>Ahmet Şimşek</Authors>
     <Description>Local Windows bridge between the Structural Engineering Assistant web app and ETABS.</Description>
     <PublishSingleFile>true</PublishSingleFile>
