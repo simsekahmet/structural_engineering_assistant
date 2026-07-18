@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f3f7fc">
+  <meta name="description" content="Web-based structural engineering checks and reporting for ETABS models.">
+  <title>Structural Engineering Assistant</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#dashboard" data-i18n-aria-label="brand.home" aria-label="Structural Engineering Assistant home">
+        <span>
+          <strong>Structural Engineering Assistant</strong>
+          <small data-i18n="brand.subtitle">ETABS checks and reporting platform</small>
+        </span>
+      </a>
+
+      <div class="topbar-actions">
+        <div class="model-chip" data-i18n-title="model.activeTitle" title="Active ETABS model">
+          <span class="status-dot" id="connectionDot"></span>
+          <span><small data-i18n="model.active">Active model</small><strong id="modelName" data-i18n="model.waiting">Waiting for connection</strong></span>
+        </div>
+        <button class="button button-primary" id="connectButton" type="button">
+          <span class="button-icon" aria-hidden="true">↗</span>
+          <span data-i18n="action.connect">Connect to ETABS</span>
+        </button>
+        <button class="switch theme-switch" id="themeToggle" type="button" aria-label="Switch light / dark mode" aria-pressed="false">
+          <span class="switch-label sun" aria-hidden="true">☀</span>
+          <span class="switch-label moon" aria-hidden="true">☾</span>
+          <span class="switch-thumb" aria-hidden="true"></span>
+        </button>
+        <button class="switch language-switch" id="languageToggle" type="button" aria-label="Switch English / Turkish" aria-pressed="false">
+          <span class="switch-label">EN</span><span class="switch-label">TR</span><span class="switch-thumb" aria-hidden="true"></span>
+        </button>
+        <span class="author-signature">Ahmet Şimşek</span>
+      </div>
+    </header>
+
+    <aside class="sidebar" data-i18n-aria-label="nav.aria" aria-label="Application menu">
+      <nav>
+        <p class="nav-label" data-i18n="nav.general">GENERAL</p>
+        <a class="nav-item active" href="#dashboard" data-view="dashboard">
+          <span class="nav-icon">⌂</span><span>Dashboard</span>
+        </a>
+
+        <p class="nav-label" data-i18n="nav.analysis">ANALYSIS & CHECKS</p>
+        <a class="nav-item" href="#spectrum" data-view="spectrum"><span class="nav-icon">⌁</span><span data-i18n="module.spectrum.title">Design Spectrum</span></a>
+        <a class="nav-item" href="#increment" data-view="increment"><span class="nav-icon">↟</span><span data-i18n="module.increment.title">Scaling Calculation</span></a>
+        <a class="nav-item" href="#drift" data-view="drift"><span class="nav-icon">↔</span><span data-i18n="module.drift.title">Interstory Drift</span></a>
+        <a class="nav-item" href="#pdelta" data-view="pdelta"><span class="nav-icon">ϑ</span><span data-i18n="module.pdelta.title">Second-Order Effects</span></a>
+
+        <p class="nav-label" data-i18n="nav.memberChecks">MEMBER CHECKS</p>
+        <a class="nav-item" href="#column-axial" data-view="column-axial"><span class="nav-icon">▥</span><span data-i18n="module.columnAxial.title">Column Axial Load</span></a>
+        <a class="nav-item" href="#wall-shear" data-view="wall-shear"><span class="nav-icon">▤</span><span data-i18n="module.wallShear.title">Wall Shear</span></a>
+        <a class="nav-item" href="#wall-axial" data-view="wall-axial"><span class="nav-icon">▯</span><span data-i18n="module.wallAxial.title">Wall Axial Load</span></a>
+        <a class="nav-item" href="#beam-shear" data-view="beam-shear"><span class="nav-icon">═</span><span data-i18n="module.beamShear.title">Beam Shear</span></a>
+        <a class="nav-item" href="#beam-axial" data-view="beam-axial"><span class="nav-icon">⇥</span><span data-i18n="module.beamAxial.title">Beam Axial Load</span></a>
+
+        <p class="nav-label" data-i18n="nav.schedules">SCHEDULES & OUTPUTS</p>
+        <a class="nav-item" href="#column-schedule" data-view="column-schedule"><span class="nav-icon">▦</span><span data-i18n="module.columnSchedule.title">Column Schedule</span></a>
+        <a class="nav-item" href="#wall-schedule" data-view="wall-schedule"><span class="nav-icon">▧</span><span data-i18n="module.wallSchedule.title">Wall Schedule</span></a>
+        <a class="nav-item" href="#beam-schedule" data-view="beam-schedule"><span class="nav-icon">▭</span><span data-i18n="module.beamSchedule.title">Beam Schedule</span></a>
+        <a class="nav-item" href="#slab-schedule" data-view="slab-schedule"><span class="nav-icon">▱</span><span data-i18n="module.slabSchedule.title">Slab Schedule</span></a>
+        <a class="nav-item" href="#foundation-schedule" data-view="foundation-schedule"><span class="nav-icon">▰</span><span data-i18n="module.foundationSchedule.title">Foundation Schedule</span></a>
+      </nav>
+      <div class="sidebar-footer">
+        <span class="version-badge" data-i18n="version">v0.2 · bilingual preview</span>
+      </div>
+    </aside>
+
+    <main class="main-content" id="mainContent">
+      <section class="view active" id="dashboard" aria-labelledby="dashboardTitle">
+        <div class="page-heading">
+          <div>
+            <span class="eyebrow" data-i18n="dashboard.eyebrow">PROJECT CENTER</span>
+            <h1 id="dashboardTitle" data-i18n="dashboard.title">Structural Engineering Dashboard</h1>
+            <p data-i18n="dashboard.description">Connect your ETABS model, manage engineering checks, and report results from one workspace.</p>
+          </div>
+          <div class="heading-meta"><span data-i18n="bridge.local">Local bridge</span><strong id="bridgeStatus" data-i18n="status.offline">Offline</strong></div>
+        </div>
+
+        <div class="stat-grid">
+          <article class="stat-card accent-blue">
+            <span class="stat-icon">◫</span><div><small data-i18n="model.active">Active model</small><strong id="activeModelStat">—</strong><span data-i18n="stat.connectionRequired">ETABS connection required</span></div>
+          </article>
+          <article class="stat-card accent-violet">
+            <span class="stat-icon">✓</span><div><small data-i18n="stat.readyModules">Interface modules</small><strong>14</strong><span data-i18n="stat.migrationDefined">Calculation engines not migrated yet</span></div>
+          </article>
+          <article class="stat-card accent-green">
+            <span class="stat-icon">◎</span><div><small data-i18n="stat.lastCheck">Last check</small><strong>—</strong><span data-i18n="stat.noCheck">No check has been run</span></div>
+          </article>
+          <article class="stat-card accent-amber">
+            <span class="stat-icon">⇩</span><div><small data-i18n="stat.reports">Reports</small><strong>0</strong><span data-i18n="stat.reportTypes">Excel / PDF outputs</span></div>
+          </article>
+        </div>
+
+        <div class="dashboard-grid">
+          <section class="panel modules-panel">
+            <div class="panel-heading">
+              <div><span class="step-number">1</span><div><h2 data-i18n="quick.title">Quick Start</h2><p data-i18n="quick.description">Select an engineering module</p></div></div>
+              <button class="text-button" type="button" id="showAllModules" data-i18n="action.showAll">Show all →</button>
+            </div>
+            <div class="module-grid" id="moduleGrid"></div>
+          </section>
+
+          <aside class="panel activity-panel">
+            <div class="panel-heading compact"><div><span class="step-number">2</span><div><h2 data-i18n="workflow.title">Workflow</h2><p data-i18n="workflow.description">Local ETABS connection status</p></div></div></div>
+            <ol class="workflow-list">
+              <li class="current"><span>1</span><div><strong data-i18n="workflow.open.title">Open ETABS</strong><small data-i18n="workflow.open.text">Load the model to be checked.</small></div></li>
+              <li><span>2</span><div><strong data-i18n="workflow.agent.title">Run the local bridge</strong><small data-i18n="workflow.agent.text">The Windows agent provides COM API access.</small></div></li>
+              <li><span>3</span><div><strong data-i18n="workflow.connect.title">Connect the web interface</strong><small data-i18n="workflow.connect.text">Use the connection button above.</small></div></li>
+              <li><span>4</span><div><strong data-i18n="workflow.check.title">Run a check</strong><small data-i18n="workflow.check.text">Review and export the results.</small></div></li>
+            </ol>
+            <button class="button button-secondary full-width" id="connectionHelp" type="button" data-i18n="action.viewArchitecture">View connection architecture</button>
+          </aside>
+        </div>
+
+        <section class="panel terminal-panel">
+          <div class="terminal-heading"><div><span class="terminal-dot red"></span><span class="terminal-dot amber"></span><span class="terminal-dot green"></span><strong>Terminal</strong></div><button id="clearTerminal" type="button" data-i18n="action.clear">Clear</button></div>
+          <div class="terminal" id="terminal" aria-live="polite">
+            <p><time>09:00:00</time><span class="ok">✓</span> <span data-i18n="terminal.ready">Web interface ready.</span></p>
+            <p><time>09:00:01</time><span class="info">i</span> <span data-i18n="terminal.waiting">Waiting for the Windows bridge to connect to ETABS.</span></p>
+          </div>
+        </section>
+
+        <section class="panel about-panel" aria-labelledby="aboutTitle">
+          <div class="panel-heading">
+            <div><span class="step-number">3</span><div><h2 id="aboutTitle" data-i18n="about.title">About the Platform</h2><p data-i18n="about.subtitle">Purpose, architecture, and current implementation status</p></div></div>
+          </div>
+          <div class="about-grid">
+            <article class="about-card">
+              <span class="about-icon">01</span>
+              <h3 data-i18n="about.purpose.title">Engineering workspace</h3>
+              <p data-i18n="about.purpose.text">Structural Engineering Assistant brings ETABS checks, member schedules, results, and exports into one bilingual web interface.</p>
+            </article>
+            <article class="about-card">
+              <span class="about-icon">02</span>
+              <h3 data-i18n="about.connection.title">Local ETABS bridge</h3>
+              <p data-i18n="about.connection.text">Because browsers cannot access the ETABS COM API directly, a secure Windows agent will connect this interface to the model open on your computer.</p>
+            </article>
+            <article class="about-card">
+              <span class="about-icon">03</span>
+              <h3 data-i18n="about.status.title">Current preview</h3>
+              <p data-i18n="about.status.text">The bilingual interface is available now. ETABS connectivity and calculation engines are the next implementation stage and are not active in this preview.</p>
+            </article>
+          </div>
+          <div class="about-note"><strong data-i18n="about.note.label">Important:</strong> <span data-i18n="about.note.text">Engineering results must be reviewed and approved by the responsible structural engineer.</span></div>
+        </section>
+      </section>
+
+      <section class="view module-view" id="moduleView" aria-labelledby="moduleTitle">
+        <div class="page-heading">
+          <div><span class="eyebrow" id="moduleCategory">ENGINEERING MODULE</span><h1 id="moduleTitle">Module</h1><p id="moduleDescription"></p></div>
+          <button class="button button-secondary" type="button" data-back-dashboard data-i18n="action.dashboard">← Dashboard</button>
+        </div>
+        <div class="module-workspace">
+          <section class="panel setup-panel">
+            <div class="panel-heading compact"><div><span class="step-number">1</span><div><h2 data-i18n="moduleData.title">Model Data</h2><p data-i18n="moduleData.description">Dataset to be read from the ETABS model</p></div></div></div>
+            <div class="empty-state">
+              <span class="empty-icon">↗</span>
+              <h3 data-i18n="moduleData.waiting">Waiting for ETABS connection</h3>
+              <p data-i18n="moduleData.note">Module inputs will be retrieved securely from the active ETABS model through the local bridge.</p>
+              <button class="button button-primary" type="button" data-connect data-i18n="action.connect">Connect to ETABS</button>
+            </div>
+          </section>
+          <section class="panel results-panel">
+            <div class="panel-heading compact"><div><span class="step-number">2</span><div><h2 data-i18n="results.title">Check Results</h2><p data-i18n="results.description">Summary metrics and member-level results</p></div></div></div>
+            <div class="table-wrap">
+              <table><thead><tr><th data-i18n="table.member">Member</th><th data-i18n="table.story">Story</th><th data-i18n="table.demand">Demand</th><th data-i18n="table.capacity">Capacity</th><th data-i18n="table.ratio">Ratio</th><th data-i18n="table.status">Status</th></tr></thead><tbody><tr><td colspan="6" class="table-empty" data-i18n="table.empty">Results will appear here after a connection is established.</td></tr></tbody></table>
+            </div>
+          </section>
+        </div>
+        <section class="panel terminal-panel">
+          <div class="terminal-heading"><div><span class="terminal-dot red"></span><span class="terminal-dot amber"></span><span class="terminal-dot green"></span><strong data-i18n="moduleLog.title">Module Log</strong></div></div>
+          <div class="terminal"><p><time>—</time><span class="info">i</span> <span data-i18n="moduleLog.ready">Module shell is ready for web migration.</span></p></div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="architectureDialog">
+    <form method="dialog">
+      <div class="dialog-heading"><div><div><h2 data-i18n="dialog.title">ETABS Web Connection</h2><p data-i18n="dialog.subtitle">Recommended secure local bridge architecture</p></div></div><button class="dialog-close" data-i18n-aria-label="action.close" aria-label="Close">×</button></div>
+      <div class="architecture-flow">
+        <div><strong data-i18n="architecture.web">Web Interface</strong><small>GitHub Pages</small></div><span>HTTPS / JSON</span><div><strong>Windows Agent</strong><small>localhost</small></div><span>COM API</span><div><strong>ETABS 22</strong><small data-i18n="model.active">Active model</small></div>
+      </div>
+      <p class="dialog-note" data-i18n="dialog.note">A browser cannot access COM objects directly. A small signed Windows service forwards only approved commands to the ETABS API and returns results to the web interface as JSON.</p>
+      <button class="button button-primary full-width" value="close" data-i18n="action.understood">Understood</button>
+    </form>
+  </dialog>
+
+  <script src="app.js" defer></script>
+</body>
+</html>
