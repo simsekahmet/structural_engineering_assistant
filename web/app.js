@@ -2,7 +2,7 @@ const moduleDefinitions = [
   { id: 'spectrum', key: 'spectrum', icon: '⌁', categoryKey: 'category.analysis' },
   { id: 'increment', key: 'increment', icon: '↟', categoryKey: 'category.analysis' },
   { id: 'drift', key: 'drift', icon: '↔', categoryKey: 'category.analysis', ready: true },
-  { id: 'pdelta', key: 'pdelta', icon: 'ϑ', categoryKey: 'category.analysis' },
+  { id: 'pdelta', key: 'pdelta', icon: 'ϑ', categoryKey: 'category.analysis', ready: true },
   { id: 'column-axial', key: 'columnAxial', icon: '▥', categoryKey: 'category.memberChecks' },
   { id: 'wall-shear', key: 'wallShear', icon: '▤', categoryKey: 'category.memberChecks' },
   { id: 'wall-axial', key: 'wallAxial', icon: '▯', categoryKey: 'category.memberChecks' },
@@ -86,7 +86,12 @@ const translations = {
     'drift.error.notConnected': 'Connect to ETABS first.',
     'drift.error.noCombos': 'Select at least one combination.',
     'drift.error.noData': 'No story drift data was returned for the selected combinations.',
-    'drift.error.fetchFailed': 'Could not reach the local ETABS bridge'
+    'drift.error.fetchFailed': 'Could not reach the local ETABS bridge',
+    'pdelta.params.title': 'Calculation Parameters', 'pdelta.params.ch': 'Ch', 'pdelta.params.r': 'R', 'pdelta.params.d': 'D',
+    'pdelta.combos.hint': 'Select the earthquake combinations (direction X/Y, level UST/ALT), e.g. RSXUST.',
+    'pdelta.table.vi': 'Vi (kN)', 'pdelta.table.wij': 'Wij (kN)', 'pdelta.table.theta': 'θ',
+    'pdelta.status.passed': 'Second-order effects can be neglected.',
+    'pdelta.status.failed': 'Second-order effects must be considered.'
   },
   tr: {
     'brand.subtitle': 'ETABS tahkik ve raporlama platformu',
@@ -158,7 +163,12 @@ const translations = {
     'drift.error.notConnected': "Önce ETABS'a bağlanın.",
     'drift.error.noCombos': 'En az bir kombinasyon seçin.',
     'drift.error.noData': 'Seçili kombinasyonlar için story drift verisi bulunamadı.',
-    'drift.error.fetchFailed': 'Yerel ETABS köprüsüne ulaşılamadı'
+    'drift.error.fetchFailed': 'Yerel ETABS köprüsüne ulaşılamadı',
+    'pdelta.params.title': 'Hesap Parametreleri', 'pdelta.params.ch': 'Ch', 'pdelta.params.r': 'R', 'pdelta.params.d': 'D',
+    'pdelta.combos.hint': 'Deprem kombinasyonlarını seçin (yön X/Y, seviye ÜST/ALT), örn. RSXUST.',
+    'pdelta.table.vi': 'Vi (kN)', 'pdelta.table.wij': 'Wij (kN)', 'pdelta.table.theta': 'θ',
+    'pdelta.status.passed': 'İkinci mertebe etkileri göz ardı edilebilir.',
+    'pdelta.status.failed': 'İkinci mertebe etkileri hesaba katılmalı.'
   }
 };
 
@@ -173,6 +183,19 @@ let currentLanguage = localStorage.getItem('sea-language') === 'tr' ? 'tr' : 'en
 const AGENT_BASE = 'http://127.0.0.1:5218';
 const defaultSetupPanelHtml = $('#setupPanel').innerHTML;
 const defaultResultsPanelHtml = $('#resultsPanel').innerHTML;
+
+// Module id -> renderer. Populated with function declarations (hoisted), used by setActiveView.
+const moduleRenderers = {
+  drift: renderDriftModule,
+  pdelta: renderPdeltaModule
+};
+
+// Find a column index in an ETABS display table by normalized header name (case/space/dot-insensitive).
+function tableIndex(fields, ...names) {
+  const norm = s => String(s).toUpperCase().replace(/[\s.]/g, '');
+  const wanted = names.map(norm);
+  return fields.findIndex(f => wanted.includes(norm(f)));
+}
 
 function t(key, values = {}) {
   const value = translations[currentLanguage][key] ?? translations.en[key] ?? key;
@@ -274,9 +297,9 @@ function setActiveView(id) {
   $$('.nav-item').forEach(item => item.classList.toggle('active', item.dataset.view === id));
   window.scrollTo({ top: 0, behavior: 'smooth' });
 
-  if (id === 'drift') {
-    renderDriftSetupPanel();
-    renderDriftResultsPanel();
+  const renderer = moduleRenderers[id];
+  if (renderer) {
+    renderer();
   } else {
     $('#setupPanel').innerHTML = defaultSetupPanelHtml;
     $('#resultsPanel').innerHTML = defaultResultsPanelHtml;
@@ -411,6 +434,11 @@ function calculateDriftItems(rows, params) {
 function sortDriftItems(items) {
   return [...items].sort((a, b) =>
     (a.direction === 'X' ? 0 : 1) - (b.direction === 'X' ? 0 : 1) || a.story.localeCompare(b.story));
+}
+
+function renderDriftModule() {
+  renderDriftSetupPanel();
+  renderDriftResultsPanel();
 }
 
 function renderDriftSetupPanel() {
@@ -604,6 +632,312 @@ function exportDriftCsv() {
   const a = document.createElement('a');
   a.href = url;
   a.download = `GoreliKat_Sonuc_${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ---------------------------------------------------------------------------
+// Second-Order Effects (İkinci Mertebe) — ported from IkinciMertebeManager (C#)
+// θ = (avgDriftRatio · cumulativeWeight) / storyShear ; limit = 0.12·D / (Ch·R)
+// ---------------------------------------------------------------------------
+
+const pdeltaState = {
+  params: { ch: 0.5, r: 8, d: 2.5, bodrum: false, bodrumKat: 0 },
+  combos: [],
+  stories: [],
+  selected: [],
+  lastResult: null
+};
+
+const pdeltaContains = (haystack, needle) => haystack.toUpperCase().includes(needle.toUpperCase());
+// Bidirectional partial match, matching the C# LoadCase comparison.
+const pdeltaLoadMatch = (a, b) => a === b || pdeltaContains(a, b) || pdeltaContains(b, a);
+
+function pdeltaCalculateDirection(sortedStories, forces, drifts, mass, direction, ch, r, d) {
+  const results = [];
+  const limit = 0.12 * d / (ch * r);
+  const uniqueCombos = [...new Set(forces.map(f => f.loadCase))];
+  for (const combo of uniqueCombos) {
+    let cumWeight = 0;
+    for (const story of sortedStories) {
+      const m = mass.find(x => x.story === story.name);
+      cumWeight += m ? m.weight : 0;
+      const fd = forces.find(f => f.story === story.name && pdeltaLoadMatch(f.loadCase, combo));
+      const dd = drifts.find(x => x.story === story.name && pdeltaLoadMatch(x.loadCase, combo));
+      if (!fd && !dd) continue;
+      const v = direction === 'X' ? (fd ? fd.vx : 0) : (fd ? fd.vy : 0);
+      const delta = dd ? dd.drift : 0;
+      const theta = v !== 0 ? (delta * cumWeight) / v : 0;
+      results.push({ story: story.name, loadCase: combo, direction, vi: v, wij: cumWeight, driftRatio: delta, theta, limit, ok: theta <= limit });
+    }
+  }
+  return results;
+}
+
+// Split selected combos into X/Y × UST/ALT buckets, matching the desktop's loose matching.
+function pdeltaBucketCombos(selected) {
+  const u = s => s.toUpperCase();
+  let xUST = selected.filter(c => u(c).includes('X') && (u(c).includes('UST') || u(c).includes('U')));
+  let xALT = selected.filter(c => u(c).includes('X') && (u(c).includes('ALT') || u(c).includes('A')));
+  let yUST = selected.filter(c => u(c).includes('Y') && (u(c).includes('UST') || u(c).includes('U')));
+  let yALT = selected.filter(c => u(c).includes('Y') && (u(c).includes('ALT') || u(c).includes('A')));
+  if (xUST.length === 0 && xALT.length === 0) xUST = selected.filter(c => u(c).includes('X'));
+  if (yUST.length === 0 && yALT.length === 0) yUST = selected.filter(c => u(c).includes('Y'));
+  return { xUST, xALT, yUST, yALT };
+}
+
+function pdeltaComputeResult(forces, drifts, mass, stories, selected, params) {
+  const nonBase = stories.filter(s => s.name.toLowerCase() !== 'base');
+  const basementNames = new Set();
+  if (params.bodrum && params.bodrumKat > 0) {
+    [...nonBase].sort((a, b) => a.elevation - b.elevation).slice(0, params.bodrumKat).forEach(s => basementNames.add(s.name));
+  }
+
+  const { xUST, xALT, yUST, yALT } = pdeltaBucketCombos(selected);
+  const anyMatch = (list, loadCase) => list.some(c => pdeltaContains(loadCase, c));
+
+  const xForces = [], yForces = [], xDrifts = [], yDrifts = [];
+  for (const f of forces) {
+    const isB = basementNames.has(f.story);
+    if (isB ? anyMatch(xALT, f.loadCase) : anyMatch(xUST, f.loadCase)) xForces.push(f);
+    if (isB ? anyMatch(yALT, f.loadCase) : anyMatch(yUST, f.loadCase)) yForces.push(f);
+  }
+  for (const dd of drifts) {
+    const isB = basementNames.has(dd.story);
+    if (dd.direction.toUpperCase() === 'X') {
+      if (isB ? anyMatch(xALT, dd.loadCase) : anyMatch(xUST, dd.loadCase)) xDrifts.push(dd);
+    } else if (dd.direction.toUpperCase() === 'Y') {
+      if (isB ? anyMatch(yALT, dd.loadCase) : anyMatch(yUST, dd.loadCase)) yDrifts.push(dd);
+    }
+  }
+
+  const sorted = [...nonBase].sort((a, b) => b.elevation - a.elevation); // top -> base
+  let results = [];
+  if (xForces.length) results = results.concat(pdeltaCalculateDirection(sorted, xForces, xDrifts, mass, 'X', params.ch, params.r, params.d));
+  if (yForces.length) results = results.concat(pdeltaCalculateDirection(sorted, yForces, yDrifts, mass, 'Y', params.ch, params.r, params.d));
+
+  const order = sorted.map(s => s.name);
+  results.sort((a, b) =>
+    a.direction.localeCompare(b.direction) ||
+    order.indexOf(a.story) - order.indexOf(b.story) ||
+    a.loadCase.localeCompare(b.loadCase));
+
+  return { items: results, allOk: results.length > 0 && results.every(x => x.ok) };
+}
+
+function parseTableRows(res, mapFn) {
+  if (!res || !res.rows) return [];
+  return res.rows.map(mapFn).filter(Boolean);
+}
+
+async function pdeltaFetchAndCompute() {
+  const comboParam = encodeURIComponent(pdeltaState.selected.join(','));
+  const [massRes, forcesRes, driftsRes, storiesRes] = await Promise.all([
+    fetchAgentJson(`/api/etabs/table?name=${encodeURIComponent('Mass Summary by Story')}`),
+    fetchAgentJson(`/api/etabs/table?name=${encodeURIComponent('Story Forces')}&combos=${comboParam}`),
+    fetchAgentJson(`/api/etabs/table?name=${encodeURIComponent('Story Max Over Avg Drifts')}&combos=${comboParam}`),
+    fetchAgentJson('/api/etabs/stories')
+  ]);
+  for (const r of [massRes, forcesRes, driftsRes, storiesRes])
+    if (!r.etabsConnected) throw new Error(r.error || t('drift.error.notConnected'));
+
+  // Mass -> weight (kN) = UX · 9.81
+  const mF = massRes.fields;
+  const mStory = tableIndex(mF, 'Story'), mUX = tableIndex(mF, 'UX', 'MassX');
+  const mass = parseTableRows(massRes, row => {
+    const story = row[mStory];
+    if (!story || story.toLowerCase() === 'base') return null;
+    return { story, weight: (parseFloat(row[mUX]) || 0) * 9.81 };
+  });
+
+  // Story Forces -> Location == Bottom, V = |VX|/|VY|
+  const fF = forcesRes.fields;
+  const fStory = tableIndex(fF, 'Story'), fCase = tableIndex(fF, 'OutputCase', 'LoadCase', 'Case');
+  const fLoc = tableIndex(fF, 'Location'), fVX = tableIndex(fF, 'VX'), fVY = tableIndex(fF, 'VY');
+  const forces = parseTableRows(forcesRes, row => {
+    if (fLoc >= 0 && (row[fLoc] || '').toLowerCase() !== 'bottom') return null;
+    if (fStory < 0 || fCase < 0) return null;
+    return {
+      story: row[fStory], loadCase: row[fCase],
+      vx: Math.abs(parseFloat(row[fVX]) || 0), vy: Math.abs(parseFloat(row[fVY]) || 0)
+    };
+  });
+
+  // Story Max Over Avg Drifts -> Avg Drift column (ratio)
+  const dF = driftsRes.fields;
+  const dStory = tableIndex(dF, 'Story'), dCase = tableIndex(dF, 'OutputCase', 'LoadCase', 'Case');
+  const dDir = tableIndex(dF, 'Direction');
+  let dDrift = tableIndex(dF, 'AvgDrift');
+  if (dDrift < 0) dDrift = 6; // desktop fallback: fixed Avg-Drift column index
+  const drifts = parseTableRows(driftsRes, row => {
+    if (dStory < 0 || dCase < 0) return null;
+    return {
+      story: row[dStory], loadCase: row[dCase],
+      direction: dDir >= 0 ? (row[dDir] || '') : '',
+      drift: parseFloat(row[dDrift]) || 0
+    };
+  });
+
+  const stories = (storiesRes.stories || []).map(s => ({ name: s.name, elevation: s.elevation }));
+  return pdeltaComputeResult(forces, drifts, mass, stories, pdeltaState.selected, pdeltaState.params);
+}
+
+function renderPdeltaModule() {
+  renderPdeltaSetupPanel();
+  renderPdeltaResultsPanel();
+}
+
+function renderPdeltaSetupPanel() {
+  const panel = $('#setupPanel');
+  panel.innerHTML = `
+    <div class="panel-heading compact"><div><span class="step-number">1</span><div><h2>${t('pdelta.params.title')}</h2><p>${t('moduleData.description')}</p></div></div></div>
+    <div class="field-grid">
+      <div class="field"><label>${t('pdelta.params.ch')}</label><input type="number" step="any" id="pdCh"></div>
+      <div class="field"><label>${t('pdelta.params.r')}</label><input type="number" step="any" id="pdR"></div>
+      <div class="field"><label>${t('pdelta.params.d')}</label><input type="number" step="any" id="pdD"></div>
+      <label class="field-checkbox"><input type="checkbox" id="pdBodrum"> ${t('drift.params.basement')}</label>
+      <div class="field"><label>${t('drift.params.basementCount')}</label><input type="number" min="0" id="pdBodrumKat"></div>
+    </div>
+    <div class="combo-picker">
+      <div class="combo-picker-heading"><h3>${t('drift.combos.title')}</h3>
+        <button class="button button-secondary" type="button" id="pdFetchCombos">${t('drift.combos.fetch')}</button>
+      </div>
+      <select class="combo-select" id="pdComboSelect" multiple></select>
+      <p class="combo-hint">${t('pdelta.combos.hint')}</p>
+    </div>
+    <div class="panel-actions">
+      <button class="button button-primary full-width" type="button" id="pdCalculate">${t('drift.calculate')}</button>
+    </div>`;
+
+  const bindNumber = (id, key, isInt = false) => {
+    const el = $('#' + id, panel);
+    el.value = pdeltaState.params[key];
+    el.addEventListener('input', () => { pdeltaState.params[key] = (isInt ? parseInt(el.value, 10) : parseFloat(el.value)) || 0; });
+  };
+  bindNumber('pdCh', 'ch');
+  bindNumber('pdR', 'r');
+  bindNumber('pdD', 'd');
+  bindNumber('pdBodrumKat', 'bodrumKat', true);
+
+  const bodrum = $('#pdBodrum', panel);
+  const bodrumKat = $('#pdBodrumKat', panel);
+  bodrum.checked = pdeltaState.params.bodrum;
+  bodrumKat.disabled = !bodrum.checked;
+  bodrum.addEventListener('change', () => {
+    pdeltaState.params.bodrum = bodrum.checked;
+    bodrumKat.disabled = !bodrum.checked;
+  });
+
+  pdeltaPopulateComboSelect();
+  $('#pdFetchCombos', panel).addEventListener('click', pdeltaFetchCombos);
+  $('#pdCalculate', panel).addEventListener('click', runPdeltaCheck);
+}
+
+function pdeltaPopulateComboSelect() {
+  const select = $('#pdComboSelect');
+  if (!select) return;
+  select.innerHTML = pdeltaState.combos
+    .map(name => `<option value="${name}" ${pdeltaState.selected.includes(name) ? 'selected' : ''}>${name}</option>`)
+    .join('');
+  select.addEventListener('change', () => {
+    pdeltaState.selected = [...select.selectedOptions].map(o => o.value);
+  });
+}
+
+function renderPdeltaResultsPanel() {
+  const panel = $('#resultsPanel');
+  panel.innerHTML = `
+    <div class="panel-heading compact"><div><span class="step-number">2</span><div><h2>${t('results.title')}</h2><p>${t('results.description')}</p></div></div>
+      <button class="button button-secondary" type="button" id="pdExport" ${pdeltaState.lastResult ? '' : 'disabled'}>${t('drift.export')}</button>
+    </div>
+    <div class="status-banner pending" id="pdStatusBanner">${t('drift.status.pending')}</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>${t('drift.table.story')}</th><th>${t('drift.table.combo')}</th><th>${t('drift.table.direction')}</th>
+          <th>${t('pdelta.table.vi')}</th><th>${t('pdelta.table.wij')}</th><th>${t('drift.table.drift')}</th>
+          <th>${t('pdelta.table.theta')}</th><th>${t('drift.table.limit')}</th><th>${t('drift.table.status')}</th>
+        </tr></thead>
+        <tbody id="pdResultsBody"><tr><td colspan="9" class="table-empty">${t('drift.table.empty')}</td></tr></tbody>
+      </table>
+    </div>`;
+
+  $('#pdExport', panel).addEventListener('click', exportPdeltaCsv);
+  if (pdeltaState.lastResult) renderPdeltaResultsTable(pdeltaState.lastResult);
+}
+
+function renderPdeltaResultsTable(result) {
+  const body = $('#pdResultsBody');
+  if (!body) return;
+  body.innerHTML = result.items.length
+    ? result.items.map(item => `
+        <tr>
+          <td>${item.story}</td><td>${item.loadCase}</td><td>${item.direction}</td>
+          <td>${item.vi.toFixed(2)}</td><td>${item.wij.toFixed(2)}</td><td>${item.driftRatio.toFixed(6)}</td>
+          <td>${item.theta.toFixed(6)}</td><td>${item.limit.toFixed(4)}</td><td>${item.ok ? '✅' : '❌'}</td>
+        </tr>`).join('')
+    : `<tr><td colspan="9" class="table-empty">${t('drift.table.empty')}</td></tr>`;
+
+  const banner = $('#pdStatusBanner');
+  banner.textContent = t(result.allOk ? 'pdelta.status.passed' : 'pdelta.status.failed');
+  banner.className = `status-banner ${result.allOk ? 'ok' : 'fail'}`;
+  const exportBtn = $('#pdExport');
+  if (exportBtn) exportBtn.disabled = false;
+}
+
+async function pdeltaFetchCombos() {
+  const btn = $('#pdFetchCombos');
+  btn.disabled = true;
+  try {
+    const res = await fetchAgentJson('/api/etabs/combinations');
+    if (!res.etabsConnected) throw new Error(res.error || t('drift.error.notConnected'));
+    pdeltaState.combos = res.names;
+    pdeltaPopulateComboSelect();
+    log(t('drift.combos.fetched', { count: pdeltaState.combos.length }), 'ok');
+  } catch (error) {
+    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function runPdeltaCheck() {
+  const btn = $('#pdCalculate');
+  if (pdeltaState.selected.length === 0) {
+    log(t('drift.error.noCombos'), 'error');
+    return;
+  }
+  btn.disabled = true;
+  try {
+    const result = await pdeltaFetchAndCompute();
+    if (result.items.length === 0) throw new Error(t('drift.error.noData'));
+    pdeltaState.lastResult = result;
+    renderPdeltaResultsTable(result);
+    recordLastCheck('pdelta');
+    log(t(result.allOk ? 'pdelta.status.passed' : 'pdelta.status.failed'), result.allOk ? 'ok' : 'error');
+  } catch (error) {
+    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function exportPdeltaCsv() {
+  const result = pdeltaState.lastResult;
+  if (!result) return;
+  const lines = ['Kat;Kombinasyon;Dogrultu;Vi(kN);Wij(kN);Drift;Theta;Limit;Durum'];
+  for (const item of result.items) {
+    lines.push([
+      item.story, item.loadCase, item.direction,
+      item.vi.toFixed(2), item.wij.toFixed(2), item.driftRatio.toFixed(6),
+      item.theta.toFixed(6), item.limit.toFixed(4), item.ok ? 'OK' : 'FAIL'
+    ].join(';'));
+  }
+  const blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `IkinciMertebe_Sonuc_${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }

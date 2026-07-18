@@ -62,7 +62,8 @@ internal sealed class AgentApplicationContext : ApplicationContext
             GetSnapshotOnUiThread,
             GetCombinationsOnUiThread,
             GetStoriesOnUiThread,
-            GetStoryDriftsOnUiThread);
+            GetStoryDriftsOnUiThread,
+            GetTableOnUiThread);
         try
         {
             _server.Start();
@@ -113,6 +114,14 @@ internal sealed class AgentApplicationContext : ApplicationContext
             return (StoryDriftsResult)_dispatcher.Invoke(new Func<string[], StoryDriftsResult>(_etabs.GetStoryDrifts), names);
 
         return _etabs.GetStoryDrifts(names);
+    }
+
+    private TableResult GetTableOnUiThread(string tableName, string[] combos)
+    {
+        if (_dispatcher.InvokeRequired)
+            return (TableResult)_dispatcher.Invoke(new Func<string, string[], TableResult>(_etabs.GetTable), tableName, combos);
+
+        return _etabs.GetTable(tableName, combos);
     }
 
     private void ShowConnectionResult()
@@ -336,6 +345,81 @@ internal sealed class EtabsConnection : IDisposable
         }
     }
 
+    // Generic ETABS database-table reader used by most calculation modules. Returns the raw
+    // display table (fields + string rows). When combos are supplied, they are selected for
+    // output first (needed for result tables such as Story Forces / Story Drifts).
+    public TableResult GetTable(string tableName, string[] combos)
+    {
+        if (string.IsNullOrWhiteSpace(tableName))
+            return new TableResult(true, true, "No table name supplied.", Array.Empty<string>(), Array.Empty<string[]>());
+        if (!EnsureModelReady(out var error))
+            return new TableResult(true, false, error, Array.Empty<string>(), Array.Empty<string[]>());
+
+        object? setup = null;
+        Type? setupType = null;
+        try
+        {
+            var sap = _sapModel!;
+            var dbProp = _sapModelInterface!.GetProperty("DatabaseTables")!;
+            var db = dbProp.GetValue(sap)!;
+            var dbType = dbProp.PropertyType;
+
+            if (combos.Length > 0)
+            {
+                var resultsProp = _sapModelInterface.GetProperty("Results")!;
+                var results = resultsProp.GetValue(sap)!;
+                var setupProp = resultsProp.PropertyType.GetProperty("Setup")!;
+                setup = setupProp.GetValue(results)!;
+                setupType = setupProp.PropertyType;
+
+                setupType.GetMethod("DeselectAllCasesAndCombosForOutput")!.Invoke(setup, null);
+                var setCombo = setupType.GetMethods().First(m => m.Name == "SetComboSelectedForOutput");
+                var setCase = setupType.GetMethods().First(m => m.Name == "SetCaseSelectedForOutput");
+                foreach (var c in combos)
+                {
+                    setCombo.Invoke(setup, new object?[] { c, true });
+                    setCase.Invoke(setup, new object?[] { c, true });
+                }
+
+                var setDisplay = dbType.GetMethods().FirstOrDefault(m => m.Name == "SetLoadCombinationsSelectedForDisplay");
+                if (setDisplay is not null)
+                {
+                    try { setDisplay.Invoke(db, new object?[] { combos }); }
+                    catch (Exception ex) { AgentLog.Write($"SetLoadCombinationsSelectedForDisplay failed: {ex.Message}"); }
+                }
+            }
+
+            var getTable = dbType.GetMethods().First(m => m.Name == "GetTableForDisplayArray");
+            // (TableKey, ref FieldKeyList, GroupName, ref TableVersion, ref FieldsKeysIncluded, ref NumberRecords, ref TableData)
+            var args = new object?[] { tableName, Array.Empty<string>(), "", 0, null, 0, null };
+            getTable.Invoke(db, args);
+
+            var fields = (string[]?)args[4] ?? Array.Empty<string>();
+            var numRecords = (int)(args[5] ?? 0);
+            var data = (string[]?)args[6] ?? Array.Empty<string>();
+            var fieldCount = fields.Length;
+
+            var rows = new List<string[]>(numRecords);
+            for (int r = 0; r < numRecords && fieldCount > 0; r++)
+            {
+                var row = new string[fieldCount];
+                Array.Copy(data, r * fieldCount, row, 0, fieldCount);
+                rows.Add(row);
+            }
+
+            return new TableResult(true, true, null, fields, rows.ToArray());
+        }
+        catch (Exception ex)
+        {
+            AgentLog.Write($"GetTable('{tableName}') failed: {ex}");
+            return new TableResult(true, false, ex.Message, Array.Empty<string>(), Array.Empty<string[]>());
+        }
+        finally
+        {
+            try { setupType?.GetMethod("DeselectAllCasesAndCombosForOutput")?.Invoke(setup, null); } catch { }
+        }
+    }
+
     // Reuses ConnectAndRead so every data endpoint shares the same connect/reconnect logic
     // and always operates against a live, readable model.
     private bool EnsureModelReady(out string? error)
@@ -533,6 +617,7 @@ internal sealed class LocalBridgeServer : IDisposable
     private readonly Func<NameListResult> _getCombinations;
     private readonly Func<StoriesResult> _getStories;
     private readonly Func<string[], StoryDriftsResult> _getStoryDrifts;
+    private readonly Func<string, string[], TableResult> _getTable;
     private readonly CancellationTokenSource _cancellation = new();
     private TcpListener? _listener;
 
@@ -540,12 +625,14 @@ internal sealed class LocalBridgeServer : IDisposable
         Func<EtabsSnapshot> getSnapshot,
         Func<NameListResult> getCombinations,
         Func<StoriesResult> getStories,
-        Func<string[], StoryDriftsResult> getStoryDrifts)
+        Func<string[], StoryDriftsResult> getStoryDrifts,
+        Func<string, string[], TableResult> getTable)
     {
         _getSnapshot = getSnapshot;
         _getCombinations = getCombinations;
         _getStories = getStories;
         _getStoryDrifts = getStoryDrifts;
+        _getTable = getTable;
     }
 
     public void Start()
@@ -644,6 +731,17 @@ internal sealed class LocalBridgeServer : IDisposable
                     return;
                 }
 
+                if (path == "/api/etabs/table")
+                {
+                    query.TryGetValue("name", out var tableName);
+                    query.TryGetValue("combos", out var tableCombos);
+                    var combos = string.IsNullOrWhiteSpace(tableCombos)
+                        ? Array.Empty<string>()
+                        : tableCombos.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                    await WriteResponseAsync(stream, 200, "OK", _getTable(tableName ?? "", combos), origin, cancellationToken);
+                    return;
+                }
+
                 await WriteResponseAsync(stream, 404, "Not Found", new { error = "Endpoint not found." }, origin, cancellationToken);
             }
             catch { }
@@ -719,7 +817,7 @@ internal sealed record EtabsSnapshot(
 
 internal static class AgentInfo
 {
-    public const string Version = "0.4.0";
+    public const string Version = "1.0.0";
 }
 
 internal sealed record NameListResult(bool AgentOnline, bool EtabsConnected, string? Error, string[] Names);
@@ -731,6 +829,8 @@ internal sealed record StoriesResult(bool AgentOnline, bool EtabsConnected, stri
 internal sealed record StoryDriftRow(string Story, string OutputCase, string Direction, double Drift);
 
 internal sealed record StoryDriftsResult(bool AgentOnline, bool EtabsConnected, string? Error, StoryDriftRow[] Rows);
+
+internal sealed record TableResult(bool AgentOnline, bool EtabsConnected, string? Error, string[] Fields, string[][] Rows);
 
 internal static class NativeMethods
 {
