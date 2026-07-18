@@ -1,5 +1,5 @@
 const moduleDefinitions = [
-  { id: 'spectrum', key: 'spectrum', icon: '⌁', categoryKey: 'category.analysis' },
+  { id: 'spectrum', key: 'spectrum', icon: '⌁', categoryKey: 'category.analysis', ready: true },
   { id: 'increment', key: 'increment', icon: '↟', categoryKey: 'category.analysis' },
   { id: 'drift', key: 'drift', icon: '↔', categoryKey: 'category.analysis', ready: true },
   { id: 'pdelta', key: 'pdelta', icon: 'ϑ', categoryKey: 'category.analysis', ready: true },
@@ -91,7 +91,16 @@ const translations = {
     'pdelta.combos.hint': 'Select the earthquake combinations (direction X/Y, level UST/ALT), e.g. RSXUST.',
     'pdelta.table.vi': 'Vi (kN)', 'pdelta.table.wij': 'Wij (kN)', 'pdelta.table.theta': 'θ',
     'pdelta.status.passed': 'Second-order effects can be neglected.',
-    'pdelta.status.failed': 'Second-order effects must be considered.'
+    'pdelta.status.failed': 'Second-order effects must be considered.',
+    'spectrum.params.title': 'TBDY 2018 Parameters', 'spectrum.params.sds': 'SDS (g)', 'spectrum.params.sd1': 'SD1 (g)',
+    'spectrum.params.r': 'R', 'spectrum.params.d': 'D', 'spectrum.params.i': 'I',
+    'spectrum.calculate': 'Calculate', 'spectrum.download': 'Download spectrum (.txt)',
+    'spectrum.chart.title': 'Design Spectrum', 'spectrum.chart.subtitle': 'Reduced horizontal elastic spectrum SaR(T)',
+    'spectrum.chart.x': 'Period T (s)', 'spectrum.chart.y': 'SaR (m/s²)',
+    'spectrum.summary.peak': 'Peak SaR', 'spectrum.summary.points': 'Points',
+    'spectrum.status.pending': 'Enter parameters and calculate to see the spectrum.',
+    'spectrum.status.done': 'Design spectrum calculated.',
+    'spectrum.error.invalid': 'SDS, SD1, R and I must be greater than zero.'
   },
   tr: {
     'brand.subtitle': 'ETABS tahkik ve raporlama platformu',
@@ -168,7 +177,16 @@ const translations = {
     'pdelta.combos.hint': 'Deprem kombinasyonlarını seçin (yön X/Y, seviye ÜST/ALT), örn. RSXUST.',
     'pdelta.table.vi': 'Vi (kN)', 'pdelta.table.wij': 'Wij (kN)', 'pdelta.table.theta': 'θ',
     'pdelta.status.passed': 'İkinci mertebe etkileri göz ardı edilebilir.',
-    'pdelta.status.failed': 'İkinci mertebe etkileri hesaba katılmalı.'
+    'pdelta.status.failed': 'İkinci mertebe etkileri hesaba katılmalı.',
+    'spectrum.params.title': 'TBDY 2018 Parametreleri', 'spectrum.params.sds': 'SDS (g)', 'spectrum.params.sd1': 'SD1 (g)',
+    'spectrum.params.r': 'R', 'spectrum.params.d': 'D', 'spectrum.params.i': 'I',
+    'spectrum.calculate': 'Hesapla', 'spectrum.download': 'Spektrumu indir (.txt)',
+    'spectrum.chart.title': 'Tasarım Spektrumu', 'spectrum.chart.subtitle': 'Azaltılmış yatay elastik spektrum SaR(T)',
+    'spectrum.chart.x': 'Periyot T (s)', 'spectrum.chart.y': 'SaR (m/s²)',
+    'spectrum.summary.peak': 'Tepe SaR', 'spectrum.summary.points': 'Nokta',
+    'spectrum.status.pending': 'Parametreleri girip hesaplayın; spektrum burada görünecek.',
+    'spectrum.status.done': 'Tasarım spektrumu hesaplandı.',
+    'spectrum.error.invalid': 'SDS, SD1, R ve I sıfırdan büyük olmalıdır.'
   }
 };
 
@@ -186,6 +204,7 @@ const defaultResultsPanelHtml = $('#resultsPanel').innerHTML;
 
 // Module id -> renderer. Populated with function declarations (hoisted), used by setActiveView.
 const moduleRenderers = {
+  spectrum: renderSpectrumModule,
   drift: renderDriftModule,
   pdelta: renderPdeltaModule
 };
@@ -938,6 +957,169 @@ function exportPdeltaCsv() {
   const a = document.createElement('a');
   a.href = url;
   a.download = `IkinciMertebe_Sonuc_${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ---------------------------------------------------------------------------
+// Design Spectrum (Tasarım Spektrumu) — ported from SpectrumManager (C#), TBDY 2018.
+// Pure client-side math; result is shared with the Increment module.
+// ---------------------------------------------------------------------------
+
+function loadSpectrumState() {
+  try {
+    return JSON.parse(localStorage.getItem('sea-spectrum')) || { sds: 0, sd1: 0, r: 8, d: 3, i: 1, periods: [], accelerations: [] };
+  } catch {
+    return { sds: 0, sd1: 0, r: 8, d: 3, i: 1, periods: [], accelerations: [] };
+  }
+}
+
+const spectrumState = loadSpectrumState();
+
+function spectrumCompute(sds, sd1, r, d, i) {
+  const ta = 0.2 * sd1 / sds;
+  const tb = sd1 / sds;
+  const round3 = x => Math.round(x * 1000) / 1000;
+  const periods = [0, ta / 3, ta / 2, ta];
+  for (let t = ta + 0.01; t <= tb; t += 0.01) periods.push(round3(t));
+  periods.push(tb);
+  for (let t = tb + 0.05; t <= 8.0; t += 0.05) periods.push(round3(t));
+  const uniqueSorted = [...new Set(periods)].sort((a, b) => a - b);
+  const accelerations = uniqueSorted.map(T => {
+    const se = T <= ta ? sds * (0.4 + 0.6 * T / ta)
+      : T <= tb ? sds
+      : T <= 6.0 ? sd1 / T
+      : sd1 * 6 / (T * T);
+    const reff = T <= tb ? d + ((r / i) - d) * (T / tb) : r / i;
+    return 9.81 * (se / reff);
+  });
+  return { ta, tb, periods: uniqueSorted, accelerations };
+}
+
+// SaR interpolated at a given period (shared with the Increment module).
+function spectrumSaAt(period) {
+  const { periods, accelerations } = spectrumState;
+  if (!periods.length) return 0;
+  for (let i = 0; i < periods.length; i++)
+    if (Math.abs(periods[i] - period) < 0.0001) return accelerations[i];
+  for (let i = 0; i < periods.length - 1; i++)
+    if (period >= periods[i] && period <= periods[i + 1]) {
+      const t1 = periods[i], t2 = periods[i + 1], a1 = accelerations[i], a2 = accelerations[i + 1];
+      return a1 + (a2 - a1) * (period - t1) / (t2 - t1);
+    }
+  return accelerations[accelerations.length - 1];
+}
+
+function renderSpectrumModule() {
+  renderSpectrumSetupPanel();
+  renderSpectrumResultsPanel();
+}
+
+function renderSpectrumSetupPanel() {
+  const panel = $('#setupPanel');
+  panel.innerHTML = `
+    <div class="panel-heading compact"><div><span class="step-number">1</span><div><h2>${t('spectrum.params.title')}</h2><p>${t('moduleData.description')}</p></div></div></div>
+    <div class="field-grid">
+      <div class="field"><label>${t('spectrum.params.sds')}</label><input type="number" step="any" id="spSds"></div>
+      <div class="field"><label>${t('spectrum.params.sd1')}</label><input type="number" step="any" id="spSd1"></div>
+      <div class="field"><label>${t('spectrum.params.r')}</label><input type="number" step="any" id="spR"></div>
+      <div class="field"><label>${t('spectrum.params.d')}</label><input type="number" step="any" id="spD"></div>
+      <div class="field"><label>${t('spectrum.params.i')}</label><input type="number" step="any" id="spI"></div>
+    </div>
+    <div class="panel-actions">
+      <button class="button button-primary full-width" type="button" id="spCalculate">${t('drift.calculate')}</button>
+      <button class="button button-secondary full-width" type="button" id="spDownload" style="margin-top:8px" ${spectrumState.periods.length ? '' : 'disabled'}>${t('spectrum.download')}</button>
+    </div>`;
+
+  const bind = (id, key) => {
+    const el = $('#' + id, panel);
+    el.value = spectrumState[key];
+    el.addEventListener('input', () => { spectrumState[key] = parseFloat(el.value) || 0; });
+  };
+  bind('spSds', 'sds');
+  bind('spSd1', 'sd1');
+  bind('spR', 'r');
+  bind('spD', 'd');
+  bind('spI', 'i');
+
+  $('#spCalculate', panel).addEventListener('click', runSpectrumCalc);
+  $('#spDownload', panel).addEventListener('click', downloadSpectrumTxt);
+}
+
+function renderSpectrumResultsPanel() {
+  const panel = $('#resultsPanel');
+  panel.innerHTML = `
+    <div class="panel-heading compact"><div><span class="step-number">2</span><div><h2>${t('spectrum.chart.title')}</h2><p>${t('spectrum.chart.subtitle')}</p></div></div></div>
+    <div class="spectrum-summary" id="spSummary"></div>
+    <div class="spectrum-chart" id="spChart">${spectrumState.periods.length ? spectrumChartSvg() : `<p class="table-empty">${t('spectrum.status.pending')}</p>`}</div>`;
+  if (spectrumState.periods.length) renderSpectrumSummary();
+}
+
+function spectrumChartSvg() {
+  const { periods, accelerations } = spectrumState;
+  const W = 560, H = 320, padL = 46, padR = 16, padT = 16, padB = 36;
+  const xMax = 6, yMax = Math.max(1, Math.ceil(Math.max(...accelerations)));
+  const px = t => padL + (Math.min(t, xMax) / xMax) * (W - padL - padR);
+  const py = a => H - padB - (a / yMax) * (H - padT - padB);
+  const pts = periods.filter(t => t <= xMax).map((t, i) => `${px(t).toFixed(1)},${py(accelerations[i]).toFixed(1)}`).join(' ');
+
+  const xTicks = [];
+  for (let x = 0; x <= xMax; x++)
+    xTicks.push(`<line x1="${px(x)}" y1="${padT}" x2="${px(x)}" y2="${H - padB}" class="grid"/><text x="${px(x)}" y="${H - padB + 16}" class="axl" text-anchor="middle">${x}</text>`);
+  const yTicks = [];
+  for (let y = 0; y <= yMax; y++)
+    yTicks.push(`<line x1="${padL}" y1="${py(y)}" x2="${W - padR}" y2="${py(y)}" class="grid"/><text x="${padL - 6}" y="${py(y) + 4}" class="axl" text-anchor="end">${y}</text>`);
+
+  return `<svg viewBox="0 0 ${W} ${H}" class="spectrum-svg" role="img" aria-label="${t('spectrum.chart.title')}">
+    ${yTicks.join('')}${xTicks.join('')}
+    <polyline points="${pts}" class="spectrum-line"/>
+    <text x="${padL + (W - padL - padR) / 2}" y="${H - 4}" class="axt" text-anchor="middle">${t('spectrum.chart.x')}</text>
+    <text x="14" y="${padT + (H - padT - padB) / 2}" class="axt" text-anchor="middle" transform="rotate(-90 14 ${padT + (H - padT - padB) / 2})">${t('spectrum.chart.y')}</text>
+  </svg>`;
+}
+
+function renderSpectrumSummary() {
+  const el = $('#spSummary');
+  if (!el) return;
+  const { sds, sd1, accelerations } = spectrumState;
+  const ta = 0.2 * sd1 / sds, tb = sd1 / sds;
+  const peak = Math.max(...accelerations);
+  el.innerHTML = `
+    <span><small>TA</small><strong>${ta.toFixed(3)} s</strong></span>
+    <span><small>TB</small><strong>${tb.toFixed(3)} s</strong></span>
+    <span><small>${t('spectrum.summary.peak')}</small><strong>${peak.toFixed(3)} m/s²</strong></span>
+    <span><small>${t('spectrum.summary.points')}</small><strong>${accelerations.length}</strong></span>`;
+}
+
+function runSpectrumCalc() {
+  const { sds, sd1, r, d, i } = spectrumState;
+  if (sds <= 0 || sd1 <= 0 || r <= 0 || i <= 0) {
+    log(t('spectrum.error.invalid'), 'error');
+    return;
+  }
+  const result = spectrumCompute(sds, sd1, r, d, i);
+  spectrumState.periods = result.periods;
+  spectrumState.accelerations = result.accelerations;
+  try { localStorage.setItem('sea-spectrum', JSON.stringify(spectrumState)); } catch { /* quota */ }
+
+  const chart = $('#spChart');
+  if (chart) chart.innerHTML = spectrumChartSvg();
+  renderSpectrumSummary();
+  const dl = $('#spDownload');
+  if (dl) dl.disabled = false;
+  recordLastCheck('spectrum');
+  log(t('spectrum.status.done'), 'ok');
+}
+
+function downloadSpectrumTxt() {
+  const { periods, accelerations, r, d, i } = spectrumState;
+  if (!periods.length) return;
+  const lines = periods.map((tp, idx) => `${tp.toFixed(3)}\t${accelerations[idx].toFixed(4)}`);
+  const blob = new Blob([lines.join('\r\n')], { type: 'text/plain;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `R${r}_D${d}_I${i}.txt`;
   a.click();
   URL.revokeObjectURL(url);
 }

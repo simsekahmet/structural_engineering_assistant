@@ -201,6 +201,17 @@ dialog form { padding: 20px; }.dialog-heading, .dialog-heading > div { display: 
 .toast.info { border-left-color: var(--primary); }
 .toast.info .toast-icon { background: var(--primary); }
 
+.spectrum-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 14px 17px 0; }
+.spectrum-summary span { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border: 1px solid var(--border-soft); border-radius: 10px; background: var(--surface-muted); }
+.spectrum-summary small { color: var(--muted); font-size: 9px; text-transform: uppercase; letter-spacing: .05em; }
+.spectrum-summary strong { color: var(--primary-dark); font-size: 13px; }
+.spectrum-chart { padding: 14px 17px 18px; overflow-x: auto; }
+.spectrum-svg { width: 100%; min-width: 420px; height: auto; }
+.spectrum-svg .grid { stroke: var(--border-soft); stroke-width: 1; }
+.spectrum-svg .axl { fill: var(--muted); font: 9px Arial, sans-serif; }
+.spectrum-svg .axt { fill: var(--muted); font: 700 10px Arial, sans-serif; }
+.spectrum-svg .spectrum-line { fill: none; stroke: var(--red); stroke-width: 2.5; stroke-linejoin: round; }
+
 .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; padding: 14px 17px; }
 .field { display: flex; flex-direction: column; gap: 4px; }
 .field label { color: var(--muted); font-size: 9px; text-transform: uppercase; letter-spacing: .04em; }
