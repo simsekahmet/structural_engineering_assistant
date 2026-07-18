@@ -123,8 +123,9 @@ internal sealed class AgentApplicationContext : ApplicationContext
 
 internal sealed class EtabsConnection : IDisposable
 {
-    private dynamic? _etabsObject;
-    private dynamic? _sapModel;
+    private object? _etabsObject;
+    private object? _sapModel;
+    private Type? _sapModelInterface;
 
     public EtabsSnapshot ConnectAndRead()
     {
@@ -135,6 +136,16 @@ internal sealed class EtabsConnection : IDisposable
 
         try
         {
+            if (TryConnectWithInstalledApi(out var typedEtabs, out var typedSapModel, out var sapModelInterface))
+            {
+                _etabsObject = typedEtabs;
+                _sapModel = typedSapModel;
+                _sapModelInterface = sapModelInterface;
+                return TryRead(out var typedSnapshot)
+                    ? typedSnapshot
+                    : EtabsSnapshot.NotConnected("ETABS is running but no model is open.");
+            }
+
             var etabsType = Type.GetTypeFromProgID("CSI.ETABS.API.ETABSObject", throwOnError: false);
             if (etabsType is null)
                 return EtabsSnapshot.NotConnected("ETABS COM API is not registered. Install ETABS 22 or later.");
@@ -150,11 +161,8 @@ internal sealed class EtabsConnection : IDisposable
                     return EtabsSnapshot.NotConnected("No running ETABS instance was found.");
             }
 
-            _etabsObject = activeObject;
-            _sapModel = _etabsObject.SapModel;
-            return TryRead(out var connected)
-                ? connected
-                : EtabsSnapshot.NotConnected("ETABS is running but no model is open.");
+            Release(activeObject);
+            return EtabsSnapshot.NotConnected("ETABS was found, but its typed API could not be loaded.");
         }
         catch (Exception ex)
         {
@@ -165,6 +173,68 @@ internal sealed class EtabsConnection : IDisposable
 
     public EtabsSnapshot ReadCurrent() =>
         TryRead(out var snapshot) ? snapshot : EtabsSnapshot.NotConnected("Not connected.");
+
+    private static bool TryConnectWithInstalledApi(out object? etabsObject, out object? sapModel, out Type? sapModelInterface)
+    {
+        etabsObject = null;
+        sapModel = null;
+        sapModelInterface = null;
+        object? helper = null;
+
+        try
+        {
+            var apiPath = FindInstalledEtabsApi();
+            if (apiPath is null)
+            {
+                AgentLog.Write("ETABSv1.dll was not found under the ETABS installation folder.");
+                return false;
+            }
+
+            AgentLog.Write($"Loading installed ETABS API: {apiPath}");
+            var apiAssembly = System.Reflection.Assembly.LoadFrom(apiPath);
+            var helperClass = apiAssembly.GetType("ETABSv1.Helper", throwOnError: true)!;
+            var helperInterface = apiAssembly.GetType("ETABSv1.cHelper", throwOnError: true)!;
+            var etabsInterface = apiAssembly.GetType("ETABSv1.cOAPI", throwOnError: true)!;
+            sapModelInterface = apiAssembly.GetType("ETABSv1.cSapModel", throwOnError: true)!;
+
+            helper = Activator.CreateInstance(helperClass);
+            if (helper is null) return false;
+
+            var getObject = helperInterface.GetMethod("GetObject", new[] { typeof(string) });
+            etabsObject = getObject?.Invoke(helper, new object[] { "CSI.ETABS.API.ETABSObject" });
+            if (etabsObject is null) return false;
+
+            var sapModelProperty = etabsInterface.GetProperty("SapModel");
+            sapModel = sapModelProperty?.GetValue(etabsObject);
+            return sapModel is not null;
+        }
+        catch (Exception ex)
+        {
+            AgentLog.Write($"Typed ETABS API connection failed: {ex}");
+            Release(sapModel);
+            Release(etabsObject);
+            etabsObject = null;
+            sapModel = null;
+            sapModelInterface = null;
+            return false;
+        }
+        finally
+        {
+            Release(helper);
+        }
+    }
+
+    private static string? FindInstalledEtabsApi()
+    {
+        var programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+        var csiRoot = Path.Combine(programFiles, "Computers and Structures");
+        if (!Directory.Exists(csiRoot)) return null;
+
+        return Directory.EnumerateDirectories(csiRoot, "ETABS *", SearchOption.TopDirectoryOnly)
+            .OrderByDescending(path => path, StringComparer.OrdinalIgnoreCase)
+            .Select(path => Path.Combine(path, "ETABSv1.dll"))
+            .FirstOrDefault(File.Exists);
+    }
 
     private static object? TryGetFromRunningObjectTable()
     {
@@ -198,9 +268,9 @@ internal sealed class EtabsConnection : IDisposable
 
                     try
                     {
-                        dynamic etabs = candidate;
-                        dynamic model = etabs.SapModel;
-                        _ = (string?)model.GetModelFilename();
+                        var candidateType = candidate.GetType();
+                        _ = candidateType.InvokeMember("SapModel",
+                            System.Reflection.BindingFlags.GetProperty, null, candidate, null);
                         return candidate;
                     }
                     catch (Exception ex)
@@ -238,8 +308,9 @@ internal sealed class EtabsConnection : IDisposable
             helper = Activator.CreateInstance(helperType);
             if (helper is null) return null;
 
-            dynamic dynamicHelper = helper;
-            return dynamicHelper.GetObject("CSI.ETABS.API.ETABSObject");
+            return helper.GetType().InvokeMember("GetObject",
+                System.Reflection.BindingFlags.InvokeMethod, null, helper,
+                new object[] { "CSI.ETABS.API.ETABSObject" });
         }
         catch (Exception ex)
         {
@@ -260,10 +331,13 @@ internal sealed class EtabsConnection : IDisposable
 
         try
         {
-            var filename = (string?)_sapModel.GetModelFilename();
+            if (_sapModelInterface is null) return false;
+
+            var filename = (string?)_sapModelInterface.GetMethod("GetModelFilename")?.Invoke(_sapModel, null);
             var modelName = string.IsNullOrWhiteSpace(filename) ? "Untitled ETABS model" : Path.GetFileName(filename);
-            var isLocked = (bool)_sapModel.GetModelIsLocked();
-            snapshot = new EtabsSnapshot(true, true, modelName, filename, isLocked, null, "0.3.1");
+            var isLocked = (bool)(_sapModelInterface.GetMethod("GetModelIsLocked")?.Invoke(_sapModel, null) ?? false);
+            // Keep the full local file path inside the agent; the web UI only needs the model name.
+            snapshot = new EtabsSnapshot(true, true, modelName, null, isLocked, null, "0.3.2");
             return true;
         }
         catch
@@ -279,6 +353,7 @@ internal sealed class EtabsConnection : IDisposable
         Release(_etabsObject);
         _sapModel = null;
         _etabsObject = null;
+        _sapModelInterface = null;
     }
 
     private static void Release(object? value)
@@ -435,7 +510,7 @@ internal sealed record EtabsSnapshot(
     string AgentVersion)
 {
     public static EtabsSnapshot NotConnected(string error) =>
-        new(true, false, null, null, null, error, "0.3.1");
+        new(true, false, null, null, null, error, "0.3.2");
 }
 
 internal static class NativeMethods
