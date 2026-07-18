@@ -68,7 +68,25 @@ const translations = {
     'module.wallSchedule.title': 'Wall Schedule', 'module.wallSchedule.description': 'Convert wall section and reinforcement data into an organized schedule.',
     'module.beamSchedule.title': 'Beam Schedule', 'module.beamSchedule.description': 'Prepare beam reinforcement and section data for drawing production.',
     'module.slabSchedule.title': 'Slab Schedule', 'module.slabSchedule.description': 'Compile slab geometry and reinforcement data in one schedule.',
-    'module.foundationSchedule.title': 'Foundation Schedule', 'module.foundationSchedule.description': 'Prepare foundation members and design data for drawing and reporting.'
+    'module.foundationSchedule.title': 'Foundation Schedule', 'module.foundationSchedule.description': 'Prepare foundation members and design data for drawing and reporting.',
+    'drift.params.title': 'Earthquake Parameters', 'drift.params.sdsDD2': 'SDS (DD-2)', 'drift.params.sdsDD3': 'SDS (DD-3)',
+    'drift.params.sd1DD2': 'SD1 (DD-2)', 'drift.params.sd1DD3': 'SD1 (DD-3)', 'drift.params.k': 'k', 'drift.params.tp': 'Tp',
+    'drift.params.flexibleJoint': 'Flexible joint present? (Yes: 0.016, No: 0.008)', 'drift.params.basement': 'Basement assumption?',
+    'drift.params.basementCount': 'Number of basement stories',
+    'drift.combos.title': 'Load Combinations', 'drift.combos.fetch': 'Fetch from ETABS',
+    'drift.combos.hint': 'Select combinations containing direction (X/Y) and level (UST/ALT), e.g. RSXUST.',
+    'drift.combos.fetched': '{count} combinations/cases found.',
+    'drift.calculate': 'Calculate', 'drift.export': 'Download CSV',
+    'drift.table.story': 'Story', 'drift.table.combo': 'Combination', 'drift.table.direction': 'Direction',
+    'drift.table.drift': 'Drift', 'drift.table.lambdaDrift': 'λδi/hi', 'drift.table.limit': 'Limit', 'drift.table.status': 'Status',
+    'drift.table.empty': 'Fetch combinations, select the ones to check, then Calculate.',
+    'drift.status.pending': 'Waiting for calculation…',
+    'drift.status.passed': 'Interstory drift check is satisfied.',
+    'drift.status.failed': 'Interstory drift check is NOT satisfied.',
+    'drift.error.notConnected': 'Connect to ETABS first.',
+    'drift.error.noCombos': 'Select at least one combination.',
+    'drift.error.noData': 'No story drift data was returned for the selected combinations.',
+    'drift.error.fetchFailed': 'Could not reach the local ETABS bridge'
   },
   tr: {
     'brand.subtitle': 'ETABS tahkik ve raporlama platformu',
@@ -122,7 +140,25 @@ const translations = {
     'module.wallSchedule.title': 'Perde Done', 'module.wallSchedule.description': 'Perde kesit ve donatı verilerini düzenli bir done çıktısına dönüştürün.',
     'module.beamSchedule.title': 'Kiriş Done', 'module.beamSchedule.description': 'Kiriş donatı ve kesit bilgilerini pafta üretimine hazırlayın.',
     'module.slabSchedule.title': 'Döşeme Done', 'module.slabSchedule.description': 'Döşeme geometri ve donatı verilerini tek tabloda derleyin.',
-    'module.foundationSchedule.title': 'Temel Done', 'module.foundationSchedule.description': 'Temel elemanlarını ve tasarım verilerini çizim ve rapor formatına hazırlayın.'
+    'module.foundationSchedule.title': 'Temel Done', 'module.foundationSchedule.description': 'Temel elemanlarını ve tasarım verilerini çizim ve rapor formatına hazırlayın.',
+    'drift.params.title': 'Deprem Parametreleri', 'drift.params.sdsDD2': 'SDS (DD-2)', 'drift.params.sdsDD3': 'SDS (DD-3)',
+    'drift.params.sd1DD2': 'SD1 (DD-2)', 'drift.params.sd1DD3': 'SD1 (DD-3)', 'drift.params.k': 'k', 'drift.params.tp': 'Tp',
+    'drift.params.flexibleJoint': 'Esnek derz var mı? (Var: 0.016, Yok: 0.008)', 'drift.params.basement': 'Bodrum kabulü var mı?',
+    'drift.params.basementCount': 'Bodrum kat sayısı',
+    'drift.combos.title': 'Yük Kombinasyonları', 'drift.combos.fetch': "ETABS'tan Getir",
+    'drift.combos.hint': 'Yön (X/Y) ve seviye (ÜST/ALT) içeren kombinasyonları seçin, örn. RSXUST.',
+    'drift.combos.fetched': '{count} kombinasyon/case bulundu.',
+    'drift.calculate': 'Hesapla', 'drift.export': 'CSV İndir',
+    'drift.table.story': 'Kat', 'drift.table.combo': 'Kombinasyon', 'drift.table.direction': 'Yön',
+    'drift.table.drift': 'Drift', 'drift.table.lambdaDrift': 'λδi/hi', 'drift.table.limit': 'Limit', 'drift.table.status': 'Durum',
+    'drift.table.empty': 'Kombinasyonları getirin, tahkik edilecekleri seçin, ardından Hesaplayın.',
+    'drift.status.pending': 'Hesaplama bekleniyor…',
+    'drift.status.passed': 'Göreli kat ötelemesi tahkiki sağlanmıştır.',
+    'drift.status.failed': 'Göreli kat ötelemesi tahkiki sağlanmamıştır.',
+    'drift.error.notConnected': "Önce ETABS'a bağlanın.",
+    'drift.error.noCombos': 'En az bir kombinasyon seçin.',
+    'drift.error.noData': 'Seçili kombinasyonlar için story drift verisi bulunamadı.',
+    'drift.error.fetchFailed': 'Yerel ETABS köprüsüne ulaşılamadı'
   }
 };
 
@@ -133,6 +169,10 @@ const dashboard = $('#dashboard');
 const moduleView = $('#moduleView');
 const terminal = $('#terminal');
 let currentLanguage = localStorage.getItem('sea-language') === 'tr' ? 'tr' : 'en';
+
+const AGENT_BASE = 'http://127.0.0.1:5218';
+const defaultSetupPanelHtml = $('#setupPanel').innerHTML;
+const defaultResultsPanelHtml = $('#resultsPanel').innerHTML;
 
 function t(key, values = {}) {
   const value = translations[currentLanguage][key] ?? translations.en[key] ?? key;
@@ -164,14 +204,18 @@ function updateShowAllLabel() {
   $('#showAllModules').textContent = t(moduleGrid.classList.contains('expanded') ? 'action.showLess' : 'action.showAll');
 }
 
+function applyTranslationsToDom(root = document) {
+  $$('[data-i18n]', root).forEach(element => { element.textContent = t(element.dataset.i18n); });
+  $$('[data-i18n-title]', root).forEach(element => { element.title = t(element.dataset.i18nTitle); });
+  $$('[data-i18n-aria-label]', root).forEach(element => { element.setAttribute('aria-label', t(element.dataset.i18nAriaLabel)); });
+}
+
 function applyLanguage(language) {
   currentLanguage = language === 'tr' ? 'tr' : 'en';
   localStorage.setItem('sea-language', currentLanguage);
   document.documentElement.lang = currentLanguage;
   document.title = 'Structural Engineering Assistant';
-  $$('[data-i18n]').forEach(element => { element.textContent = t(element.dataset.i18n); });
-  $$('[data-i18n-title]').forEach(element => { element.title = t(element.dataset.i18nTitle); });
-  $$('[data-i18n-aria-label]').forEach(element => { element.setAttribute('aria-label', t(element.dataset.i18nAriaLabel)); });
+  applyTranslationsToDom();
   $('.brand').setAttribute('aria-label', t('brand.home'));
   $('#themeToggle').setAttribute('aria-label', currentLanguage === 'tr' ? 'Açık / koyu tema değiştir' : 'Switch light / dark mode');
   $('#languageToggle').setAttribute('aria-label', currentLanguage === 'tr' ? 'İngilizce / Türkçe değiştir' : 'Switch English / Turkish');
@@ -198,6 +242,18 @@ function setActiveView(id) {
   moduleView.classList.add('active');
   $$('.nav-item').forEach(item => item.classList.toggle('active', item.dataset.view === id));
   window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  if (id === 'drift') {
+    renderDriftSetupPanel();
+    renderDriftResultsPanel();
+  } else {
+    $('#setupPanel').innerHTML = defaultSetupPanelHtml;
+    $('#resultsPanel').innerHTML = defaultResultsPanelHtml;
+    applyTranslationsToDom($('#setupPanel'));
+    applyTranslationsToDom($('#resultsPanel'));
+    const connectBtn = $('[data-connect]', $('#setupPanel'));
+    if (connectBtn) connectBtn.addEventListener('click', connectToEtabs);
+  }
 }
 
 function setConnectButtonsLoading(loading) {
@@ -236,6 +292,288 @@ async function connectToEtabs() {
   } finally {
     setConnectButtonsLoading(false);
   }
+}
+
+// ---------------------------------------------------------------------------
+// Interstory Drift module (pilot migration of GoreliKatOtelemesiManager, C#)
+// ---------------------------------------------------------------------------
+
+const driftState = {
+  params: { sdsDD2: 0, sdsDD3: 0, sd1DD2: 0, sd1DD3: 0, k: 1, tp: 0.5, esnekDerz: false, bodrum: false, bodrumKat: 0 },
+  combos: [],
+  stories: [],
+  selected: [],
+  lastResult: null
+};
+
+async function fetchAgentJson(path, timeoutMs = 8000) {
+  const response = await fetch(`${AGENT_BASE}${path}`, {
+    headers: { Accept: 'application/json' },
+    signal: AbortSignal.timeout(timeoutMs)
+  });
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  return response.json();
+}
+
+// TBDY 2018 lambda: interpolates between DD-2 and DD-3 spectra depending on Tp vs TA.
+function driftCalculateLambda({ sdsDD2, sdsDD3, sd1DD2, sd1DD3, tp }) {
+  if (sdsDD2 === 0) return 0;
+  const ta = sd1DD2 / sdsDD2;
+  return tp < ta ? sdsDD3 / sdsDD2 : sd1DD3 / sd1DD2;
+}
+
+function driftCalculateLimit({ esnekDerz, k }) {
+  return esnekDerz ? 0.016 * k : 0.008 * k;
+}
+
+// Basement stories = the N lowest stories by elevation, excluding "Base".
+function determineBasementStories(stories, count) {
+  if (!count || count <= 0) return new Set();
+  return new Set(
+    stories
+      .filter(s => s.name.toLowerCase() !== 'base')
+      .slice()
+      .sort((a, b) => a.elevation - b.elevation)
+      .slice(0, count)
+      .map(s => s.name)
+  );
+}
+
+function groupCombos(names) {
+  const upper = names.map(n => n.toUpperCase());
+  const pick = (mustInclude) => names.filter((_, i) => mustInclude.every(part => upper[i].includes(part)));
+  return {
+    xUST: pick(['X', 'UST']),
+    xALT: pick(['X', 'ALT']),
+    yUST: pick(['Y', 'UST']),
+    yALT: pick(['Y', 'ALT'])
+  };
+}
+
+// Mirrors the desktop app's per-direction, per-basement row filtering.
+function filterDriftRows(rows, groups, basementNames, useBasement) {
+  const result = [];
+  for (const row of rows) {
+    const direction = row.direction.toUpperCase();
+    const isBasement = basementNames.has(row.story);
+    if (direction === 'X') {
+      if (groups.xUST.includes(row.outputCase) && (!useBasement || !isBasement)) result.push(row);
+      else if (useBasement && groups.xALT.includes(row.outputCase) && isBasement) result.push(row);
+    } else if (direction === 'Y') {
+      if (groups.yUST.includes(row.outputCase) && (!useBasement || !isBasement)) result.push(row);
+      else if (useBasement && groups.yALT.includes(row.outputCase) && isBasement) result.push(row);
+    }
+  }
+  return result;
+}
+
+function calculateDriftItems(rows, params) {
+  const lambda = driftCalculateLambda(params);
+  const limit = driftCalculateLimit(params);
+  const items = rows.map(row => {
+    const lambdaDrift = lambda * row.drift;
+    return { ...row, lambdaDrift, limit, isOk: lambdaDrift < limit };
+  });
+  return { lambda, limit, items, allPassed: items.length > 0 && items.every(i => i.isOk) };
+}
+
+function sortDriftItems(items) {
+  return [...items].sort((a, b) =>
+    (a.direction === 'X' ? 0 : 1) - (b.direction === 'X' ? 0 : 1) || a.story.localeCompare(b.story));
+}
+
+function renderDriftSetupPanel() {
+  const panel = $('#setupPanel');
+  panel.innerHTML = `
+    <div class="panel-heading compact"><div><span class="step-number">1</span><div><h2>${t('drift.params.title')}</h2><p>${t('moduleData.description')}</p></div></div></div>
+    <div class="field-grid">
+      <div class="field"><label>${t('drift.params.sdsDD2')}</label><input type="number" step="any" id="driftSdsDD2"></div>
+      <div class="field"><label>${t('drift.params.sdsDD3')}</label><input type="number" step="any" id="driftSdsDD3"></div>
+      <div class="field"><label>${t('drift.params.sd1DD2')}</label><input type="number" step="any" id="driftSd1DD2"></div>
+      <div class="field"><label>${t('drift.params.sd1DD3')}</label><input type="number" step="any" id="driftSd1DD3"></div>
+      <div class="field"><label>${t('drift.params.k')}</label><input type="number" step="any" id="driftK"></div>
+      <div class="field"><label>${t('drift.params.tp')}</label><input type="number" step="any" id="driftTp"></div>
+      <label class="field-checkbox"><input type="checkbox" id="driftEsnekDerz"> ${t('drift.params.flexibleJoint')}</label>
+      <label class="field-checkbox"><input type="checkbox" id="driftBodrum"> ${t('drift.params.basement')}</label>
+      <div class="field"><label>${t('drift.params.basementCount')}</label><input type="number" min="0" id="driftBodrumKat"></div>
+    </div>
+    <div class="combo-picker">
+      <div class="combo-picker-heading"><h3>${t('drift.combos.title')}</h3>
+        <button class="button button-secondary" type="button" id="driftFetchCombos">${t('drift.combos.fetch')}</button>
+      </div>
+      <select class="combo-select" id="driftComboSelect" multiple></select>
+      <p class="combo-hint">${t('drift.combos.hint')}</p>
+    </div>
+    <div class="panel-actions">
+      <button class="button button-primary full-width" type="button" id="driftCalculate">${t('drift.calculate')}</button>
+    </div>`;
+
+  bindDriftParamInputs(panel);
+  populateComboSelect();
+  $('#driftFetchCombos', panel).addEventListener('click', fetchDriftCombosAndStories);
+  $('#driftCalculate', panel).addEventListener('click', runDriftCheck);
+}
+
+function bindDriftParamInputs(panel) {
+  const bindNumber = (id, key) => {
+    const el = $('#' + id, panel);
+    el.value = driftState.params[key];
+    el.addEventListener('input', () => { driftState.params[key] = parseFloat(el.value) || 0; });
+  };
+  bindNumber('driftSdsDD2', 'sdsDD2');
+  bindNumber('driftSdsDD3', 'sdsDD3');
+  bindNumber('driftSd1DD2', 'sd1DD2');
+  bindNumber('driftSd1DD3', 'sd1DD3');
+  bindNumber('driftK', 'k');
+  bindNumber('driftTp', 'tp');
+
+  const esnek = $('#driftEsnekDerz', panel);
+  esnek.checked = driftState.params.esnekDerz;
+  esnek.addEventListener('change', () => { driftState.params.esnekDerz = esnek.checked; });
+
+  const bodrum = $('#driftBodrum', panel);
+  const bodrumKat = $('#driftBodrumKat', panel);
+  bodrum.checked = driftState.params.bodrum;
+  bodrumKat.value = driftState.params.bodrumKat;
+  bodrumKat.disabled = !bodrum.checked;
+  bodrum.addEventListener('change', () => {
+    driftState.params.bodrum = bodrum.checked;
+    bodrumKat.disabled = !bodrum.checked;
+  });
+  bodrumKat.addEventListener('input', () => { driftState.params.bodrumKat = parseInt(bodrumKat.value, 10) || 0; });
+}
+
+function populateComboSelect() {
+  const select = $('#driftComboSelect');
+  if (!select) return;
+  select.innerHTML = driftState.combos
+    .map(name => `<option value="${name}" ${driftState.selected.includes(name) ? 'selected' : ''}>${name}</option>`)
+    .join('');
+  select.addEventListener('change', () => {
+    driftState.selected = [...select.selectedOptions].map(o => o.value);
+  });
+}
+
+function renderDriftResultsPanel() {
+  const panel = $('#resultsPanel');
+  panel.innerHTML = `
+    <div class="panel-heading compact"><div><span class="step-number">2</span><div><h2>${t('results.title')}</h2><p>${t('results.description')}</p></div></div>
+      <button class="button button-secondary" type="button" id="driftExport" ${driftState.lastResult ? '' : 'disabled'}>${t('drift.export')}</button>
+    </div>
+    <div class="status-banner pending" id="driftStatusBanner">${t('drift.status.pending')}</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>${t('drift.table.story')}</th><th>${t('drift.table.combo')}</th><th>${t('drift.table.direction')}</th>
+          <th>${t('drift.table.drift')}</th><th>${t('drift.table.lambdaDrift')}</th><th>${t('drift.table.limit')}</th><th>${t('drift.table.status')}</th>
+        </tr></thead>
+        <tbody id="driftResultsBody"><tr><td colspan="7" class="table-empty">${t('drift.table.empty')}</td></tr></tbody>
+      </table>
+    </div>`;
+
+  $('#driftExport', panel).addEventListener('click', exportDriftCsv);
+  if (driftState.lastResult) renderDriftResultsTable(driftState.lastResult);
+}
+
+function renderDriftResultsTable(result) {
+  const body = $('#driftResultsBody');
+  if (!body) return;
+  const sorted = sortDriftItems(result.items);
+  body.innerHTML = sorted.length
+    ? sorted.map(item => `
+        <tr>
+          <td>${item.story}</td><td>${item.outputCase}</td><td>${item.direction}</td>
+          <td>${item.drift.toFixed(5)}</td><td>${item.lambdaDrift.toFixed(5)}</td><td>${item.limit.toFixed(5)}</td>
+          <td>${item.isOk ? '✅' : '❌'}</td>
+        </tr>`).join('')
+    : `<tr><td colspan="7" class="table-empty">${t('drift.table.empty')}</td></tr>`;
+
+  const banner = $('#driftStatusBanner');
+  banner.textContent = t(result.allPassed ? 'drift.status.passed' : 'drift.status.failed');
+  banner.className = `status-banner ${result.allPassed ? 'ok' : 'fail'}`;
+
+  const exportBtn = $('#driftExport');
+  if (exportBtn) exportBtn.disabled = false;
+}
+
+async function fetchDriftCombosAndStories() {
+  const panel = $('#setupPanel');
+  const btn = $('#driftFetchCombos', panel);
+  btn.disabled = true;
+  try {
+    const [combosRes, storiesRes] = await Promise.all([
+      fetchAgentJson('/api/etabs/combinations'),
+      fetchAgentJson('/api/etabs/stories')
+    ]);
+    if (!combosRes.etabsConnected) throw new Error(combosRes.error || t('drift.error.notConnected'));
+    driftState.combos = combosRes.names;
+    driftState.stories = storiesRes.stories || [];
+    populateComboSelect();
+    log(t('drift.combos.fetched', { count: driftState.combos.length }), 'ok');
+  } catch (error) {
+    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function runDriftCheck() {
+  const panel = $('#setupPanel');
+  const btn = $('#driftCalculate', panel);
+  if (driftState.selected.length === 0) {
+    log(t('drift.error.noCombos'), 'error');
+    return;
+  }
+
+  btn.disabled = true;
+  try {
+    if (driftState.stories.length === 0) {
+      const storiesRes = await fetchAgentJson('/api/etabs/stories');
+      if (!storiesRes.etabsConnected) throw new Error(storiesRes.error || t('drift.error.notConnected'));
+      driftState.stories = storiesRes.stories;
+    }
+
+    const comboParam = encodeURIComponent(driftState.selected.join(','));
+    const driftRes = await fetchAgentJson(`/api/etabs/story-drifts?combos=${comboParam}`);
+    if (!driftRes.etabsConnected) throw new Error(driftRes.error || t('drift.error.notConnected'));
+
+    const groups = groupCombos(driftState.selected);
+    const basementNames = driftState.params.bodrum
+      ? determineBasementStories(driftState.stories, driftState.params.bodrumKat)
+      : new Set();
+    const filtered = filterDriftRows(driftRes.rows || [], groups, basementNames, driftState.params.bodrum);
+    if (filtered.length === 0) throw new Error(t('drift.error.noData'));
+
+    const result = calculateDriftItems(filtered, driftState.params);
+    driftState.lastResult = result;
+    renderDriftResultsTable(result);
+    log(t(result.allPassed ? 'drift.status.passed' : 'drift.status.failed'), result.allPassed ? 'ok' : 'error');
+  } catch (error) {
+    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function exportDriftCsv() {
+  const result = driftState.lastResult;
+  if (!result) return;
+  const sorted = sortDriftItems(result.items);
+  const lines = ['Kat;Kombinasyon;Dogrultu;Drift;LambdaDrift;Limit;Durum'];
+  for (const item of sorted) {
+    lines.push([
+      item.story, item.outputCase, item.direction,
+      item.drift.toFixed(5), item.lambdaDrift.toFixed(5), item.limit.toFixed(5),
+      item.isOk ? 'OK' : 'FAIL'
+    ].join(';'));
+  }
+  const blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `GoreliKat_Sonuc_${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 moduleGrid.addEventListener('click', event => {

@@ -183,6 +183,23 @@ dialog::backdrop { background: rgba(14, 24, 40, .56); backdrop-filter: blur(4px)
 dialog form { padding: 20px; }.dialog-heading, .dialog-heading > div { display: flex; align-items: center; }.dialog-heading { justify-content: space-between; gap: 18px; }.dialog-heading > div { gap: 11px; }.dialog-heading h2 { margin: 0; color: var(--primary-dark); font-size: 17px; }.dialog-heading p { margin: 2px 0 0; color: var(--muted); font-size: 10px; }.dialog-close { width: 32px; height: 32px; border: 0; border-radius: 9px; cursor: pointer; color: var(--muted); background: var(--surface-strong); font-size: 20px; }
 .architecture-flow { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; align-items: center; gap: 10px; margin: 25px 0; }.architecture-flow div { padding: 17px 10px; border: 1px solid var(--border); border-radius: 12px; text-align: center; background: var(--surface-muted); }.architecture-flow strong, .architecture-flow small { display: block; }.architecture-flow small, .architecture-flow > span { color: var(--muted); font-size: 9px; }.architecture-flow > span { text-align: center; }.dialog-note { margin: 0 0 18px; padding: 13px; border-radius: 11px; color: var(--muted); background: var(--primary-soft); }
 
+.field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; padding: 14px 17px; }
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field label { color: var(--muted); font-size: 9px; text-transform: uppercase; letter-spacing: .04em; }
+.field input { height: 32px; padding: 0 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-muted); color: var(--text); }
+.field-checkbox { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--text); }
+.field-checkbox input { width: 15px; height: 15px; }
+.combo-picker { padding: 0 17px 14px; }
+.combo-picker-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.combo-picker-heading h3 { margin: 0; color: var(--primary-dark); font-size: 12px; }
+.combo-select { width: 100%; min-height: 130px; padding: 6px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-muted); color: var(--text); font-size: 11px; }
+.combo-hint { margin: 8px 0 0; color: var(--muted); font-size: 10px; }
+.panel-actions { padding: 0 17px 17px; }
+.status-banner { margin: 14px 17px 0; padding: 10px 13px; border-radius: 10px; font-size: 11px; font-weight: 700; text-align: center; }
+.status-banner.ok { color: var(--green); background: color-mix(in srgb, var(--green) 14%, transparent); }
+.status-banner.fail { color: var(--red); background: color-mix(in srgb, var(--red) 14%, transparent); }
+.status-banner.pending { color: var(--muted); background: var(--surface-muted); }
+
 @media (max-width: 1120px) {
   :root { --sidebar: 210px; }
   .stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }

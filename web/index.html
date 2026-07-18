@@ -158,7 +158,7 @@
           <button class="button button-secondary" type="button" data-back-dashboard data-i18n="action.dashboard">← Dashboard</button>
         </div>
         <div class="module-workspace">
-          <section class="panel setup-panel">
+          <section class="panel setup-panel" id="setupPanel">
             <div class="panel-heading compact"><div><span class="step-number">1</span><div><h2 data-i18n="moduleData.title">Model Data</h2><p data-i18n="moduleData.description">Dataset to be read from the ETABS model</p></div></div></div>
             <div class="empty-state">
               <span class="empty-icon">↗</span>
@@ -167,7 +167,7 @@
               <button class="button button-primary" type="button" data-connect data-i18n="action.connect">Connect to ETABS</button>
             </div>
           </section>
-          <section class="panel results-panel">
+          <section class="panel results-panel" id="resultsPanel">
             <div class="panel-heading compact"><div><span class="step-number">2</span><div><h2 data-i18n="results.title">Check Results</h2><p data-i18n="results.description">Summary metrics and member-level results</p></div></div></div>
             <div class="table-wrap">
               <table><thead><tr><th data-i18n="table.member">Member</th><th data-i18n="table.story">Story</th><th data-i18n="table.demand">Demand</th><th data-i18n="table.capacity">Capacity</th><th data-i18n="table.ratio">Ratio</th><th data-i18n="table.status">Status</th></tr></thead><tbody><tr><td colspan="6" class="table-empty" data-i18n="table.empty">Results will appear here after a connection is established.</td></tr></tbody></table>

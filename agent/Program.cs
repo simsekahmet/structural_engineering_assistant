@@ -58,7 +58,11 @@ internal sealed class AgentApplicationContext : ApplicationContext
         _trayIcon.DoubleClick += (_, _) => ShowConnectionResult();
         AgentLog.Write("Tray icon created.");
 
-        _server = new LocalBridgeServer(GetSnapshotOnUiThread);
+        _server = new LocalBridgeServer(
+            GetSnapshotOnUiThread,
+            GetCombinationsOnUiThread,
+            GetStoriesOnUiThread,
+            GetStoryDriftsOnUiThread);
         try
         {
             _server.Start();
@@ -85,6 +89,30 @@ internal sealed class AgentApplicationContext : ApplicationContext
             return (EtabsSnapshot)_dispatcher.Invoke(new Func<EtabsSnapshot>(_etabs.ConnectAndRead));
 
         return _etabs.ConnectAndRead();
+    }
+
+    private NameListResult GetCombinationsOnUiThread()
+    {
+        if (_dispatcher.InvokeRequired)
+            return (NameListResult)_dispatcher.Invoke(new Func<NameListResult>(_etabs.GetCombinationsAndCases));
+
+        return _etabs.GetCombinationsAndCases();
+    }
+
+    private StoriesResult GetStoriesOnUiThread()
+    {
+        if (_dispatcher.InvokeRequired)
+            return (StoriesResult)_dispatcher.Invoke(new Func<StoriesResult>(_etabs.GetStories));
+
+        return _etabs.GetStories();
+    }
+
+    private StoryDriftsResult GetStoryDriftsOnUiThread(string[] names)
+    {
+        if (_dispatcher.InvokeRequired)
+            return (StoryDriftsResult)_dispatcher.Invoke(new Func<string[], StoryDriftsResult>(_etabs.GetStoryDrifts), names);
+
+        return _etabs.GetStoryDrifts(names);
     }
 
     private void ShowConnectionResult()
@@ -180,6 +208,148 @@ internal sealed class EtabsConnection : IDisposable
 
     public EtabsSnapshot ReadCurrent() =>
         TryRead(out var snapshot) ? snapshot : EtabsSnapshot.NotConnected("Not connected.");
+
+    // Response combination names and load case names, merged (mirrors the desktop app's
+    // "Getir" button, which lists both in a single picker).
+    public NameListResult GetCombinationsAndCases()
+    {
+        if (!EnsureModelReady(out var error))
+            return new NameListResult(true, false, error, Array.Empty<string>());
+
+        try
+        {
+            var sap = _sapModel!;
+
+            var respComboProp = _sapModelInterface!.GetProperty("RespCombo")!;
+            var respCombo = respComboProp.GetValue(sap);
+            var comboArgs = new object?[] { 0, null };
+            respComboProp.PropertyType.GetMethod("GetNameList")!.Invoke(respCombo, comboArgs);
+            var combos = (string[]?)comboArgs[1] ?? Array.Empty<string>();
+
+            var loadCasesProp = _sapModelInterface.GetProperty("LoadCases")!;
+            var loadCases = loadCasesProp.GetValue(sap);
+            // GetNameList(ref int, ref string[], eLoadCaseType) — the type filter has a default
+            // value in the API, but reflection Invoke does not apply C# default parameters, so
+            // it must be supplied explicitly.
+            var getNameList = loadCasesProp.PropertyType.GetMethods().First(m => m.Name == "GetNameList");
+            var caseTypeDefault = getNameList.GetParameters()[2].DefaultValue;
+            var caseArgs = new object?[] { 0, null, caseTypeDefault };
+            getNameList.Invoke(loadCases, caseArgs);
+            var cases = (string[]?)caseArgs[1] ?? Array.Empty<string>();
+
+            return new NameListResult(true, true, null, combos.Concat(cases).ToArray());
+        }
+        catch (Exception ex)
+        {
+            AgentLog.Write($"GetCombinationsAndCases failed: {ex}");
+            return new NameListResult(true, false, ex.Message, Array.Empty<string>());
+        }
+    }
+
+    // Story names and elevations, used client-side to determine which stories are basements.
+    public StoriesResult GetStories()
+    {
+        if (!EnsureModelReady(out var error))
+            return new StoriesResult(true, false, error, Array.Empty<StoryInfo>());
+
+        try
+        {
+            var sap = _sapModel!;
+            var storyProp = _sapModelInterface!.GetProperty("Story")!;
+            var story = storyProp.GetValue(sap);
+            var args = new object?[] { 0, null, null, null, null, null, null, null };
+            storyProp.PropertyType.GetMethod("GetStories")!.Invoke(story, args);
+
+            var names = (string[]?)args[1] ?? Array.Empty<string>();
+            var elevations = (double[]?)args[2] ?? Array.Empty<double>();
+            var stories = names
+                .Select((name, i) => new StoryInfo(name, i < elevations.Length ? elevations[i] : 0))
+                .ToArray();
+
+            return new StoriesResult(true, true, null, stories);
+        }
+        catch (Exception ex)
+        {
+            AgentLog.Write($"GetStories failed: {ex}");
+            return new StoriesResult(true, false, ex.Message, Array.Empty<StoryInfo>());
+        }
+    }
+
+    // Raw story drift rows for the given response combinations / load cases. Each selected
+    // name is tried as both a combination and a case, since the caller does not distinguish;
+    // ETABS ignores the one that does not apply.
+    public StoryDriftsResult GetStoryDrifts(string[] selectedNames)
+    {
+        if (selectedNames.Length == 0)
+            return new StoryDriftsResult(true, true, "No combinations selected.", Array.Empty<StoryDriftRow>());
+        if (!EnsureModelReady(out var error))
+            return new StoryDriftsResult(true, false, error, Array.Empty<StoryDriftRow>());
+
+        object? setup = null;
+        Type? setupType = null;
+        try
+        {
+            var sap = _sapModel!;
+            var resultsProp = _sapModelInterface!.GetProperty("Results")!;
+            var results = resultsProp.GetValue(sap)!;
+            var resultsType = resultsProp.PropertyType;
+
+            var setupProp = resultsType.GetProperty("Setup")!;
+            setup = setupProp.GetValue(results)!;
+            setupType = setupProp.PropertyType;
+
+            setupType.GetMethod("DeselectAllCasesAndCombosForOutput")!.Invoke(setup, null);
+
+            var setCombo = setupType.GetMethods().First(m => m.Name == "SetComboSelectedForOutput");
+            var setCase = setupType.GetMethods().First(m => m.Name == "SetCaseSelectedForOutput");
+            foreach (var name in selectedNames)
+            {
+                setCombo.Invoke(setup, new object?[] { name, true });
+                setCase.Invoke(setup, new object?[] { name, true });
+            }
+
+            var storyDrifts = resultsType.GetMethod("StoryDrifts")!;
+            var args = new object?[11];
+            args[0] = 0;
+            storyDrifts.Invoke(results, args);
+
+            var numResults = (int)(args[0] ?? 0);
+            var story = (string[]?)args[1] ?? Array.Empty<string>();
+            var loadCase = (string[]?)args[2] ?? Array.Empty<string>();
+            var direction = (string[]?)args[5] ?? Array.Empty<string>();
+            var drift = (double[]?)args[6] ?? Array.Empty<double>();
+
+            var rows = new List<StoryDriftRow>(numResults);
+            for (int i = 0; i < numResults; i++)
+                rows.Add(new StoryDriftRow(story[i], loadCase[i], direction[i], drift[i]));
+
+            return new StoryDriftsResult(true, true, null, rows.ToArray());
+        }
+        catch (Exception ex)
+        {
+            AgentLog.Write($"GetStoryDrifts failed: {ex}");
+            return new StoryDriftsResult(true, false, ex.Message, Array.Empty<StoryDriftRow>());
+        }
+        finally
+        {
+            try { setupType?.GetMethod("DeselectAllCasesAndCombosForOutput")?.Invoke(setup, null); } catch { }
+        }
+    }
+
+    // Reuses ConnectAndRead so every data endpoint shares the same connect/reconnect logic
+    // and always operates against a live, readable model.
+    private bool EnsureModelReady(out string? error)
+    {
+        var snapshot = ConnectAndRead();
+        if (!snapshot.EtabsConnected)
+        {
+            error = snapshot.Error ?? "ETABS is not connected.";
+            return false;
+        }
+
+        error = null;
+        return true;
+    }
 
     private bool EnsureApiLoaded()
     {
@@ -360,10 +530,23 @@ internal sealed class LocalBridgeServer : IDisposable
     };
 
     private readonly Func<EtabsSnapshot> _getSnapshot;
+    private readonly Func<NameListResult> _getCombinations;
+    private readonly Func<StoriesResult> _getStories;
+    private readonly Func<string[], StoryDriftsResult> _getStoryDrifts;
     private readonly CancellationTokenSource _cancellation = new();
     private TcpListener? _listener;
 
-    public LocalBridgeServer(Func<EtabsSnapshot> getSnapshot) => _getSnapshot = getSnapshot;
+    public LocalBridgeServer(
+        Func<EtabsSnapshot> getSnapshot,
+        Func<NameListResult> getCombinations,
+        Func<StoriesResult> getStories,
+        Func<string[], StoryDriftsResult> getStoryDrifts)
+    {
+        _getSnapshot = getSnapshot;
+        _getCombinations = getCombinations;
+        _getStories = getStories;
+        _getStoryDrifts = getStoryDrifts;
+    }
 
     public void Start()
     {
@@ -401,7 +584,9 @@ internal sealed class LocalBridgeServer : IDisposable
                 if (parts.Length < 2) return;
 
                 var method = parts[0].ToUpperInvariant();
-                var path = parts[1].Split('?', 2)[0];
+                var pathAndQuery = parts[1].Split('?', 2);
+                var path = pathAndQuery[0];
+                var query = pathAndQuery.Length > 1 ? ParseQuery(pathAndQuery[1]) : new Dictionary<string, string>();
                 var headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
                 string? line;
                 while (!string.IsNullOrEmpty(line = await reader.ReadLineAsync(cancellationToken)))
@@ -437,10 +622,45 @@ internal sealed class LocalBridgeServer : IDisposable
                     return;
                 }
 
+                if (path == "/api/etabs/combinations")
+                {
+                    await WriteResponseAsync(stream, 200, "OK", _getCombinations(), origin, cancellationToken);
+                    return;
+                }
+
+                if (path == "/api/etabs/stories")
+                {
+                    await WriteResponseAsync(stream, 200, "OK", _getStories(), origin, cancellationToken);
+                    return;
+                }
+
+                if (path == "/api/etabs/story-drifts")
+                {
+                    query.TryGetValue("combos", out var combosParam);
+                    var names = string.IsNullOrWhiteSpace(combosParam)
+                        ? Array.Empty<string>()
+                        : combosParam.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                    await WriteResponseAsync(stream, 200, "OK", _getStoryDrifts(names), origin, cancellationToken);
+                    return;
+                }
+
                 await WriteResponseAsync(stream, 404, "Not Found", new { error = "Endpoint not found." }, origin, cancellationToken);
             }
             catch { }
         }
+    }
+
+    private static Dictionary<string, string> ParseQuery(string query)
+    {
+        var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var pair in query.Split('&', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var kv = pair.Split('=', 2);
+            var key = Uri.UnescapeDataString(kv[0]);
+            var value = kv.Length > 1 ? Uri.UnescapeDataString(kv[1]) : string.Empty;
+            result[key] = value;
+        }
+        return result;
     }
 
     private static async Task WriteResponseAsync(
@@ -501,6 +721,16 @@ internal static class AgentInfo
 {
     public const string Version = "0.3.3";
 }
+
+internal sealed record NameListResult(bool AgentOnline, bool EtabsConnected, string? Error, string[] Names);
+
+internal sealed record StoryInfo(string Name, double Elevation);
+
+internal sealed record StoriesResult(bool AgentOnline, bool EtabsConnected, string? Error, StoryInfo[] Stories);
+
+internal sealed record StoryDriftRow(string Story, string OutputCase, string Direction, double Drift);
+
+internal sealed record StoryDriftsResult(bool AgentOnline, bool EtabsConnected, string? Error, StoryDriftRow[] Rows);
 
 internal static class NativeMethods
 {
