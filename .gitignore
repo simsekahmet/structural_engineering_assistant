@@ -9,3 +9,12 @@
 *.pnc
 *.exe
 *.dll
+
+# NuGet packages are restored on build, not committed
+packages/
+
+# Local .NET SDK cache / sentinels
+.dotnet/
+
+# Dated source backups live outside version control
+BACKUP_*/
