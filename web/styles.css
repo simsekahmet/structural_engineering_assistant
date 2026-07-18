@@ -142,6 +142,9 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .module-card::after { content: "→"; position: absolute; top: 13px; right: 12px; color: var(--muted); }
 .module-card.extra { display: none; }
 .module-grid.expanded .module-card.extra { display: block; }
+.module-card.ready { border-color: color-mix(in srgb, var(--green) 40%, var(--border-soft)); }
+.module-card.ready .module-icon { color: var(--green); background: color-mix(in srgb, var(--green) 14%, transparent); }
+.module-card.ready small { color: var(--green); font-weight: 700; }
 
 .workflow-list { list-style: none; margin: 0; padding: 13px 18px 5px; }
 .workflow-list li { position: relative; display: flex; gap: 11px; padding: 7px 0 14px; }

@@ -1,7 +1,7 @@
 const moduleDefinitions = [
   { id: 'spectrum', key: 'spectrum', icon: '⌁', categoryKey: 'category.analysis' },
   { id: 'increment', key: 'increment', icon: '↟', categoryKey: 'category.analysis' },
-  { id: 'drift', key: 'drift', icon: '↔', categoryKey: 'category.analysis' },
+  { id: 'drift', key: 'drift', icon: '↔', categoryKey: 'category.analysis', ready: true },
   { id: 'pdelta', key: 'pdelta', icon: 'ϑ', categoryKey: 'category.analysis' },
   { id: 'column-axial', key: 'columnAxial', icon: '▥', categoryKey: 'category.memberChecks' },
   { id: 'wall-shear', key: 'wallShear', icon: '▤', categoryKey: 'category.memberChecks' },
@@ -29,7 +29,7 @@ const translations = {
     'dashboard.eyebrow': 'PROJECT CENTER', 'dashboard.title': 'Structural Engineering Dashboard',
     'dashboard.description': 'Connect your ETABS model, manage engineering checks, and report results from one workspace.',
     'bridge.local': 'Local bridge', 'status.offline': 'Offline', 'status.connected': 'Connected',
-    'stat.connectionRequired': 'ETABS connection required', 'stat.readyModules': 'Interface modules', 'stat.migrationDefined': 'Calculation engines not migrated yet', 'status.uiOnly': 'UI only',
+    'stat.connectionRequired': 'ETABS connection required', 'stat.readyModules': 'Interface modules', 'stat.migrationDefined': 'Calculation engines not migrated yet', 'status.uiOnly': 'UI only', 'status.ready': 'Ready',
     'stat.lastCheck': 'Last check', 'stat.noCheck': 'No check has been run', 'stat.reports': 'Reports', 'stat.reportTypes': 'Excel / PDF outputs',
     'quick.title': 'Quick Start', 'quick.description': 'Select an engineering module',
     'workflow.title': 'Workflow', 'workflow.description': 'Local ETABS connection status',
@@ -101,7 +101,7 @@ const translations = {
     'dashboard.eyebrow': 'PROJE MERKEZİ', 'dashboard.title': 'Yapısal Mühendislik Paneli',
     'dashboard.description': 'ETABS modelinizi bağlayın, tahkikleri tek merkezden yönetin ve sonuçları raporlayın.',
     'bridge.local': 'Yerel köprü', 'status.offline': 'Çevrimdışı', 'status.connected': 'Bağlı',
-    'stat.connectionRequired': 'ETABS bağlantısı gerekli', 'stat.readyModules': 'Arayüz modülü', 'stat.migrationDefined': 'Hesap motorları henüz taşınmadı', 'status.uiOnly': 'Yalnızca arayüz',
+    'stat.connectionRequired': 'ETABS bağlantısı gerekli', 'stat.readyModules': 'Arayüz modülü', 'stat.migrationDefined': 'Hesap motorları henüz taşınmadı', 'status.uiOnly': 'Yalnızca arayüz', 'status.ready': 'Hazır',
     'stat.lastCheck': 'Son kontrol', 'stat.noCheck': 'Henüz kontrol çalıştırılmadı', 'stat.reports': 'Raporlar', 'stat.reportTypes': 'Excel / PDF çıktıları',
     'quick.title': 'Hızlı Başlangıç', 'quick.description': 'Bir mühendislik modülü seçin',
     'workflow.title': 'Çalışma Akışı', 'workflow.description': 'ETABS yerel bağlantı durumu',
@@ -182,10 +182,10 @@ function t(key, values = {}) {
 function renderModules() {
   const expanded = moduleGrid.classList.contains('expanded');
   moduleGrid.innerHTML = moduleDefinitions.map((module, index) => `
-    <button class="module-card ${index >= 6 ? 'extra' : ''}" type="button" data-module="${module.id}">
+    <button class="module-card ${index >= 6 ? 'extra' : ''} ${module.ready ? 'ready' : ''}" type="button" data-module="${module.id}">
       <span class="module-icon">${module.icon}</span>
       <strong>${t(`module.${module.key}.title`)}</strong>
-      <small>${t(module.categoryKey)} · ${t('status.uiOnly')}</small>
+      <small>${t(module.categoryKey)} · ${t(module.ready ? 'status.ready' : 'status.uiOnly')}</small>
     </button>`).join('');
   moduleGrid.classList.toggle('expanded', expanded);
 }
