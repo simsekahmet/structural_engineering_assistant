@@ -6,9 +6,9 @@ const moduleDefinitions = [
   { id: 'column-axial', key: 'columnAxial', icon: '▥', categoryKey: 'category.memberChecks', ready: true },
   { id: 'wall-shear', key: 'wallShear', icon: '▤', categoryKey: 'category.memberChecks' },
   { id: 'wall-axial', key: 'wallAxial', icon: '▯', categoryKey: 'category.memberChecks' },
-  { id: 'beam-shear', key: 'beamShear', icon: '═', categoryKey: 'category.memberChecks' },
-  { id: 'beam-axial', key: 'beamAxial', icon: '⇥', categoryKey: 'category.memberChecks' },
-  { id: 'column-schedule', key: 'columnSchedule', icon: '▦', categoryKey: 'category.schedules' },
+  { id: 'beam-shear', key: 'beamShear', icon: '═', categoryKey: 'category.memberChecks', ready: true },
+  { id: 'beam-axial', key: 'beamAxial', icon: '⇥', categoryKey: 'category.memberChecks', ready: true },
+  { id: 'column-schedule', key: 'columnSchedule', icon: '▦', categoryKey: 'category.schedules', ready: true },
   { id: 'wall-schedule', key: 'wallSchedule', icon: '▧', categoryKey: 'category.schedules' },
   { id: 'beam-schedule', key: 'beamSchedule', icon: '▭', categoryKey: 'category.schedules' },
   { id: 'slab-schedule', key: 'slabSchedule', icon: '▱', categoryKey: 'category.schedules' },
@@ -148,7 +148,18 @@ const translations = {
     'beamShear.table.spacing': 's (cm)', 'beamShear.table.vr': 'Vr (kN)',
     'beamShear.status.passed': 'All beams are safe in shear.', 'beamShear.status.failed': '{count} beam(s) fail the shear check!',
     'beamAxial.params.limit': 'Limit ratio', 'beamAxial.selectFailing': 'Select column-like beams in model',
-    'beamAxial.status.passed': 'All beams are within the axial-load limit.', 'beamAxial.status.failed': '{count} beam(s) must be detailed as columns!'
+    'beamAxial.status.passed': 'All beams are within the axial-load limit.', 'beamAxial.status.failed': '{count} beam(s) must be detailed as columns!',
+    'columnSchedule.params.title': 'Settings and Data Fetch', 'columnSchedule.fetch': 'Fetch Model Data', 'columnSchedule.reset': 'Reset to Original',
+    'columnSchedule.story': 'Story', 'columnSchedule.applyWholeType': 'Apply rebar edits to the whole type (all stories)',
+    'columnSchedule.hint': 'Columns at the same (X,Y) location across stories are grouped into one Type. Editing a Type\'s rebar re-groups types automatically.',
+    'columnSchedule.selectType': 'Select type in model', 'columnSchedule.selectOne': 'Select',
+    'columnSchedule.table.type': 'Type', 'columnSchedule.table.h': 'h/⌀ (cm)', 'columnSchedule.table.shape': 'Shape',
+    'columnSchedule.table.rebar': 'Rebar', 'columnSchedule.table.ratio': 'Ratio',
+    'columnSchedule.shape.rect': 'Rectangular', 'columnSchedule.shape.circle': 'Circular',
+    'columnSchedule.status.fetched': '{count} columns fetched and grouped into types.',
+    'columnSchedule.status.reset': 'Reverted to the originally fetched values.',
+    'columnSchedule.status.selected': '{count} column(s) selected in the model.',
+    'columnSchedule.promptRebar': 'Current rebar: {current}\nEnter new rebar (e.g. 16φ20):'
   },
   tr: {
     'brand.subtitle': 'ETABS tahkik ve raporlama platformu',
@@ -282,7 +293,18 @@ const translations = {
     'beamShear.table.spacing': 'Aralık s (cm)', 'beamShear.table.vr': 'Vr (kN)',
     'beamShear.status.passed': 'Tüm kirişler kesme güvenliğini sağlıyor.', 'beamShear.status.failed': '{count} kiriş kesme güvenliğini sağlamıyor!',
     'beamAxial.params.limit': 'Sınır oran', 'beamAxial.selectFailing': 'Kolon Gibi Donatılacakları Modelde Seç',
-    'beamAxial.status.passed': 'Tüm kirişler eksenel yük sınırında.', 'beamAxial.status.failed': '{count} kiriş kolon gibi donatılmalı!'
+    'beamAxial.status.passed': 'Tüm kirişler eksenel yük sınırında.', 'beamAxial.status.failed': '{count} kiriş kolon gibi donatılmalı!',
+    'columnSchedule.params.title': 'Ayarlar ve Veri Çekme', 'columnSchedule.fetch': 'Model Bilgilerini Çek', 'columnSchedule.reset': 'Orijinale Dön',
+    'columnSchedule.story': 'Kat Seçimi', 'columnSchedule.applyWholeType': 'Donatı değişikliğini tipin tamamına uygula (tüm katlar)',
+    'columnSchedule.hint': 'Katlar boyunca aynı (X,Y) konumundaki kolonlar tek bir Tip olarak gruplanır. Bir tipin donatısını değiştirmek tipleri otomatik yeniden gruplar.',
+    'columnSchedule.selectType': 'Tipi Modelde Seç', 'columnSchedule.selectOne': 'Seç',
+    'columnSchedule.table.type': 'Tip', 'columnSchedule.table.h': 'h/⌀ (cm)', 'columnSchedule.table.shape': 'Şekil',
+    'columnSchedule.table.rebar': 'Donatı', 'columnSchedule.table.ratio': 'Oran',
+    'columnSchedule.shape.rect': 'Dikdörtgen', 'columnSchedule.shape.circle': 'Dairesel',
+    'columnSchedule.status.fetched': '{count} kolon çekildi ve tiplere gruplandı.',
+    'columnSchedule.status.reset': 'Orijinal çekilen değerlere dönüldü.',
+    'columnSchedule.status.selected': '{count} kolon modelde seçildi.',
+    'columnSchedule.promptRebar': 'Güncel donatı: {current}\nYeni donatıyı girin (örn: 16φ20):'
   }
 };
 
@@ -306,7 +328,8 @@ const moduleRenderers = {
   pdelta: renderPdeltaModule,
   'column-axial': renderColumnAxialModule,
   'beam-shear': renderBeamShearModule,
-  'beam-axial': renderBeamAxialModule
+  'beam-axial': renderBeamAxialModule,
+  'column-schedule': renderColumnScheduleModule
 };
 
 // Shared across beam checks: unique frame name -> { section, h, b } (h/b in model length units).
@@ -1963,7 +1986,7 @@ async function columnAxialSelectFailing() {
   }
   const items = [...new Map(failing.map(r => [`${r.story}|${r.column}`, { story: r.story, label: r.column }])).values()];
   try {
-    const res = await postAgentJson('/api/etabs/select-frames', { items }, 60000);
+    const res = await postAgentJson('/api/etabs/select-frames', { items }, 90000);
     if (!res.etabsConnected) throw new Error(res.error || t('drift.error.notConnected'));
     log(t('columnAxial.status.selected', { count: res.selectedCount }), 'ok');
   } catch (error) {
@@ -2130,7 +2153,7 @@ async function beamSelectFailing(results) {
   if (failing.length === 0) { log(t('beam.status.allPass'), 'ok'); return; }
   const items = [...new Map(failing.map(r => [`${r.story}|${r.label}`, { story: r.story, label: r.label }])).values()];
   try {
-    const res = await postAgentJson('/api/etabs/select-frames', { items }, 60000);
+    const res = await postAgentJson('/api/etabs/select-frames', { items }, 90000);
     if (!res.etabsConnected) throw new Error(res.error || t('drift.error.notConnected'));
     log(t('beam.status.selected', { count: res.selectedCount }), 'ok');
   } catch (error) {
@@ -2430,6 +2453,351 @@ async function beamAxialExportExcel() {
       fck: beamAxialState.fck, limit: beamAxialState.limit,
       rows: results.map(r => ({ story: r.story, label: r.label, unique: r.unique, loadCase: r.case, section: r.section, b: r.b, d: r.d, p: r.p }))
     }, 'Kiris_Eksenel_Raporu.xlsx');
+  } catch (error) {
+    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Column Schedule (Kolon Donesi) — ported from KolonDonesiUI.GenerateColumnTypes
+// + CalculateRebarRatio (C#). Clusters columns by (X,Y) into stacks, assigns a
+// Type label per stack via subset/superset matching across stories, and
+// computes the reinforcement ratio. DWG export (kolon_dwg_export.cs) is CAD
+// drawing generation — out of scope for the web app's table/Excel format, so
+// only the calculation + schedule table + Excel export are migrated here.
+// ---------------------------------------------------------------------------
+
+const columnScheduleState = {
+  columns: [], original: [], stories: [], selectedStory: null, applyToWholeType: false
+};
+
+function extractRebarParts(rebarLabel) {
+  if (!rebarLabel) return null;
+  const parts = String(rebarLabel).replace(/\s/g, '').split('φ');
+  if (parts.length !== 2) return null;
+  const count = parseInt(parts[0], 10);
+  const dia = parseFloat(parts[1]);
+  return Number.isFinite(count) && Number.isFinite(dia) ? { count, dia } : null;
+}
+
+function calculateRebarRatio(col) {
+  const parts = extractRebarParts(col.rebarLabel);
+  if (!parts) return 0;
+  const diaM = parts.dia / 1000;
+  const rebarAreaM2 = parts.count * (Math.PI * diaM * diaM / 4);
+  const colAreaM2 = col.width * col.depth;
+  return colAreaM2 === 0 ? 0 : (rebarAreaM2 / colAreaM2) * 100;
+}
+
+// Mirrors GenerateColumnTypes 1:1: cluster by (X,Y), then assign each stack a Type via
+// subset/superset matching against already-defined types (largest stacks first).
+function generateColumnTypes(columns) {
+  const clusterTolerance = 0.05;
+  const groups = [];
+  for (const col of columns) {
+    let added = false;
+    for (const grp of groups) {
+      const rep = grp[0];
+      if (Math.abs(rep.x - col.x) < clusterTolerance && Math.abs(rep.y - col.y) < clusterTolerance) {
+        grp.push(col);
+        added = true;
+        break;
+      }
+    }
+    if (!added) groups.push([col]);
+  }
+
+  const stackInfos = groups.map(grp => {
+    const storySections = new Map();
+    for (const col of grp) {
+      const minDim = Math.min(col.width, col.depth);
+      const maxDim = Math.max(col.width, col.depth);
+      storySections.set(col.story, `${Math.round(minDim * 100)}x${Math.round(maxDim * 100)}_${col.shape}_${col.rebarLabel}`);
+    }
+    return { group: grp, storySections };
+  });
+
+  stackInfos.sort((a, b) => b.storySections.size - a.storySections.size);
+
+  let typeCounter = 1;
+  const definedTypes = [];
+  for (const info of stackInfos) {
+    let matchedType = null;
+    for (const defined of definedTypes) {
+      let isMatch = true;
+      for (const [story, sig] of info.storySections) {
+        if (defined.storySections.get(story) !== sig) { isMatch = false; break; }
+      }
+      if (isMatch) { matchedType = defined; break; }
+    }
+    const typeLabel = matchedType ? matchedType.typeLabel : `T${typeCounter++}`;
+    if (!matchedType) { info.typeLabel = typeLabel; definedTypes.push(info); }
+    for (const col of info.group) col.type = typeLabel;
+  }
+}
+
+function columnScheduleTypeNumber(type) {
+  return parseInt(String(type || '').replace(/\D/g, ''), 10) || 0;
+}
+
+function columnScheduleColorFor(rebarLabel) {
+  const palette = { 16: '#f2c94c', 18: '#eb5757', 20: '#f2994a', 22: '#bb6bd9', 25: '#9b51e0' };
+  const parts = extractRebarParts(rebarLabel);
+  if (parts && palette[Math.round(parts.dia)]) return palette[Math.round(parts.dia)];
+  let hash = 0;
+  for (const ch of String(rebarLabel)) hash = (hash * 31 + ch.charCodeAt(0)) % 360;
+  return `hsl(${hash}, 55%, 55%)`;
+}
+
+function renderColumnScheduleModule() {
+  renderColumnScheduleSetupPanel();
+  renderColumnScheduleResultsPanel();
+}
+
+function renderColumnScheduleSetupPanel() {
+  const panel = $('#setupPanel');
+  panel.innerHTML = `
+    <div class="panel-heading compact"><div><span class="step-number">1</span><div><h2>${t('columnSchedule.params.title')}</h2><p>${t('moduleData.description')}</p></div></div></div>
+    <div class="panel-actions two-up">
+      <button class="button button-primary" type="button" id="csFetch">${t('columnSchedule.fetch')}</button>
+      <button class="button button-secondary" type="button" id="csReset">${t('columnSchedule.reset')}</button>
+    </div>
+    <div class="field-grid">
+      <div class="field"><label>${t('columnSchedule.story')}</label><select id="csStorySelect"></select></div>
+      <label class="field-checkbox"><input type="checkbox" id="csApplyWholeType"> ${t('columnSchedule.applyWholeType')}</label>
+    </div>
+    <p class="combo-hint">${t('columnSchedule.hint')}</p>
+    <div class="panel-actions">
+      <button class="button button-secondary full-width" type="button" id="csExport">${t('columnAxial.export')}</button>
+    </div>`;
+
+  $('#csFetch', panel).addEventListener('click', runColumnScheduleFetch);
+  $('#csReset', panel).addEventListener('click', columnScheduleReset);
+  $('#csExport', panel).addEventListener('click', columnScheduleExportExcel);
+  $('#csApplyWholeType', panel).addEventListener('change', e => { columnScheduleState.applyToWholeType = e.target.checked; });
+  $('#csStorySelect', panel).addEventListener('change', e => { columnScheduleState.selectedStory = e.target.value; renderColumnSchedulePlan(); });
+}
+
+function populateColumnScheduleStorySelect() {
+  const select = $('#csStorySelect');
+  if (!select) return;
+  select.innerHTML = columnScheduleState.stories
+    .map(s => `<option value="${s}" ${s === columnScheduleState.selectedStory ? 'selected' : ''}>${s}</option>`)
+    .join('');
+}
+
+function renderColumnScheduleResultsPanel() {
+  const panel = $('#resultsPanel');
+  panel.innerHTML = `
+    <div class="panel-heading compact"><div><span class="step-number">2</span><div><h2>${t('results.title')}</h2><p>${t('results.description')}</p></div></div>
+      <div class="column-schedule-type-select">
+        <select id="csTypeSelect"></select>
+        <button class="button button-secondary" type="button" id="csSelectType">${t('columnSchedule.selectType')}</button>
+      </div>
+    </div>
+    <div class="column-schedule-plan" id="csPlanWrap"></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>${t('columnSchedule.table.type')}</th><th>${t('drift.table.story')}</th><th>${t('columnAxial.table.section')}</th>
+          <th>${t('columnAxial.table.b')}</th><th>${t('columnSchedule.table.h')}</th><th>${t('columnSchedule.table.shape')}</th>
+          <th>${t('columnSchedule.table.rebar')}</th><th>${t('columnSchedule.table.ratio')}</th><th></th>
+        </tr></thead>
+        <tbody id="csResultsBody"><tr><td colspan="9" class="table-empty">${t('drift.table.empty')}</td></tr></tbody>
+      </table>
+    </div>`;
+
+  $('#csSelectType', panel).addEventListener('click', () => {
+    const type = $('#csTypeSelect').value;
+    columnScheduleSelectInModel(columnScheduleState.columns.filter(c => c.type === type));
+  });
+
+  renderColumnSchedulePlan();
+  renderColumnScheduleResultsTable();
+}
+
+function populateColumnScheduleTypeSelect() {
+  const select = $('#csTypeSelect');
+  if (!select) return;
+  const types = [...new Set(columnScheduleState.columns.map(c => c.type).filter(Boolean))]
+    .sort((a, b) => columnScheduleTypeNumber(a) - columnScheduleTypeNumber(b));
+  select.innerHTML = types.map(tp => `<option value="${tp}">${tp}</option>`).join('');
+}
+
+function columnScheduleSortedColumns() {
+  const storyOrder = columnScheduleState.stories;
+  return [...columnScheduleState.columns].sort((a, b) => {
+    const diff = columnScheduleTypeNumber(a.type) - columnScheduleTypeNumber(b.type);
+    if (diff !== 0) return diff;
+    return storyOrder.indexOf(a.story) - storyOrder.indexOf(b.story);
+  });
+}
+
+function renderColumnScheduleResultsTable() {
+  const body = $('#csResultsBody');
+  if (!body) return;
+  populateColumnScheduleTypeSelect();
+
+  const sorted = columnScheduleSortedColumns();
+  body.innerHTML = sorted.length
+    ? sorted.map(col => `
+        <tr data-name="${col.name}">
+          <td><strong>${col.type || ''}</strong></td><td>${col.story}</td><td>${col.section}</td>
+          <td>${(col.width * 100).toFixed(0)}</td><td>${(col.depth * 100).toFixed(0)}</td>
+          <td>${col.shape === 2 ? t('columnSchedule.shape.circle') : t('columnSchedule.shape.rect')}</td>
+          <td><input type="text" class="cs-edit-rebar" data-name="${col.name}" value="${col.rebarLabel}"></td>
+          <td>${calculateRebarRatio(col).toFixed(2)}%</td>
+          <td><button class="text-button cs-select-one" data-name="${col.name}" type="button">${t('columnSchedule.selectOne')}</button></td>
+        </tr>`).join('')
+    : `<tr><td colspan="9" class="table-empty">${t('drift.table.empty')}</td></tr>`;
+
+  $$('.cs-edit-rebar', body).forEach(input => {
+    input.addEventListener('change', () => columnScheduleApplyRebarEdit(input.dataset.name, input.value));
+  });
+  $$('.cs-select-one', body).forEach(btn => {
+    btn.addEventListener('click', () => {
+      const col = columnScheduleState.columns.find(c => c.name === btn.dataset.name);
+      if (col) columnScheduleSelectInModel([col]);
+    });
+  });
+}
+
+function renderColumnSchedulePlan() {
+  const wrap = $('#csPlanWrap');
+  if (!wrap) return;
+  const cols = columnScheduleState.columns.filter(c => c.story === columnScheduleState.selectedStory);
+  if (cols.length === 0) {
+    wrap.innerHTML = `<div class="table-empty">${t('drift.table.empty')}</div>`;
+    return;
+  }
+
+  const xs = cols.map(c => c.x), ys = cols.map(c => c.y);
+  const minX = Math.min(...xs), maxX = Math.max(...xs);
+  const minY = Math.min(...ys), maxY = Math.max(...ys);
+  const pad = 1.5;
+  const dataW = Math.max(maxX - minX, 1) + pad * 2;
+  const dataH = Math.max(maxY - minY, 1) + pad * 2;
+  const viewW = 640, viewH = 260;
+  const scale = Math.min(viewW / dataW, viewH / dataH);
+  const toScreenX = x => (x - minX + pad) * scale;
+  const toScreenY = y => viewH - (y - minY + pad) * scale;
+
+  const rects = cols.map(col => {
+    const cx = toScreenX(col.x), cy = toScreenY(col.y);
+    const rw = Math.max(col.width * scale, 4);
+    const rh = Math.max(col.depth * scale, 4);
+    const color = columnScheduleColorFor(col.rebarLabel);
+    return `<g transform="translate(${cx},${cy}) rotate(${col.angle})">
+      <rect x="${-rw / 2}" y="${-rh / 2}" width="${rw}" height="${rh}" fill="${color}" stroke="#333" stroke-width="0.5" data-name="${col.name}" class="cs-plan-col"></rect>
+      <text x="0" y="3" font-size="8" text-anchor="middle" fill="#111" style="pointer-events:none;">${col.type || ''}</text>
+    </g>`;
+  }).join('');
+
+  wrap.innerHTML = `<svg viewBox="0 0 ${viewW} ${viewH}" class="column-schedule-svg">${rects}</svg>`;
+
+  $$('.cs-plan-col', wrap).forEach(rect => {
+    rect.addEventListener('click', () => {
+      const col = columnScheduleState.columns.find(c => c.name === rect.dataset.name);
+      if (!col) return;
+      const newRebar = prompt(t('columnSchedule.promptRebar', { current: col.rebarLabel }), col.rebarLabel);
+      if (newRebar && newRebar !== col.rebarLabel) columnScheduleApplyRebarEdit(col.name, newRebar);
+    });
+  });
+}
+
+function columnScheduleApplyRebarEdit(name, newRebar) {
+  const col = columnScheduleState.columns.find(c => c.name === name);
+  if (!col || !newRebar || newRebar === col.rebarLabel) return;
+
+  if (columnScheduleState.applyToWholeType) {
+    for (const c of columnScheduleState.columns.filter(c => c.type === col.type)) c.rebarLabel = newRebar;
+  } else {
+    col.rebarLabel = newRebar;
+  }
+
+  generateColumnTypes(columnScheduleState.columns);
+  renderColumnScheduleResultsTable();
+  renderColumnSchedulePlan();
+}
+
+async function columnScheduleSelectInModel(cols) {
+  if (!cols || cols.length === 0) return;
+  const items = cols.map(c => ({ story: c.story, label: c.label }));
+  try {
+    const res = await postAgentJson('/api/etabs/select-frames', { items }, 90000);
+    if (!res.etabsConnected) throw new Error(res.error || t('drift.error.notConnected'));
+    log(t('columnSchedule.status.selected', { count: res.selectedCount }), 'ok');
+  } catch (error) {
+    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+  }
+}
+
+async function runColumnScheduleFetch() {
+  const btn = $('#csFetch');
+  btn.disabled = true;
+  try {
+    const [colsRes, storiesRes] = await Promise.all([
+      fetchAgentJson('/api/etabs/column-schedule', 30000),
+      fetchAgentJson('/api/etabs/stories')
+    ]);
+    if (!colsRes.etabsConnected) throw new Error(colsRes.error || t('drift.error.notConnected'));
+
+    const columns = colsRes.rows.map(r => ({
+      name: r.name, label: r.label, story: r.story, x: r.x, y: r.y,
+      section: r.section, width: r.width, depth: r.depth, shape: r.shape, angle: r.angle,
+      rebarLabel: r.rebarLabel, type: null
+    }));
+    generateColumnTypes(columns);
+
+    columnScheduleState.columns = columns;
+    columnScheduleState.original = columns.map(c => ({ ...c }));
+
+    const storyOrder = (storiesRes.stories || []).slice().sort((a, b) => b.elevation - a.elevation).map(s => s.name);
+    const usedStories = [...new Set(columns.map(c => c.story))];
+    columnScheduleState.stories = storyOrder.filter(s => usedStories.includes(s))
+      .concat(usedStories.filter(s => !storyOrder.includes(s)));
+    columnScheduleState.selectedStory = columnScheduleState.stories[0] || null;
+
+    populateColumnScheduleStorySelect();
+    renderColumnScheduleResultsTable();
+    renderColumnSchedulePlan();
+    recordLastCheck('column-schedule');
+    log(t('columnSchedule.status.fetched', { count: columns.length }), 'ok');
+  } catch (error) {
+    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function columnScheduleReset() {
+  if (columnScheduleState.original.length === 0) return;
+  columnScheduleState.columns = columnScheduleState.original.map(c => ({ ...c }));
+  generateColumnTypes(columnScheduleState.columns);
+  renderColumnScheduleResultsTable();
+  renderColumnSchedulePlan();
+  log(t('columnSchedule.status.reset'), 'ok');
+}
+
+async function columnScheduleExportExcel() {
+  const columns = columnScheduleState.columns;
+  if (columns.length === 0) { log(t('columnAxial.error.noFrameData'), 'error'); return; }
+  const btn = $('#csExport');
+  if (btn) btn.disabled = true;
+  try {
+    const sorted = columnScheduleSortedColumns();
+    await downloadAgentExcel('/api/etabs/export/column-schedule', {
+      rows: sorted.map(c => {
+        const parts = extractRebarParts(c.rebarLabel) || { count: 0, dia: 0 };
+        return {
+          type: c.type || '', story: c.story, section: c.section,
+          b: c.width * 100, h: c.depth * 100, shape: c.shape,
+          rebarLabel: c.rebarLabel, rebarCount: parts.count, rebarDiaMm: parts.dia
+        };
+      })
+    }, 'Kolon_Donesi.xlsx');
   } catch (error) {
     log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
   } finally {

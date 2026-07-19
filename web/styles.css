@@ -227,7 +227,7 @@ dialog form { padding: 20px; }.dialog-heading, .dialog-heading > div { display: 
 .increment-warning { color: var(--amber); font-weight: 700; }
 .field { display: flex; flex-direction: column; gap: 4px; }
 .field label { color: var(--muted); font-size: 9px; text-transform: uppercase; letter-spacing: .04em; }
-.field input { height: 32px; padding: 0 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-muted); color: var(--text); }
+.field input, .field select { height: 32px; padding: 0 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-muted); color: var(--text); }
 .field-checkbox { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--text); }
 .field-checkbox input { width: 15px; height: 15px; }
 .combo-picker { padding: 0 17px 14px; }
@@ -238,7 +238,14 @@ dialog form { padding: 20px; }.dialog-heading, .dialog-heading > div { display: 
 .panel-actions { padding: 0 17px 17px; }
 .panel-actions.two-up { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .panel-actions.two-up .button { width: 100%; }
-.ca-edit, .bs-edit, .ba-edit { width: 58px; height: 26px; padding: 0 6px; border: 1px solid var(--border); border-radius: 6px; background: color-mix(in srgb, var(--amber) 10%, var(--surface-muted)); color: var(--text); text-align: center; }
+.ca-edit, .bs-edit, .ba-edit, .cs-edit-rebar { width: 58px; height: 26px; padding: 0 6px; border: 1px solid var(--border); border-radius: 6px; background: color-mix(in srgb, var(--amber) 10%, var(--surface-muted)); color: var(--text); text-align: center; }
+.cs-edit-rebar { width: 84px; }
+.column-schedule-type-select { display: flex; align-items: center; gap: 8px; }
+.column-schedule-type-select select { height: 32px; padding: 0 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-muted); color: var(--text); }
+.column-schedule-plan { margin: 0 17px 14px; padding: 10px; border: 1px solid var(--border-soft); border-radius: 12px; background: var(--surface-muted); }
+.column-schedule-svg { width: 100%; height: 260px; display: block; }
+.cs-plan-col { cursor: pointer; }
+.cs-plan-col:hover { stroke: var(--primary); stroke-width: 1.5; }
 tr.row-fail { background: color-mix(in srgb, var(--red) 8%, transparent); }
 .column-axial-failed { margin: 0 17px 17px; padding: 12px 14px; border: 1px solid var(--border-soft); border-radius: 12px; background: var(--surface-muted); }
 .column-axial-failed h3 { margin: 0 0 6px; color: var(--primary-dark); font-size: 12px; }
