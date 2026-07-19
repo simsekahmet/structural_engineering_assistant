@@ -1340,7 +1340,7 @@ internal sealed record EtabsSnapshot(
 
 internal static class AgentInfo
 {
-    public const string Version = "1.3.0";
+    public const string Version = "1.4.0";
 }
 
 internal sealed record NameListResult(bool AgentOnline, bool EtabsConnected, string? Error, string[] Names);
@@ -1679,6 +1679,10 @@ internal static class BeamShearExcelReport
         ws.Cells[2, 4].Value = fyk;
         ws.Cells[2, 5].Value = "Vc:";
         ws.Cells[2, 6].Value = useVc ? "Var" : "Yok";
+        ws.Cells[2, 14].Value = "fyd (N/mm2):";
+        ws.Cells[2, 15].Formula = "$D$2/1.15";
+        ws.Cells[3, 14].Value = "fctd (N/mm2):";
+        ws.Cells[3, 15].Formula = "0.35*SQRT($B$2)/1.5";
 
         string[] headers = { "Story", "Beam", "Section", "Vd (kN)", "b(cm)", "h(cm)", "d(cm)", "Kolu (n)", "Çap (mm)", "Aralık (s)", "Vr (kN)", "Durum" };
         for (int i = 0; i < headers.Length; i++)
@@ -1689,10 +1693,6 @@ internal static class BeamShearExcelReport
             ws.Cells[3, i + 1].Style.Fill.PatternType = ExcelFillStyle.Solid;
             ws.Cells[3, i + 1].Style.Fill.BackgroundColor.SetColor(DrawingColor.FromArgb(240, 240, 240));
         }
-
-        var fyd = fyk / 1.15;
-        var fctd = 0.35 * Math.Sqrt(fck) / 1.5;
-        var ci = System.Globalization.CultureInfo.InvariantCulture;
 
         int row = 4;
         foreach (var item in rows)
@@ -1708,8 +1708,13 @@ internal static class BeamShearExcelReport
             ws.Cells[row, 9].Value = item.Phi;
             ws.Cells[row, 10].Value = item.S;
 
-            var vcComponent = useVc ? 0.65 * fctd * (item.B / 100.0) * (item.D / 100.0) * 1000 * 0.8 : 0;
-            ws.Cells[row, 11].Formula = $"((H{row}*3.14159265*(I{row}/10)^2)/4/J{row})*G{row}*{fyd.ToString(ci)}*0.1 + {vcComponent.ToString(ci)}";
+            // Fully formula-driven, mirroring BeamAxialExcelReport: fck ($B$2), fyk ($D$2) and the
+            // Vc toggle ($F$2) are live cell references, not baked C# literals, so editing ANY of
+            // fck/fyk/Vc/b/h/d/n/phi/s in the downloaded sheet recalculates Vr and Durum.
+            ws.Cells[row, 11].Formula =
+                $"MIN(((H{row}*3.14159265*(I{row}/10)^2)/4/J{row})*G{row}*$O$2*0.1" +
+                $"+IF($F$2=\"Var\",0.65*$O$3*(E{row}/100)*(G{row}/100)*1000*0.8,0)," +
+                $"0.85*(E{row}/100)*(F{row}/100)*SQRT($B$2)*1000)";
             ws.Cells[row, 12].Formula = $"IF(D{row}<=K{row},\"OK\", \"NOT OK\")";
             row++;
         }

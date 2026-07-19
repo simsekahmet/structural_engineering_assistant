@@ -159,7 +159,9 @@ const translations = {
     'columnSchedule.status.fetched': '{count} columns fetched and grouped into types.',
     'columnSchedule.status.reset': 'Reverted to the originally fetched values.',
     'columnSchedule.status.selected': '{count} column(s) selected in the model.',
-    'columnSchedule.promptRebar': 'Current rebar: {current}\nEnter new rebar (e.g. 16φ20):'
+    'columnSchedule.promptRebar': 'Current rebar: {current}\nEnter new rebar (e.g. 16φ20):',
+    'columnSchedule.exportDxf': 'Download DXF (plan + rebar schedule)',
+    'columnSchedule.status.dxfSaved': 'DXF file generated.'
   },
   tr: {
     'brand.subtitle': 'ETABS tahkik ve raporlama platformu',
@@ -304,7 +306,9 @@ const translations = {
     'columnSchedule.status.fetched': '{count} kolon çekildi ve tiplere gruplandı.',
     'columnSchedule.status.reset': 'Orijinal çekilen değerlere dönüldü.',
     'columnSchedule.status.selected': '{count} kolon modelde seçildi.',
-    'columnSchedule.promptRebar': 'Güncel donatı: {current}\nYeni donatıyı girin (örn: 16φ20):'
+    'columnSchedule.promptRebar': 'Güncel donatı: {current}\nYeni donatıyı girin (örn: 16φ20):',
+    'columnSchedule.exportDxf': 'DXF İndir (plan + donatı donesi)',
+    'columnSchedule.status.dxfSaved': 'DXF dosyası oluşturuldu.'
   }
 };
 
@@ -2569,13 +2573,15 @@ function renderColumnScheduleSetupPanel() {
       <label class="field-checkbox"><input type="checkbox" id="csApplyWholeType"> ${t('columnSchedule.applyWholeType')}</label>
     </div>
     <p class="combo-hint">${t('columnSchedule.hint')}</p>
-    <div class="panel-actions">
-      <button class="button button-secondary full-width" type="button" id="csExport">${t('columnAxial.export')}</button>
+    <div class="panel-actions two-up">
+      <button class="button button-secondary" type="button" id="csExport">${t('columnAxial.export')}</button>
+      <button class="button button-secondary" type="button" id="csExportDxf">${t('columnSchedule.exportDxf')}</button>
     </div>`;
 
   $('#csFetch', panel).addEventListener('click', runColumnScheduleFetch);
   $('#csReset', panel).addEventListener('click', columnScheduleReset);
   $('#csExport', panel).addEventListener('click', columnScheduleExportExcel);
+  $('#csExportDxf', panel).addEventListener('click', columnScheduleExportDxf);
   $('#csApplyWholeType', panel).addEventListener('change', e => { columnScheduleState.applyToWholeType = e.target.checked; });
   $('#csStorySelect', panel).addEventListener('change', e => { columnScheduleState.selectedStory = e.target.value; renderColumnSchedulePlan(); });
 }
@@ -2803,6 +2809,218 @@ async function columnScheduleExportExcel() {
   } finally {
     if (btn) btn.disabled = false;
   }
+}
+
+// --- Kolon Donesi DXF export -----------------------------------------------
+// Hand-written minimal ASCII DXF (R2000 / AC1015) writer: LINE, CIRCLE, TEXT,
+// LWPOLYLINE entities only, one flat ENTITIES section, colors via ACI (group
+// code 62), no LAYER table needed (everything drawn on default layer "0").
+// Geometry/formulas mirror kolon_dwg_export.cs (ZWCAD script) 1:1 where practical;
+// the circular arc "çiroz"/etriye tie details are intentionally simplified to a
+// closed inner stirrup rectangle instead of replicating the bulge-arc tie ties,
+// since the schedule information (count/diameter/ratio) is unaffected.
+function dxfNum(n) {
+  return (Math.round(n * 1000) / 1000).toString();
+}
+
+function dxfText(x, y, height, text, color, halign = 0, valign = 0) {
+  const lines = ['0', 'TEXT', '8', '0', '62', String(color),
+    '10', dxfNum(x), '20', dxfNum(y), '30', '0',
+    '40', dxfNum(height), '1', String(text).replace(/[\r\n]+/g, ' ')];
+  if (halign !== 0 || valign !== 0) {
+    lines.push('72', String(halign), '73', String(valign), '11', dxfNum(x), '21', dxfNum(y), '31', '0');
+  }
+  return lines;
+}
+
+function dxfLine(x1, y1, x2, y2, color) {
+  return ['0', 'LINE', '8', '0', '62', String(color),
+    '10', dxfNum(x1), '20', dxfNum(y1), '30', '0',
+    '11', dxfNum(x2), '21', dxfNum(y2), '31', '0'];
+}
+
+function dxfCircle(cx, cy, r, color) {
+  return ['0', 'CIRCLE', '8', '0', '62', String(color),
+    '10', dxfNum(cx), '20', dxfNum(cy), '30', '0', '40', dxfNum(r)];
+}
+
+function dxfPolyline(points, closed, color, constantWidth) {
+  const lines = ['0', 'LWPOLYLINE', '8', '0', '62', String(color),
+    '90', String(points.length), '70', closed ? '1' : '0'];
+  if (constantWidth) lines.push('43', dxfNum(constantWidth));
+  for (const [x, y] of points) lines.push('10', dxfNum(x), '20', dxfNum(y));
+  return lines;
+}
+
+function dxfRotate(cx, cy, dx, dy, cosA, sinA) {
+  return [cx + dx * cosA - dy * sinA, cy + dx * sinA + dy * cosA];
+}
+
+function dxfDonatiAdedi(k) {
+  if (k <= 35) return 3; if (k <= 50) return 4; if (k <= 60) return 5; if (k <= 70) return 6;
+  if (k <= 80) return 7; if (k <= 90) return 8; if (k <= 110) return 9; if (k <= 130) return 11;
+  if (k <= 160) return 13; if (k <= 180) return 15; if (k <= 190) return 17; if (k <= 240) return 19;
+  if (k <= 270) return 21; return 23;
+}
+
+// Draws one "type box" (dimensioned section + rebar layout + labels), matching
+// TipCiz() in kolon_dwg_export.cs. Returns nothing; appends to `out`.
+function dxfDrawTypeBox(out, refX, refY, b, h, rebarDia, color, baslik) {
+  const FixedBoxWidth = 200, FixedBoxHeight = 400, Paspayi = 3.5, R = 1.75;
+  const boxTopY = refY, boxBottomY = refY - FixedBoxHeight;
+  const centerX = refX + FixedBoxWidth / 2;
+  const t1PosY = boxTopY - 20;
+  const infoStartY = t1PosY - 15;
+  const colTopY = boxTopY - 110;
+  const insX = centerX - b / 2;
+  const insY = colTopY - h;
+
+  const adetX = dxfDonatiAdedi(b), adetY = dxfDonatiAdedi(h);
+  const toplamAdet = 2 * adetX + 2 * adetY - 4;
+  const cap = rebarDia > 0 ? rebarDia : 16;
+  const oran = (toplamAdet * Math.PI * Math.pow(cap / 20, 2) / (b * h)) * 100;
+
+  out.push(...dxfPolyline([[insX, insY], [insX + b, insY], [insX + b, insY + h], [insX, insY + h]], true, 1));
+
+  out.push(...dxfLine(insX, insY, insX, insY - 20, 3));
+  out.push(...dxfLine(insX + b, insY, insX + b, insY - 20, 3));
+  out.push(...dxfLine(insX, insY - 15, insX + b, insY - 15, 3));
+  out.push(...dxfText(insX + b / 2, insY - 18, 4.0, Math.round(b), 3, 1, 3));
+
+  out.push(...dxfLine(insX, insY, insX - 20, insY, 3));
+  out.push(...dxfLine(insX, insY + h, insX - 20, insY + h, 3));
+  out.push(...dxfLine(insX - 15, insY, insX - 15, insY + h, 3));
+  out.push(...dxfText(insX - 18, insY + h / 2, 4.0, Math.round(h), 3, 2, 2));
+
+  out.push(...dxfPolyline([[insX + Paspayi, insY + Paspayi], [insX + b - Paspayi, insY + Paspayi],
+    [insX + b - Paspayi, insY + h - Paspayi], [insX + Paspayi, insY + h - Paspayi]], true, 7));
+
+  const off = Paspayi + R;
+  const sx = adetX > 1 ? (b - 2 * off) / (adetX - 1) : 0;
+  const sy = adetY > 1 ? (h - 2 * off) / (adetY - 1) : 0;
+  for (let i = 0; i < adetX; i++) {
+    out.push(...dxfCircle(insX + off + i * sx, insY + h - off, R, 7));
+    out.push(...dxfCircle(insX + off + i * sx, insY + off, R, 7));
+  }
+  for (let j = 1; j < adetY - 1; j++) {
+    out.push(...dxfCircle(insX + off, insY + off + j * sy, R, 7));
+    out.push(...dxfCircle(insX + b - off, insY + off + j * sy, R, 7));
+  }
+
+  out.push(...dxfPolyline([[refX, boxBottomY], [refX + FixedBoxWidth, boxBottomY],
+    [refX + FixedBoxWidth, boxTopY], [refX, boxTopY]], true, color));
+
+  out.push(...dxfText(centerX, t1PosY, 12.0, baslik, 3, 1, 1));
+  out.push(...dxfText(centerX, infoStartY, 10.0, `${toplamAdet}Ø${cap}`, 2, 1, 3));
+  out.push(...dxfText(centerX, infoStartY - 20.0, 10.0, `%${oran.toFixed(2)}`, 2, 1, 3));
+
+  return boxBottomY;
+}
+
+function buildColumnScheduleDxf() {
+  const PlanScale = 100; // ETABS m -> DXF cm, matches desktop
+  const priorityColors = [1, 2, 3, 4, 6, 7, 5, 30, 150, 190, 11, 68, 144, 171, 240, 115, 225, 53];
+  const story = columnScheduleState.selectedStory;
+  const storyColumns = columnScheduleState.columns.filter(c => c.story === story);
+  const allColumns = columnScheduleState.columns;
+  const storyOrder = columnScheduleState.stories;
+
+  const typesInOrder = [...new Set(storyColumns.map(c => c.type || 'Bilinmiyor'))]
+    .sort((a, b) => columnScheduleTypeNumber(a) - columnScheduleTypeNumber(b));
+  const typeColorMap = {};
+  typesInOrder.forEach((tp, idx) => { typeColorMap[tp] = priorityColors[idx % priorityColors.length]; });
+
+  const out = [];
+
+  // 1. PLAN VIEW
+  out.push(...dxfText(0, 50, 5.0, `KAT PLANI - ${story}`, 4));
+  for (const col of storyColumns) {
+    const cx = col.x * PlanScale, cy = col.y * PlanScale;
+    const w = col.width * PlanScale, d = col.depth * PlanScale;
+    const rad = (col.angle || 0) * Math.PI / 180;
+    const cosA = Math.cos(rad), sinA = Math.sin(rad);
+    const hw = w / 2, hd = d / 2;
+    const c0 = dxfRotate(cx, cy, -hw, -hd, cosA, sinA), c1 = dxfRotate(cx, cy, hw, -hd, cosA, sinA);
+    const c2 = dxfRotate(cx, cy, hw, hd, cosA, sinA), c3 = dxfRotate(cx, cy, -hw, hd, cosA, sinA);
+    const pad = 15, mHw = hw + pad, mHd = hd + pad;
+    const m0 = dxfRotate(cx, cy, -mHw, -mHd, cosA, sinA), m1 = dxfRotate(cx, cy, mHw, -mHd, cosA, sinA);
+    const m2 = dxfRotate(cx, cy, mHw, mHd, cosA, sinA), m3 = dxfRotate(cx, cy, -mHw, mHd, cosA, sinA);
+    const color = typeColorMap[col.type || 'Bilinmiyor'] || 7;
+
+    out.push(...dxfPolyline([m0, m1, m2, m3], true, color, 0.5));
+    out.push(...dxfPolyline([c0, c1, c2, c3], true, 7));
+
+    const label = col.rebarLabel || col.type || col.name;
+    out.push(...dxfText(cx + mHw + 2, cy, 1.5, label, 7));
+  }
+
+  // 2. TYPE DETAIL DRAWINGS (+ story-to-story necking, matching DrawColumnTypeDetails)
+  const FixedBoxWidth = 200, FixedBoxHeight = 400;
+  let curX = 0, rowY = -600;
+  let minX = curX, maxX = curX, minY = rowY;
+
+  for (const tp of typesInOrder) {
+    const grp = storyColumns.filter(c => c.type === tp);
+    const rep = grp[0];
+    const adet = grp.length;
+    const parts = extractRebarParts(rep.rebarLabel) || { count: 0, dia: 0 };
+    const b = rep.width * 100, h = rep.depth * 100;
+    const color = typeColorMap[tp] || 7;
+    const bCm = Math.min(b, h), hCm = Math.max(b, h);
+    const baslik = `${tp} (${bCm.toFixed(0)}x${hCm.toFixed(0)}) (Adet:${adet})`;
+
+    let curY = rowY;
+    const boxBottom = dxfDrawTypeBox(out, curX, curY, b, h, parts.dia, color, baslik);
+    if (curX < minX) minX = curX;
+    if (curX + FixedBoxWidth > maxX) maxX = curX + FixedBoxWidth;
+    if (boxBottom < minY) minY = boxBottom;
+    curY -= (FixedBoxHeight + 50.0);
+
+    if (storyOrder && storyOrder.length > 1) {
+      const refCol = rep;
+      const zincir = allColumns
+        .filter(c => Math.abs(c.x - refCol.x) < 0.01 && Math.abs(c.y - refCol.y) < 0.01)
+        .sort((a, c) => storyOrder.indexOf(a.story) - storyOrder.indexOf(c.story));
+
+      let oncekiBoyut = `${bCm.toFixed(0)}x${hCm.toFixed(0)}`;
+      for (const zCol of zincir) {
+        const zB = zCol.width * 100, zH = zCol.depth * 100;
+        const zBCm = Math.min(zB, zH), zHCm = Math.max(zB, zH);
+        const yeniBoyut = `${zBCm.toFixed(0)}x${zHCm.toFixed(0)}`;
+        if (yeniBoyut !== oncekiBoyut) {
+          const daralmaBaslik = `${zCol.story} Daralması`;
+          const zParts = extractRebarParts(zCol.rebarLabel) || parts;
+          const bb = dxfDrawTypeBox(out, curX, curY, zB, zH, zParts.dia, color, daralmaBaslik);
+          if (bb < minY) minY = bb;
+          curY -= (FixedBoxHeight + 50.0);
+          oncekiBoyut = yeniBoyut;
+        }
+      }
+    }
+    curX += (FixedBoxWidth + 35.0);
+  }
+
+  const cerceveY = minY - 100;
+  out.push(...dxfPolyline([[minX - 100, cerceveY], [maxX + 100, cerceveY],
+    [maxX + 100, rowY + 100], [minX - 100, rowY + 100]], true, 7, 5.0));
+  out.push(...dxfText((minX + maxX) / 2 + 100, rowY + 150, 125.0, 'KOLON DONESİ', 2, 1, 1));
+
+  const doc = ['0', 'SECTION', '2', 'HEADER', '9', '$ACADVER', '1', 'AC1021', '0', 'ENDSEC',
+    '0', 'SECTION', '2', 'ENTITIES', ...out, '0', 'ENDSEC', '0', 'EOF'];
+  return doc.join('\r\n');
+}
+
+function columnScheduleExportDxf() {
+  if (columnScheduleState.columns.length === 0) { log(t('columnAxial.error.noFrameData'), 'error'); return; }
+  const dxfText = buildColumnScheduleDxf();
+  const blob = new Blob([dxfText], { type: 'application/dxf' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Kolon_Donesi_${columnScheduleState.selectedStory || 'plan'}.dxf`;
+  a.click();
+  URL.revokeObjectURL(url);
+  log(t('columnSchedule.status.dxfSaved'), 'ok');
 }
 
 moduleGrid.addEventListener('click', event => {
