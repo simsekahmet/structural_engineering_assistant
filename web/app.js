@@ -162,7 +162,9 @@ const translations = {
     'columnSchedule.status.selected': '{count} column(s) selected in the model.',
     'columnSchedule.promptRebar': 'Current rebar: {current}\nEnter new rebar (e.g. 16φ20):',
     'columnSchedule.exportDxf': 'Download DXF (plan + rebar schedule)',
-    'columnSchedule.status.dxfSaved': 'DXF file generated.'
+    'columnSchedule.status.dxfSaved': 'DXF file generated.',
+    'columnSchedule.ratio.under': 'ρ < 1% — below TBDY 2018 minimum longitudinal ratio',
+    'columnSchedule.ratio.over': 'ρ > 4% — above TBDY 2018 maximum longitudinal ratio'
   },
   tr: {
     'brand.subtitle': 'ETABS tahkik ve raporlama platformu',
@@ -310,7 +312,9 @@ const translations = {
     'columnSchedule.status.selected': '{count} kolon modelde seçildi.',
     'columnSchedule.promptRebar': 'Güncel donatı: {current}\nYeni donatıyı girin (örn: 16φ20):',
     'columnSchedule.exportDxf': 'DXF İndir (plan + donatı donesi)',
-    'columnSchedule.status.dxfSaved': 'DXF dosyası oluşturuldu.'
+    'columnSchedule.status.dxfSaved': 'DXF dosyası oluşturuldu.',
+    'columnSchedule.ratio.under': 'ρ < %1 — TBDY 2018 minimum boyuna donatı oranının altında',
+    'columnSchedule.ratio.over': 'ρ > %4 — TBDY 2018 maksimum boyuna donatı oranının üstünde'
   }
 };
 
@@ -2617,22 +2621,87 @@ function calculateRebarRatio(col) {
   return colAreaM2 === 0 ? 0 : (rebarAreaM2 / colAreaM2) * 100;
 }
 
+// TBDY 2018 §7.3.2: column longitudinal reinforcement ratio must be 1% ≤ ρ ≤ 4%.
+const COLUMN_RHO_MIN = 1.0;
+const COLUMN_RHO_MAX = 4.0;
+
+// Returns 'under' (ρ<1%), 'over' (ρ>4%), or 'ok'. Zero/undefined ratio is 'under'.
+function columnScheduleRatioStatus(ratio) {
+  if (ratio > COLUMN_RHO_MAX + 1e-9) return 'over';
+  if (ratio < COLUMN_RHO_MIN - 1e-9) return 'under';
+  return 'ok';
+}
+
+// Distributes an ACTUAL perimeter bar count into per-edge counts (adetX along b,
+// adetY along h) proportional to the section aspect ratio, keeping the corners.
+// For an even count the total 2·adetX+2·adetY−4 matches exactly; odd counts land
+// within ±1 (only reachable via manual edits, since ETABS rectangular counts are
+// even). Used so the DXF draws the model's real bar count, not a rule of thumb.
+function distributeRebar(count, b, h) {
+  if (!count || count < 4) return { adetX: 2, adetY: 2, total: 4 };
+  const target = count / 2 + 2;            // adetX + adetY
+  const r = b / h;
+  let adetY = Math.max(2, Math.round((target - 1 + r) / (r + 1)));
+  let adetX = Math.max(2, Math.round(target) - adetY);
+  let total = 2 * adetX + 2 * adetY - 4;
+  let guard = 0;
+  while (total !== count && guard++ < 60) {
+    if (total < count) { if (b >= h) adetX++; else adetY++; }
+    else if (adetX >= adetY && adetX > 2) adetX--;
+    else if (adetY > 2) adetY--;
+    else break;
+    total = 2 * adetX + 2 * adetY - 4;
+  }
+  return { adetX, adetY, total };
+}
+
 // Mirrors GenerateColumnTypes 1:1: cluster by (X,Y), then assign each stack a Type via
 // subset/superset matching against already-defined types (largest stacks first).
 function generateColumnTypes(columns) {
   const clusterTolerance = 0.05;
   const groups = [];
-  for (const col of columns) {
-    let added = false;
-    for (const grp of groups) {
-      const rep = grp[0];
-      if (Math.abs(rep.x - col.x) < clusterTolerance && Math.abs(rep.y - col.y) < clusterTolerance) {
-        grp.push(col);
-        added = true;
-        break;
-      }
+
+  // Primary grouping is by ETABS column label — the same label identifies a
+  // vertical column line across every story, so it survives plan setbacks/offsets
+  // that a pure (X,Y) tolerance would wrongly split. A label group is only
+  // sub-split when its columns sit FAR apart (> reuseTolerance), which catches a
+  // label accidentally reused for two separate lines while still keeping normal
+  // setbacks (small offsets) together. Falls back to (X,Y) clustering when any
+  // column lacks a label.
+  const reuseTolerance = 1.0; // metres — well beyond any real setback, well under a reused-label span
+  const allLabeled = columns.length > 0 && columns.every(c => c.label);
+  if (allLabeled) {
+    const byLabel = new Map();
+    for (const col of columns) {
+      if (!byLabel.has(col.label)) byLabel.set(col.label, []);
+      byLabel.get(col.label).push(col);
     }
-    if (!added) groups.push([col]);
+    for (const grp of byLabel.values()) {
+      const sub = [];
+      for (const col of grp) {
+        let placed = false;
+        for (const s of sub) {
+          if (Math.abs(s[0].x - col.x) < reuseTolerance && Math.abs(s[0].y - col.y) < reuseTolerance) {
+            s.push(col); placed = true; break;
+          }
+        }
+        if (!placed) sub.push([col]);
+      }
+      for (const s of sub) groups.push(s);
+    }
+  } else {
+    for (const col of columns) {
+      let added = false;
+      for (const grp of groups) {
+        const rep = grp[0];
+        if (Math.abs(rep.x - col.x) < clusterTolerance && Math.abs(rep.y - col.y) < clusterTolerance) {
+          grp.push(col);
+          added = true;
+          break;
+        }
+      }
+      if (!added) groups.push([col]);
+    }
   }
 
   const stackInfos = groups.map(grp => {
@@ -2770,15 +2839,24 @@ function renderColumnScheduleResultsTable() {
 
   const sorted = columnScheduleSortedColumns();
   body.innerHTML = sorted.length
-    ? sorted.map(col => `
+    ? sorted.map(col => {
+        const ratio = calculateRebarRatio(col);
+        const status = columnScheduleRatioStatus(ratio);
+        const ratioTitle = status === 'under' ? t('columnSchedule.ratio.under')
+          : status === 'over' ? t('columnSchedule.ratio.over') : '';
+        const ratioCell = status === 'ok'
+          ? `${ratio.toFixed(2)}%`
+          : `<span class="cs-ratio cs-ratio-${status}" title="${ratioTitle}">${ratio.toFixed(2)}% ⚠</span>`;
+        return `
         <tr data-name="${col.name}">
           <td><strong>${col.type || ''}</strong></td><td>${col.story}</td><td>${col.section}</td>
           <td>${(col.width * 100).toFixed(0)}</td><td>${(col.depth * 100).toFixed(0)}</td>
           <td>${col.shape === 2 ? t('columnSchedule.shape.circle') : t('columnSchedule.shape.rect')}</td>
           <td><input type="text" class="cs-edit-rebar" data-name="${col.name}" value="${col.rebarLabel}"></td>
-          <td>${calculateRebarRatio(col).toFixed(2)}%</td>
+          <td>${ratioCell}</td>
           <td><button class="text-button cs-select-one" data-name="${col.name}" type="button">${t('columnSchedule.selectOne')}</button></td>
-        </tr>`).join('')
+        </tr>`;
+      }).join('')
     : `<tr><td colspan="9" class="table-empty">${t('drift.table.empty')}</td></tr>`;
 
   $$('.cs-edit-rebar', body).forEach(input => {
@@ -2988,8 +3066,11 @@ function dxfDonatiAdedi(k) {
 }
 
 // Draws one "type box" (dimensioned section + rebar layout + labels), matching
-// TipCiz() in kolon_dwg_export.cs. Returns nothing; appends to `out`.
-function dxfDrawTypeBox(out, refX, refY, b, h, rebarDia, color, baslik) {
+// TipCiz() in kolon_dwg_export.cs. When rebarCount > 0 the drawing uses the model's
+// ACTUAL bar count (distributed by distributeRebar) and derives the count text and
+// ratio from it, so the drawing matches the schedule table/Excel; otherwise it
+// falls back to the size-based rule of thumb. Returns the box bottom Y.
+function dxfDrawTypeBox(out, refX, refY, b, h, rebarDia, rebarCount, color, baslik) {
   const FixedBoxWidth = 200, FixedBoxHeight = 400, Paspayi = 3.5, R = 1.75;
   const boxTopY = refY, boxBottomY = refY - FixedBoxHeight;
   const centerX = refX + FixedBoxWidth / 2;
@@ -2999,10 +3080,17 @@ function dxfDrawTypeBox(out, refX, refY, b, h, rebarDia, color, baslik) {
   const insX = centerX - b / 2;
   const insY = colTopY - h;
 
-  const adetX = dxfDonatiAdedi(b), adetY = dxfDonatiAdedi(h);
-  const toplamAdet = 2 * adetX + 2 * adetY - 4;
+  let adetX, adetY;
+  if (rebarCount > 0) {
+    ({ adetX, adetY } = distributeRebar(rebarCount, b, h));
+  } else {
+    adetX = dxfDonatiAdedi(b); adetY = dxfDonatiAdedi(h);
+  }
+  const drawnAdet = 2 * adetX + 2 * adetY - 4;
+  const shownAdet = rebarCount > 0 ? rebarCount : drawnAdet;
   const cap = rebarDia > 0 ? rebarDia : 16;
-  const oran = (toplamAdet * Math.PI * Math.pow(cap / 20, 2) / (b * h)) * 100;
+  const oran = (shownAdet * Math.PI * Math.pow(cap / 20, 2) / (b * h)) * 100;
+  const ratioStatus = columnScheduleRatioStatus(oran);
 
   out.push(...dxfPolyline([[insX, insY], [insX + b, insY], [insX + b, insY + h], [insX, insY + h]], true, 1));
 
@@ -3035,8 +3123,14 @@ function dxfDrawTypeBox(out, refX, refY, b, h, rebarDia, color, baslik) {
     [refX + FixedBoxWidth, boxTopY], [refX, boxTopY]], true, color));
 
   out.push(...dxfText(centerX, t1PosY, 12.0, baslik, 3, 1, 1));
-  out.push(...dxfText(centerX, infoStartY, 10.0, `${toplamAdet}Ø${cap}`, 2, 1, 3));
-  out.push(...dxfText(centerX, infoStartY - 20.0, 10.0, `%${oran.toFixed(2)}`, 2, 1, 3));
+  out.push(...dxfText(centerX, infoStartY, 10.0, `${shownAdet}Ø${cap}`, 2, 1, 3));
+  // Ratio in red (color 1) when outside TBDY 1%–4%, otherwise yellow (color 2).
+  const oranText = ratioStatus === 'ok' ? `%${oran.toFixed(2)}` : `%${oran.toFixed(2)} !`;
+  out.push(...dxfText(centerX, infoStartY - 20.0, 10.0, oranText, ratioStatus === 'ok' ? 2 : 1, 1, 3));
+  if (ratioStatus !== 'ok') {
+    const warn = ratioStatus === 'under' ? 'p<%1 (TBDY)' : 'p>%4 (TBDY)';
+    out.push(...dxfText(centerX, infoStartY - 33.0, 6.0, warn, 1, 1, 3));
+  }
 
   return boxBottomY;
 }
@@ -3094,7 +3188,7 @@ function buildColumnScheduleDxf() {
     const baslik = `${tp} (${bCm.toFixed(0)}x${hCm.toFixed(0)}) (Adet:${adet})`;
 
     let curY = rowY;
-    const boxBottom = dxfDrawTypeBox(out, curX, curY, b, h, parts.dia, color, baslik);
+    const boxBottom = dxfDrawTypeBox(out, curX, curY, b, h, parts.dia, parts.count, color, baslik);
     if (curX < minX) minX = curX;
     if (curX + FixedBoxWidth > maxX) maxX = curX + FixedBoxWidth;
     if (boxBottom < minY) minY = boxBottom;
@@ -3102,8 +3196,12 @@ function buildColumnScheduleDxf() {
 
     if (storyOrder && storyOrder.length > 1) {
       const refCol = rep;
+      // Follow the vertical column line by label (falls back to position) so the
+      // necking chain matches the label-based type grouping.
       const zincir = allColumns
-        .filter(c => Math.abs(c.x - refCol.x) < 0.01 && Math.abs(c.y - refCol.y) < 0.01)
+        .filter(c => refCol.label
+          ? c.label === refCol.label
+          : (Math.abs(c.x - refCol.x) < 0.01 && Math.abs(c.y - refCol.y) < 0.01))
         .sort((a, c) => storyOrder.indexOf(a.story) - storyOrder.indexOf(c.story));
 
       let oncekiBoyut = `${bCm.toFixed(0)}x${hCm.toFixed(0)}`;
@@ -3112,9 +3210,9 @@ function buildColumnScheduleDxf() {
         const zBCm = Math.min(zB, zH), zHCm = Math.max(zB, zH);
         const yeniBoyut = `${zBCm.toFixed(0)}x${zHCm.toFixed(0)}`;
         if (yeniBoyut !== oncekiBoyut) {
-          const daralmaBaslik = `${zCol.story} Daralması`;
+          const daralmaBaslik = `${zCol.story} Daralmasi`;
           const zParts = extractRebarParts(zCol.rebarLabel) || parts;
-          const bb = dxfDrawTypeBox(out, curX, curY, zB, zH, zParts.dia, color, daralmaBaslik);
+          const bb = dxfDrawTypeBox(out, curX, curY, zB, zH, zParts.dia, zParts.count, color, daralmaBaslik);
           if (bb < minY) minY = bb;
           curY -= (FixedBoxHeight + 50.0);
           oncekiBoyut = yeniBoyut;

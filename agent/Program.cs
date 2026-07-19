@@ -1340,7 +1340,7 @@ internal sealed record EtabsSnapshot(
 
 internal static class AgentInfo
 {
-    public const string Version = "1.4.0";
+    public const string Version = "1.5.0";
 }
 
 internal sealed record NameListResult(bool AgentOnline, bool EtabsConnected, string? Error, string[] Names);
@@ -1842,7 +1842,7 @@ internal static class ColumnScheduleExcelReport
         using var package = new ExcelPackage();
         var ws = package.Workbook.Worksheets.Add("Kolon Donesi");
 
-        ws.Cells[1, 1, 1, 9].Merge = true;
+        ws.Cells[1, 1, 1, 10].Merge = true;
         ws.Cells[1, 1].Value = "KOLON DONESİ";
         ws.Cells[1, 1].Style.Font.Size = 14;
         ws.Cells[1, 1].Style.Font.Bold = true;
@@ -1850,7 +1850,7 @@ internal static class ColumnScheduleExcelReport
         ws.Cells[1, 1].Style.Fill.PatternType = ExcelFillStyle.Solid;
         ws.Cells[1, 1].Style.Fill.BackgroundColor.SetColor(DrawingColor.FromArgb(218, 232, 252));
 
-        string[] headers = { "Tip", "Kat", "Kesit", "b (cm)", "h/Çap (cm)", "Şekil", "Donatı", "Ac (cm²)", "Oran (%)" };
+        string[] headers = { "Tip", "Kat", "Kesit", "b (cm)", "h/Çap (cm)", "Şekil", "Donatı", "Ac (cm²)", "Oran (%)", "TBDY" };
         for (int i = 0; i < headers.Length; i++)
         {
             var cell = ws.Cells[2, i + 1];
@@ -1884,6 +1884,10 @@ internal static class ColumnScheduleExcelReport
             ws.Cells[r, 11].Style.Font.Color.SetColor(DrawingColor.Gray);
             ws.Cells[r, 12].Style.Font.Color.SetColor(DrawingColor.Gray);
             ws.Cells[r, 9].Formula = $"IF(H{r}=0,0,(K{r}*PI()*POWER(L{r}/10,2)/4)/H{r}*100)";
+
+            // TBDY 2018 §7.3.2 longitudinal ratio check (1% ≤ ρ ≤ 4%), live off the Oran formula.
+            ws.Cells[r, 10].Formula = $"IF(I{r}<1,\"ρ<%1\",IF(I{r}>4,\"ρ>%4\",\"OK\"))";
+            ws.Cells[r, 10].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
         }
 
         ws.Cells[2, 11].Value = "Adet";
@@ -1899,6 +1903,16 @@ internal static class ColumnScheduleExcelReport
             colorScale.LowValue.Color = DrawingColor.LightGreen;
             colorScale.MiddleValue.Color = DrawingColor.Yellow;
             colorScale.HighValue.Color = DrawingColor.Salmon;
+
+            // Flag TBDY column: green when OK, bold red otherwise.
+            var tbdyRange = ws.Cells[$"J{startRow}:J{lastRow}"];
+            var okRule = tbdyRange.ConditionalFormatting.AddEqual();
+            okRule.Formula = "\"OK\"";
+            okRule.Style.Font.Color.Color = DrawingColor.Green;
+            var notOkRule = tbdyRange.ConditionalFormatting.AddNotEqual();
+            notOkRule.Formula = "\"OK\"";
+            notOkRule.Style.Font.Color.Color = DrawingColor.Red;
+            notOkRule.Style.Font.Bold = true;
         }
 
         ws.Cells.AutoFitColumns();
