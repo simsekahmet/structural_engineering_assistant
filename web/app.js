@@ -136,7 +136,19 @@ const translations = {
     'columnAxial.status.frameFetched': '{count} column frame assignments fetched.',
     'columnAxial.status.forcesFetched': '{count} element force rows fetched.',
     'columnAxial.status.selected': '{count} failing column(s) selected in the model.',
-    'columnAxial.error.noFrameData': 'Fetch Frame Assignment and Element Forces data first.'
+    'columnAxial.error.noFrameData': 'Fetch Frame Assignment and Element Forces data first.',
+    'beam.params.title': 'Calculation Settings', 'beam.params.fck': 'Concrete strength fck (MPa)',
+    'beam.params.fyk': 'Rebar yield fyk (MPa)', 'beam.params.dprime': "Cover d' (cm)", 'beam.params.useVc': 'Include Vc (concrete shear contribution)',
+    'beam.combos.hint': 'Select the design combinations to scan (governing value per beam is used).',
+    'beam.table.beam': 'Beam', 'beam.table.h': 'h (cm)',
+    'beam.status.allPass': 'All beams satisfy the check.', 'beam.status.selected': '{count} beam(s) selected in the model.',
+    'beam.error.noData': 'No beam element-force data was returned for the selected combinations.',
+    'beamShear.selectFailing': 'Select failing beams in model',
+    'beamShear.table.vd': 'Vd (kN)', 'beamShear.table.legs': 'Legs (n)', 'beamShear.table.phi': 'φ (mm)',
+    'beamShear.table.spacing': 's (cm)', 'beamShear.table.vr': 'Vr (kN)',
+    'beamShear.status.passed': 'All beams are safe in shear.', 'beamShear.status.failed': '{count} beam(s) fail the shear check!',
+    'beamAxial.params.limit': 'Limit ratio', 'beamAxial.selectFailing': 'Select column-like beams in model',
+    'beamAxial.status.passed': 'All beams are within the axial-load limit.', 'beamAxial.status.failed': '{count} beam(s) must be detailed as columns!'
   },
   tr: {
     'brand.subtitle': 'ETABS tahkik ve raporlama platformu',
@@ -258,7 +270,19 @@ const translations = {
     'columnAxial.status.frameFetched': '{count} kolon frame assignment verisi çekildi.',
     'columnAxial.status.forcesFetched': '{count} element force satırı çekildi.',
     'columnAxial.status.selected': '{count} adet sınırı aşan kolon modelde seçildi.',
-    'columnAxial.error.noFrameData': 'Önce Frame Assignment ve Element Forces verilerini "Getir" ile çekiniz.'
+    'columnAxial.error.noFrameData': 'Önce Frame Assignment ve Element Forces verilerini "Getir" ile çekiniz.',
+    'beam.params.title': 'Hesap Ayarları', 'beam.params.fck': 'Beton Dayanımı fck (MPa)',
+    'beam.params.fyk': 'Donatı Akma fyk (MPa)', 'beam.params.dprime': "Paspayı d' (cm)", 'beam.params.useVc': 'Vc (Beton Kesme Katkısı) Kullanılsın',
+    'beam.combos.hint': 'Taranacak tasarım kombinasyonlarını seçin (her kiriş için kritik değer kullanılır).',
+    'beam.table.beam': 'Kiriş', 'beam.table.h': 'h (cm)',
+    'beam.status.allPass': 'Tüm kirişler kontrolü sağlıyor.', 'beam.status.selected': '{count} kiriş modelde seçildi.',
+    'beam.error.noData': 'Seçili kombinasyonlar için kiriş element force verisi bulunamadı.',
+    'beamShear.selectFailing': 'Kurtarmayan Kirişleri Modelde Seç',
+    'beamShear.table.vd': 'Vd (kN)', 'beamShear.table.legs': 'Etriye (kol)', 'beamShear.table.phi': 'Çap φ (mm)',
+    'beamShear.table.spacing': 'Aralık s (cm)', 'beamShear.table.vr': 'Vr (kN)',
+    'beamShear.status.passed': 'Tüm kirişler kesme güvenliğini sağlıyor.', 'beamShear.status.failed': '{count} kiriş kesme güvenliğini sağlamıyor!',
+    'beamAxial.params.limit': 'Sınır oran', 'beamAxial.selectFailing': 'Kolon Gibi Donatılacakları Modelde Seç',
+    'beamAxial.status.passed': 'Tüm kirişler eksenel yük sınırında.', 'beamAxial.status.failed': '{count} kiriş kolon gibi donatılmalı!'
   }
 };
 
@@ -280,8 +304,19 @@ const moduleRenderers = {
   increment: renderIncrementModule,
   drift: renderDriftModule,
   pdelta: renderPdeltaModule,
-  'column-axial': renderColumnAxialModule
+  'column-axial': renderColumnAxialModule,
+  'beam-shear': renderBeamShearModule,
+  'beam-axial': renderBeamAxialModule
 };
+
+// Shared across beam checks: unique frame name -> { section, h, b } (h/b in model length units).
+async function fetchFrameSectionMap() {
+  const res = await fetchAgentJson('/api/etabs/frame-sections', 20000);
+  if (!res.etabsConnected) throw new Error(res.error || t('drift.error.notConnected'));
+  const map = new Map();
+  for (const s of res.sections || []) map.set(s.unique, s);
+  return map;
+}
 
 // Find a column index in an ETABS display table by normalized header name (case/space/dot-insensitive).
 function tableIndex(fields, ...names) {
@@ -1664,10 +1699,6 @@ function renderColumnAxialSetupPanel() {
       <select class="combo-select" id="caComboSelect" multiple></select>
       <p class="combo-hint">${t('columnAxial.combos.hint')}</p>
     </div>
-    <div class="panel-actions two-up">
-      <button class="button button-secondary" type="button" id="caFetchFrame">${t('columnAxial.frame.fetch')}</button>
-      <button class="button button-secondary" type="button" id="caFetchForces">${t('columnAxial.forces.fetch')}</button>
-    </div>
     <div class="panel-actions">
       <button class="button button-primary full-width" type="button" id="caCalculate">${t('columnAxial.calculate')}</button>
     </div>
@@ -1696,8 +1727,6 @@ function renderColumnAxialSetupPanel() {
 
   columnAxialPopulateComboSelect();
   $('#caFetchCombos', panel).addEventListener('click', columnAxialFetchCombos);
-  $('#caFetchFrame', panel).addEventListener('click', columnAxialFetchFrameAssignments);
-  $('#caFetchForces', panel).addEventListener('click', columnAxialFetchElementForces);
   $('#caCalculate', panel).addEventListener('click', runColumnAxialCheck);
   $('#caSelectFailing', panel).addEventListener('click', columnAxialSelectFailing);
   $('#caExport', panel).addEventListener('click', columnAxialExportExcel);
@@ -1827,98 +1856,87 @@ async function columnAxialFetchCombos() {
   }
 }
 
-async function columnAxialFetchFrameAssignments() {
-  const btn = $('#caFetchFrame');
-  btn.disabled = true;
-  try {
-    const res = await fetchAgentJson(`/api/etabs/table?name=${encodeURIComponent('Frame Assignments - Summary')}`);
-    if (!res.etabsConnected) throw new Error(res.error || t('drift.error.notConnected'));
+// Pure fetch: pulls column frame assignments from ETABS and returns them (throws on error).
+async function columnAxialLoadFrameAssignments() {
+  const res = await fetchAgentJson(`/api/etabs/table?name=${encodeURIComponent('Frame Assignments - Summary')}`);
+  if (!res.etabsConnected) throw new Error(res.error || t('drift.error.notConnected'));
 
-    const f = res.fields;
-    const storyIdx = tableIndex(f, 'Story');
-    const labelIdx = tableIndex(f, 'Label');
-    const uniqueIdx = tableIndex(f, 'Unique Name', 'UniqueName');
-    const typeIdx = tableIndex(f, 'Design Type', 'Type');
-    const analysisSectIdx = tableIndex(f, 'AnalysisSect', 'Analysis Section');
-    const designSectIdx = tableIndex(f, 'DesignSect', 'Design Section');
+  const f = res.fields;
+  const storyIdx = tableIndex(f, 'Story');
+  const labelIdx = tableIndex(f, 'Label');
+  const uniqueIdx = tableIndex(f, 'Unique Name', 'UniqueName');
+  const typeIdx = tableIndex(f, 'Design Type', 'Type');
+  const analysisSectIdx = tableIndex(f, 'AnalysisSect', 'Analysis Section');
+  const designSectIdx = tableIndex(f, 'DesignSect', 'Design Section');
 
-    columnAxialState.frameAssignments = res.rows
-      .filter(row => typeIdx < 0 || (row[typeIdx] || '').toLowerCase().includes('column'))
-      .map(row => {
-        let section = analysisSectIdx >= 0 ? row[analysisSectIdx] : '';
-        if (!section && designSectIdx >= 0) section = row[designSectIdx];
-        return {
-          story: row[storyIdx] || '', label: row[labelIdx] || '',
-          uniqueName: uniqueIdx >= 0 ? row[uniqueIdx] : '',
-          section: section || ''
-        };
-      });
-
-    log(t('columnAxial.status.frameFetched', { count: columnAxialState.frameAssignments.length }), 'ok');
-  } catch (error) {
-    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
-  } finally {
-    btn.disabled = false;
-  }
+  return res.rows
+    .filter(row => typeIdx < 0 || (row[typeIdx] || '').toLowerCase().includes('column'))
+    .map(row => {
+      let section = analysisSectIdx >= 0 ? row[analysisSectIdx] : '';
+      if (!section && designSectIdx >= 0) section = row[designSectIdx];
+      return {
+        story: row[storyIdx] || '', label: row[labelIdx] || '',
+        uniqueName: uniqueIdx >= 0 ? row[uniqueIdx] : '',
+        section: section || ''
+      };
+    });
 }
 
-async function columnAxialFetchElementForces() {
+// Pure fetch: pulls the column element forces for the selected combos (Station≈0, StepType=Min).
+async function columnAxialLoadElementForces() {
+  const comboParam = encodeURIComponent(columnAxialState.selected.join(','));
+  const res = await fetchAgentJson(`/api/etabs/table?name=${encodeURIComponent('Element Forces - Columns')}&combos=${comboParam}`);
+  if (!res.etabsConnected) throw new Error(res.error || t('drift.error.notConnected'));
+
+  const f = res.fields;
+  const storyIdx = tableIndex(f, 'Story');
+  const columnIdx = tableIndex(f, 'Column', 'Label');
+  const uniqueIdx = tableIndex(f, 'Unique Name', 'UniqueName');
+  const caseIdx = tableIndex(f, 'OutputCase', 'LoadCase', 'Case');
+  const stepTypeIdx = tableIndex(f, 'StepType');
+  const stationIdx = tableIndex(f, 'Station', 'Location');
+  const pIdx = tableIndex(f, 'P');
+
+  const selectedUpper = columnAxialState.selected.map(c => c.toUpperCase());
+  return res.rows
+    .filter(row => {
+      const loadCase = (row[caseIdx] || '').toUpperCase();
+      if (!selectedUpper.includes(loadCase)) return false;
+      const station = parseFloat(row[stationIdx]);
+      if (!Number.isNaN(station) && Math.abs(station) > 0.0001) return false;
+      const stepType = row[stepTypeIdx] || '';
+      return !stepType || stepType.toLowerCase() === 'min';
+    })
+    .map(row => ({
+      story: row[storyIdx] || '', column: row[columnIdx] || '',
+      uniqueName: uniqueIdx >= 0 ? row[uniqueIdx] : '',
+      loadCase: row[caseIdx] || '', location: stationIdx >= 0 ? row[stationIdx] : '0',
+      p: parseFloat(row[pIdx]) || 0
+    }));
+}
+
+// Single "Hesapla" action: fetches the frame assignments, element forces and stories fresh from
+// ETABS, then runs the check — so the user never has to pull the tables manually.
+async function runColumnAxialCheck() {
   if (columnAxialState.selected.length === 0) {
     log(t('drift.error.noCombos'), 'error');
     return;
   }
-  const btn = $('#caFetchForces');
-  btn.disabled = true;
+  const btn = $('#caCalculate');
+  if (btn) btn.disabled = true;
   try {
-    const comboParam = encodeURIComponent(columnAxialState.selected.join(','));
-    const res = await fetchAgentJson(`/api/etabs/table?name=${encodeURIComponent('Element Forces - Columns')}&combos=${comboParam}`);
-    if (!res.etabsConnected) throw new Error(res.error || t('drift.error.notConnected'));
+    const [frames, forces, storiesRes] = await Promise.all([
+      columnAxialLoadFrameAssignments(),
+      columnAxialLoadElementForces(),
+      fetchAgentJson('/api/etabs/stories')
+    ]);
+    if (!storiesRes.etabsConnected) throw new Error(storiesRes.error || t('drift.error.notConnected'));
 
-    const f = res.fields;
-    const storyIdx = tableIndex(f, 'Story');
-    const columnIdx = tableIndex(f, 'Column', 'Label');
-    const uniqueIdx = tableIndex(f, 'Unique Name', 'UniqueName');
-    const caseIdx = tableIndex(f, 'OutputCase', 'LoadCase', 'Case');
-    const stepTypeIdx = tableIndex(f, 'StepType');
-    const stationIdx = tableIndex(f, 'Station', 'Location');
-    const pIdx = tableIndex(f, 'P');
+    columnAxialState.frameAssignments = frames;
+    columnAxialState.columnForces = forces;
+    columnAxialState.stories = storiesRes.stories || [];
 
-    const selectedUpper = columnAxialState.selected.map(c => c.toUpperCase());
-    columnAxialState.columnForces = res.rows
-      .filter(row => {
-        const loadCase = (row[caseIdx] || '').toUpperCase();
-        if (!selectedUpper.includes(loadCase)) return false;
-        const station = parseFloat(row[stationIdx]);
-        if (!Number.isNaN(station) && Math.abs(station) > 0.0001) return false;
-        const stepType = row[stepTypeIdx] || '';
-        return !stepType || stepType.toLowerCase() === 'min';
-      })
-      .map(row => ({
-        story: row[storyIdx] || '', column: row[columnIdx] || '',
-        uniqueName: uniqueIdx >= 0 ? row[uniqueIdx] : '',
-        loadCase: row[caseIdx] || '', location: stationIdx >= 0 ? row[stationIdx] : '0',
-        p: parseFloat(row[pIdx]) || 0
-      }));
-
-    log(t('columnAxial.status.forcesFetched', { count: columnAxialState.columnForces.length }), 'ok');
-  } catch (error) {
-    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
-  } finally {
-    btn.disabled = false;
-  }
-}
-
-async function runColumnAxialCheck() {
-  if (columnAxialState.columnForces.length === 0 || columnAxialState.frameAssignments.length === 0) {
-    log(t('columnAxial.error.noFrameData'), 'error');
-    return;
-  }
-  try {
-    if (columnAxialState.stories.length === 0) {
-      const storiesRes = await fetchAgentJson('/api/etabs/stories');
-      if (!storiesRes.etabsConnected) throw new Error(storiesRes.error || t('drift.error.notConnected'));
-      columnAxialState.stories = storiesRes.stories;
-    }
+    if (forces.length === 0 || frames.length === 0) throw new Error(t('columnAxial.error.noFrameData'));
 
     const results = columnAxialCalculate(
       columnAxialState.columnForces, columnAxialState.frameAssignments, columnAxialState.stories,
@@ -1932,6 +1950,8 @@ async function runColumnAxialCheck() {
     log(failCount > 0 ? t('columnAxial.status.failed', { count: failCount }) : t('columnAxial.status.passed'), failCount > 0 ? 'error' : 'ok');
   } catch (error) {
     log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+  } finally {
+    if (btn) btn.disabled = false;
   }
 }
 
@@ -1943,7 +1963,7 @@ async function columnAxialSelectFailing() {
   }
   const items = [...new Map(failing.map(r => [`${r.story}|${r.column}`, { story: r.story, label: r.column }])).values()];
   try {
-    const res = await postAgentJson('/api/etabs/select-frames', { items });
+    const res = await postAgentJson('/api/etabs/select-frames', { items }, 60000);
     if (!res.etabsConnected) throw new Error(res.error || t('drift.error.notConnected'));
     log(t('columnAxial.status.selected', { count: res.selectedCount }), 'ok');
   } catch (error) {
@@ -1967,6 +1987,449 @@ async function columnAxialExportExcel() {
         section: r.section, b: r.b, d: r.d, p: r.nd
       }))
     }, 'Kolon_Eksenel_Raporu.xlsx');
+  } catch (error) {
+    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Beam Shear (Kiriş Kesme) — ported from KirisKesmeUI (C#).
+// Vr = Vw + Vcr (capped at Vrmax) vs Vd (max |V2| per beam). One "Hesapla" fetches everything.
+// ---------------------------------------------------------------------------
+
+const beamShearState = {
+  fck: 30, fyk: 420, dprime: 5, useVc: true,
+  combos: [], selected: [], lastResults: []
+};
+
+function beamShearComputeRow(vd, bM, hM, fck, fyk, dprime, useVc, n, phi, s) {
+  const fyd = fyk / 1.15;
+  const fctd = 0.35 * Math.sqrt(fck) / 1.5;
+  const dM = hM - dprime / 100;
+  const vrmax = 0.85 * bM * hM * Math.sqrt(fck) * 1000;
+  const vc = useVc ? 0.65 * fctd * bM * dM * 1000 : 0;
+  const vcr = 0.8 * vc;
+  const sSafe = s > 0 ? s : 10;
+  const aswS = n * Math.PI * Math.pow(phi / 10, 2) / 4 / sSafe;
+  const vw = aswS * (dM * 100) * fyd * 0.1;
+  let vr = vw + vcr;
+  if (vr > vrmax) vr = vrmax;
+  return { d: dM * 100, vr, ok: vd <= vr };
+}
+
+function beamShearCalculate(beams, sectionMap, p) {
+  const results = [];
+  for (const beam of beams) {
+    const sec = sectionMap.get(beam.unique);
+    const bM = sec ? sec.b : 0;
+    const hM = sec ? sec.h : 0;
+    const n = bM > 0.45 ? 4 : 2;
+    const phi = 10, s = 10;
+    const c = beamShearComputeRow(beam.vd, bM, hM, p.fck, p.fyk, p.dprime, p.useVc, n, phi, s);
+    results.push({
+      story: beam.story, label: beam.label, unique: beam.unique, case: beam.case,
+      section: sec ? sec.section : '', b: bM * 100, h: hM * 100, d: c.d,
+      vd: beam.vd, n, phi, s, vr: c.vr, ok: c.ok
+    });
+  }
+  return results.sort((a, b) => b.vd - a.vd);
+}
+
+async function loadBeamElementForces(selected, valueField) {
+  const comboParam = encodeURIComponent(selected.join(','));
+  const res = await fetchAgentJson(`/api/etabs/table?name=${encodeURIComponent('Element Forces - Beams')}&combos=${comboParam}`, 20000);
+  if (!res.etabsConnected) throw new Error(res.error || t('drift.error.notConnected'));
+  const f = res.fields;
+  const storyIdx = tableIndex(f, 'Story');
+  const labelIdx = tableIndex(f, 'Beam', 'Label');
+  const uniqueIdx = tableIndex(f, 'UniqueName', 'Unique');
+  const caseIdx = tableIndex(f, 'OutputCase', 'Case');
+  const valIdx = tableIndex(f, valueField);
+  const selectedUpper = selected.map(c => c.toUpperCase());
+  return { rows: res.rows, storyIdx, labelIdx, uniqueIdx, caseIdx, valIdx, selectedUpper };
+}
+
+function renderBeamShearModule() {
+  renderBeamShearSetupPanel();
+  renderBeamShearResultsPanel();
+}
+
+function renderBeamShearSetupPanel() {
+  const panel = $('#setupPanel');
+  panel.innerHTML = `
+    <div class="panel-heading compact"><div><span class="step-number">1</span><div><h2>${t('beam.params.title')}</h2><p>${t('moduleData.description')}</p></div></div></div>
+    <div class="field-grid">
+      <div class="field"><label>${t('beam.params.fck')}</label><input type="number" step="any" id="bsFck"></div>
+      <div class="field"><label>${t('beam.params.fyk')}</label><input type="number" step="any" id="bsFyk"></div>
+      <div class="field"><label>${t('beam.params.dprime')}</label><input type="number" step="any" id="bsDprime"></div>
+      <label class="field-checkbox"><input type="checkbox" id="bsUseVc"> ${t('beam.params.useVc')}</label>
+    </div>
+    <div class="combo-picker">
+      <div class="combo-picker-heading"><h3>${t('drift.combos.title')}</h3>
+        <button class="button button-secondary" type="button" id="bsFetchCombos">${t('drift.combos.fetch')}</button>
+      </div>
+      <select class="combo-select" id="bsComboSelect" multiple></select>
+      <p class="combo-hint">${t('beam.combos.hint')}</p>
+    </div>
+    <div class="panel-actions">
+      <button class="button button-primary full-width" type="button" id="bsCalculate">${t('columnAxial.calculate')}</button>
+    </div>
+    <div class="panel-actions two-up">
+      <button class="button button-secondary" type="button" id="bsSelectFailing">${t('beamShear.selectFailing')}</button>
+      <button class="button button-secondary" type="button" id="bsExport">${t('columnAxial.export')}</button>
+    </div>`;
+
+  const bind = (id, key) => {
+    const el = $('#' + id, panel);
+    el.value = beamShearState[key];
+    el.addEventListener('input', () => { beamShearState[key] = parseFloat(el.value) || 0; });
+  };
+  bind('bsFck', 'fck');
+  bind('bsFyk', 'fyk');
+  bind('bsDprime', 'dprime');
+  const useVc = $('#bsUseVc', panel);
+  useVc.checked = beamShearState.useVc;
+  useVc.addEventListener('change', () => { beamShearState.useVc = useVc.checked; });
+
+  beamComboSelect('#bsComboSelect', beamShearState);
+  $('#bsFetchCombos', panel).addEventListener('click', () => beamFetchCombos('#bsFetchCombos', '#bsComboSelect', beamShearState));
+  $('#bsCalculate', panel).addEventListener('click', runBeamShearCheck);
+  $('#bsSelectFailing', panel).addEventListener('click', () => beamSelectFailing(beamShearState.lastResults));
+  $('#bsExport', panel).addEventListener('click', beamShearExportExcel);
+}
+
+function beamComboSelect(selector, state) {
+  const select = $(selector);
+  if (!select) return;
+  select.innerHTML = state.combos
+    .map(name => `<option value="${name}" ${state.selected.includes(name) ? 'selected' : ''}>${name}</option>`)
+    .join('');
+  select.addEventListener('change', () => { state.selected = [...select.selectedOptions].map(o => o.value); });
+}
+
+async function beamFetchCombos(btnSel, comboSel, state) {
+  const btn = $(btnSel);
+  btn.disabled = true;
+  try {
+    const res = await fetchAgentJson('/api/etabs/combinations');
+    if (!res.etabsConnected) throw new Error(res.error || t('drift.error.notConnected'));
+    state.combos = res.names;
+    beamComboSelect(comboSel, state);
+    log(t('drift.combos.fetched', { count: state.combos.length }), 'ok');
+  } catch (error) {
+    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function beamSelectFailing(results) {
+  const failing = results.filter(r => !r.ok);
+  if (failing.length === 0) { log(t('beam.status.allPass'), 'ok'); return; }
+  const items = [...new Map(failing.map(r => [`${r.story}|${r.label}`, { story: r.story, label: r.label }])).values()];
+  try {
+    const res = await postAgentJson('/api/etabs/select-frames', { items }, 60000);
+    if (!res.etabsConnected) throw new Error(res.error || t('drift.error.notConnected'));
+    log(t('beam.status.selected', { count: res.selectedCount }), 'ok');
+  } catch (error) {
+    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+  }
+}
+
+async function runBeamShearCheck() {
+  if (beamShearState.selected.length === 0) { log(t('drift.error.noCombos'), 'error'); return; }
+  const btn = $('#bsCalculate');
+  if (btn) btn.disabled = true;
+  try {
+    const [forces, sectionMap] = await Promise.all([
+      loadBeamElementForces(beamShearState.selected, 'V2'),
+      fetchFrameSectionMap()
+    ]);
+    const { rows, storyIdx, labelIdx, uniqueIdx, caseIdx, valIdx, selectedUpper } = forces;
+
+    // Group by story+label, keep the governing (max |V2|) row.
+    const byKey = new Map();
+    for (const row of rows) {
+      if (!selectedUpper.includes((row[caseIdx] || '').toUpperCase())) continue;
+      const story = row[storyIdx] || '', label = row[labelIdx] || '';
+      const key = `${story}_${label}`;
+      const vd = Math.abs(parseFloat(row[valIdx]) || 0);
+      const existing = byKey.get(key);
+      if (!existing) byKey.set(key, { story, label, unique: row[uniqueIdx] || '', case: row[caseIdx] || '', vd });
+      else if (vd > existing.vd) { existing.vd = vd; existing.case = row[caseIdx] || ''; }
+    }
+
+    const beams = [...byKey.values()];
+    if (beams.length === 0) throw new Error(t('beam.error.noData'));
+
+    beamShearState.lastResults = beamShearCalculate(beams, sectionMap, beamShearState);
+    renderBeamShearResultsTable();
+    recordLastCheck('beam-shear');
+    const failCount = beamShearState.lastResults.filter(r => !r.ok).length;
+    log(failCount > 0 ? t('beamShear.status.failed', { count: failCount }) : t('beamShear.status.passed'), failCount > 0 ? 'error' : 'ok');
+  } catch (error) {
+    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+function renderBeamShearResultsPanel() {
+  const panel = $('#resultsPanel');
+  panel.innerHTML = `
+    <div class="panel-heading compact"><div><span class="step-number">2</span><div><h2>${t('results.title')}</h2><p>${t('results.description')}</p></div></div></div>
+    <div class="status-banner pending" id="bsStatusBanner">${t('columnAxial.status.pending')}</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>${t('drift.table.story')}</th><th>${t('beam.table.beam')}</th><th>${t('columnAxial.table.section')}</th>
+          <th>${t('beamShear.table.vd')}</th><th>${t('columnAxial.table.b')}</th><th>${t('beam.table.h')}</th><th>${t('columnAxial.table.d')}</th>
+          <th>${t('beamShear.table.legs')}</th><th>${t('beamShear.table.phi')}</th><th>${t('beamShear.table.spacing')}</th>
+          <th>${t('beamShear.table.vr')}</th><th>${t('drift.table.status')}</th>
+        </tr></thead>
+        <tbody id="bsResultsBody"><tr><td colspan="12" class="table-empty">${t('drift.table.empty')}</td></tr></tbody>
+      </table>
+    </div>`;
+  if (beamShearState.lastResults.length) renderBeamShearResultsTable();
+}
+
+function renderBeamShearResultsTable() {
+  const body = $('#bsResultsBody');
+  if (!body) return;
+  const results = beamShearState.lastResults;
+  body.innerHTML = results.length
+    ? results.map((item, i) => `
+        <tr data-index="${i}" class="${item.ok ? '' : 'row-fail'}">
+          <td>${item.story}</td><td>${item.label}</td><td>${item.section}</td>
+          <td>${item.vd.toFixed(2)}</td><td>${item.b.toFixed(1)}</td><td>${item.h.toFixed(1)}</td><td>${item.d.toFixed(1)}</td>
+          <td><input type="number" step="1" class="bs-edit bs-edit-n" data-index="${i}" value="${item.n}"></td>
+          <td><input type="number" step="1" class="bs-edit bs-edit-phi" data-index="${i}" value="${item.phi}"></td>
+          <td><input type="number" step="any" class="bs-edit bs-edit-s" data-index="${i}" value="${item.s}"></td>
+          <td class="bs-vr">${item.vr.toFixed(2)}</td><td class="bs-status">${item.ok ? '✅' : '❌'}</td>
+        </tr>`).join('')
+    : `<tr><td colspan="12" class="table-empty">${t('drift.table.empty')}</td></tr>`;
+
+  $$('.bs-edit', body).forEach(input => input.addEventListener('input', () => beamShearRecalcRow(parseInt(input.dataset.index, 10))));
+  beamShearUpdateBanner();
+}
+
+function beamShearRecalcRow(index) {
+  const item = beamShearState.lastResults[index];
+  const row = $(`tr[data-index="${index}"]`, $('#bsResultsBody'));
+  if (!item || !row) return;
+  item.n = parseInt($('.bs-edit-n', row).value, 10) || 0;
+  item.phi = parseInt($('.bs-edit-phi', row).value, 10) || 0;
+  item.s = parseFloat($('.bs-edit-s', row).value) || 0;
+  const c = beamShearComputeRow(item.vd, item.b / 100, item.h / 100, beamShearState.fck, beamShearState.fyk, beamShearState.dprime, beamShearState.useVc, item.n, item.phi, item.s);
+  item.vr = c.vr;
+  item.ok = c.ok;
+  $('.bs-vr', row).textContent = item.vr.toFixed(2);
+  $('.bs-status', row).textContent = item.ok ? '✅' : '❌';
+  row.classList.toggle('row-fail', !item.ok);
+  beamShearUpdateBanner();
+}
+
+function beamShearUpdateBanner() {
+  const banner = $('#bsStatusBanner');
+  if (!banner) return;
+  const failCount = beamShearState.lastResults.filter(r => !r.ok).length;
+  if (failCount > 0) { banner.textContent = t('beamShear.status.failed', { count: failCount }); banner.className = 'status-banner fail'; }
+  else if (beamShearState.lastResults.length) { banner.textContent = t('beamShear.status.passed'); banner.className = 'status-banner ok'; }
+  else { banner.textContent = t('columnAxial.status.pending'); banner.className = 'status-banner pending'; }
+}
+
+async function beamShearExportExcel() {
+  const results = beamShearState.lastResults;
+  if (results.length === 0) { log(t('beam.error.noData'), 'error'); return; }
+  const btn = $('#bsExport');
+  if (btn) btn.disabled = true;
+  try {
+    await downloadAgentExcel('/api/etabs/export/beam-shear', {
+      fck: beamShearState.fck, fyk: beamShearState.fyk, useVc: beamShearState.useVc,
+      rows: results.map(r => ({ story: r.story, label: r.label, section: r.section, vd: r.vd, b: r.b, h: r.h, d: r.d, n: r.n, phi: r.phi, s: r.s }))
+    }, 'Kiris_Kesme_Raporu.xlsx');
+  } catch (error) {
+    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Beam Axial (Kiriş Eksenel) — ported from KirisEksenelYukUI (C#).
+// ratio = |P| / (Ac·fck/10) vs 0.1 ; > 0.1 => beam must be detailed as a column.
+// ---------------------------------------------------------------------------
+
+const beamAxialState = {
+  fck: 30, limit: 0.1,
+  combos: [], selected: [], lastResults: []
+};
+
+function beamAxialComputeRow(b, d, p, fck, limit) {
+  const ac = b * d;
+  const capacity = (ac * fck) / 10;
+  const ratio = capacity !== 0 ? p / capacity : 0;
+  return { ac, capacity, ratio, ok: ratio <= limit };
+}
+
+function renderBeamAxialModule() {
+  renderBeamAxialSetupPanel();
+  renderBeamAxialResultsPanel();
+}
+
+function renderBeamAxialSetupPanel() {
+  const panel = $('#setupPanel');
+  panel.innerHTML = `
+    <div class="panel-heading compact"><div><span class="step-number">1</span><div><h2>${t('beam.params.title')}</h2><p>${t('moduleData.description')}</p></div></div></div>
+    <div class="field-grid">
+      <div class="field"><label>${t('beam.params.fck')}</label><input type="number" step="any" id="baFck"></div>
+      <div class="field"><label>${t('beamAxial.params.limit')}</label><input type="number" step="any" id="baLimit"></div>
+    </div>
+    <div class="combo-picker">
+      <div class="combo-picker-heading"><h3>${t('drift.combos.title')}</h3>
+        <button class="button button-secondary" type="button" id="baFetchCombos">${t('drift.combos.fetch')}</button>
+      </div>
+      <select class="combo-select" id="baComboSelect" multiple></select>
+      <p class="combo-hint">${t('beam.combos.hint')}</p>
+    </div>
+    <div class="panel-actions">
+      <button class="button button-primary full-width" type="button" id="baCalculate">${t('columnAxial.calculate')}</button>
+    </div>
+    <div class="panel-actions two-up">
+      <button class="button button-secondary" type="button" id="baSelectFailing">${t('beamAxial.selectFailing')}</button>
+      <button class="button button-secondary" type="button" id="baExport">${t('columnAxial.export')}</button>
+    </div>`;
+
+  const fck = $('#baFck', panel), limit = $('#baLimit', panel);
+  fck.value = beamAxialState.fck; limit.value = beamAxialState.limit;
+  fck.addEventListener('input', () => { beamAxialState.fck = parseFloat(fck.value) || 0; });
+  limit.addEventListener('input', () => { beamAxialState.limit = parseFloat(limit.value) || 0; });
+
+  beamComboSelect('#baComboSelect', beamAxialState);
+  $('#baFetchCombos', panel).addEventListener('click', () => beamFetchCombos('#baFetchCombos', '#baComboSelect', beamAxialState));
+  $('#baCalculate', panel).addEventListener('click', runBeamAxialCheck);
+  $('#baSelectFailing', panel).addEventListener('click', () => beamSelectFailing(beamAxialState.lastResults));
+  $('#baExport', panel).addEventListener('click', beamAxialExportExcel);
+}
+
+async function runBeamAxialCheck() {
+  if (beamAxialState.selected.length === 0) { log(t('drift.error.noCombos'), 'error'); return; }
+  const btn = $('#baCalculate');
+  if (btn) btn.disabled = true;
+  try {
+    const [forces, sectionMap] = await Promise.all([
+      loadBeamElementForces(beamAxialState.selected, 'P'),
+      fetchFrameSectionMap()
+    ]);
+    const { rows, storyIdx, labelIdx, uniqueIdx, caseIdx, valIdx, selectedUpper } = forces;
+
+    // Group by unique, keep the governing (max |P|) row.
+    const byUnique = new Map();
+    for (const row of rows) {
+      if (!selectedUpper.includes((row[caseIdx] || '').toUpperCase())) continue;
+      const unique = row[uniqueIdx] || '';
+      const p = Math.abs(parseFloat(row[valIdx]) || 0);
+      const existing = byUnique.get(unique);
+      if (!existing) byUnique.set(unique, { story: row[storyIdx] || '', label: row[labelIdx] || '', unique, case: row[caseIdx] || '', p });
+      else if (p > existing.p) { existing.p = p; existing.case = row[caseIdx] || ''; }
+    }
+
+    const beams = [...byUnique.values()];
+    if (beams.length === 0) throw new Error(t('beam.error.noData'));
+
+    beamAxialState.lastResults = beams.map(beam => {
+      const sec = sectionMap.get(beam.unique);
+      const b = (sec ? sec.b : 0) * 100;
+      const d = (sec ? sec.h : 0) * 100;
+      const c = beamAxialComputeRow(b, d, beam.p, beamAxialState.fck, beamAxialState.limit);
+      return { story: beam.story, label: beam.label, unique: beam.unique, case: beam.case, section: sec ? sec.section : '', b, d, p: beam.p, ...c };
+    }).sort((a, b) => b.ratio - a.ratio);
+
+    renderBeamAxialResultsTable();
+    recordLastCheck('beam-axial');
+    const failCount = beamAxialState.lastResults.filter(r => !r.ok).length;
+    log(failCount > 0 ? t('beamAxial.status.failed', { count: failCount }) : t('beamAxial.status.passed'), failCount > 0 ? 'error' : 'ok');
+  } catch (error) {
+    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+function renderBeamAxialResultsPanel() {
+  const panel = $('#resultsPanel');
+  panel.innerHTML = `
+    <div class="panel-heading compact"><div><span class="step-number">2</span><div><h2>${t('results.title')}</h2><p>${t('results.description')}</p></div></div></div>
+    <div class="status-banner pending" id="baStatusBanner">${t('columnAxial.status.pending')}</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>${t('drift.table.story')}</th><th>${t('beam.table.beam')}</th><th>${t('drift.table.combo')}</th><th>${t('columnAxial.table.section')}</th>
+          <th>${t('columnAxial.table.b')}</th><th>${t('columnAxial.table.d')}</th><th>${t('columnAxial.table.ac')}</th><th>${t('columnAxial.table.acFck')}</th>
+          <th>${t('columnAxial.table.p')}</th><th>${t('columnAxial.table.ratio')}</th><th>${t('drift.table.status')}</th>
+        </tr></thead>
+        <tbody id="baResultsBody"><tr><td colspan="11" class="table-empty">${t('drift.table.empty')}</td></tr></tbody>
+      </table>
+    </div>`;
+  if (beamAxialState.lastResults.length) renderBeamAxialResultsTable();
+}
+
+function renderBeamAxialResultsTable() {
+  const body = $('#baResultsBody');
+  if (!body) return;
+  const results = beamAxialState.lastResults;
+  body.innerHTML = results.length
+    ? results.map((item, i) => `
+        <tr data-index="${i}" class="${item.ok ? '' : 'row-fail'}">
+          <td>${item.story}</td><td>${item.label}</td><td>${item.case}</td><td>${item.section}</td>
+          <td><input type="number" step="any" class="ba-edit ba-edit-b" data-index="${i}" value="${item.b.toFixed(1)}"></td>
+          <td><input type="number" step="any" class="ba-edit ba-edit-d" data-index="${i}" value="${item.d.toFixed(1)}"></td>
+          <td class="ba-ac">${item.ac.toFixed(1)}</td><td class="ba-cap">${item.capacity.toFixed(1)}</td>
+          <td>${item.p.toFixed(2)}</td><td class="ba-ratio">${item.ratio.toFixed(3)}</td><td class="ba-status">${item.ok ? '✅' : '❌'}</td>
+        </tr>`).join('')
+    : `<tr><td colspan="11" class="table-empty">${t('drift.table.empty')}</td></tr>`;
+
+  $$('.ba-edit', body).forEach(input => input.addEventListener('input', () => beamAxialRecalcRow(parseInt(input.dataset.index, 10))));
+  beamAxialUpdateBanner();
+}
+
+function beamAxialRecalcRow(index) {
+  const item = beamAxialState.lastResults[index];
+  const row = $(`tr[data-index="${index}"]`, $('#baResultsBody'));
+  if (!item || !row) return;
+  item.b = parseFloat($('.ba-edit-b', row).value) || 0;
+  item.d = parseFloat($('.ba-edit-d', row).value) || 0;
+  const c = beamAxialComputeRow(item.b, item.d, item.p, beamAxialState.fck, beamAxialState.limit);
+  item.ac = c.ac; item.capacity = c.capacity; item.ratio = c.ratio; item.ok = c.ok;
+  $('.ba-ac', row).textContent = item.ac.toFixed(1);
+  $('.ba-cap', row).textContent = item.capacity.toFixed(1);
+  $('.ba-ratio', row).textContent = item.ratio.toFixed(3);
+  $('.ba-status', row).textContent = item.ok ? '✅' : '❌';
+  row.classList.toggle('row-fail', !item.ok);
+  beamAxialUpdateBanner();
+}
+
+function beamAxialUpdateBanner() {
+  const banner = $('#baStatusBanner');
+  if (!banner) return;
+  const failCount = beamAxialState.lastResults.filter(r => !r.ok).length;
+  if (failCount > 0) { banner.textContent = t('beamAxial.status.failed', { count: failCount }); banner.className = 'status-banner fail'; }
+  else if (beamAxialState.lastResults.length) { banner.textContent = t('beamAxial.status.passed'); banner.className = 'status-banner ok'; }
+  else { banner.textContent = t('columnAxial.status.pending'); banner.className = 'status-banner pending'; }
+}
+
+async function beamAxialExportExcel() {
+  const results = beamAxialState.lastResults;
+  if (results.length === 0) { log(t('beam.error.noData'), 'error'); return; }
+  const btn = $('#baExport');
+  if (btn) btn.disabled = true;
+  try {
+    await downloadAgentExcel('/api/etabs/export/beam-axial', {
+      fck: beamAxialState.fck, limit: beamAxialState.limit,
+      rows: results.map(r => ({ story: r.story, label: r.label, unique: r.unique, loadCase: r.case, section: r.section, b: r.b, d: r.d, p: r.p }))
+    }, 'Kiris_Eksenel_Raporu.xlsx');
   } catch (error) {
     log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
   } finally {

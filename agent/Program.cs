@@ -67,7 +67,8 @@ internal sealed class AgentApplicationContext : ApplicationContext
             GetStoriesOnUiThread,
             GetStoryDriftsOnUiThread,
             GetTableOnUiThread,
-            SelectFramesOnUiThread);
+            SelectFramesOnUiThread,
+            GetFrameSectionsOnUiThread);
         try
         {
             _server.Start();
@@ -134,6 +135,14 @@ internal sealed class AgentApplicationContext : ApplicationContext
             return (SelectResult)_dispatcher.Invoke(new Func<IReadOnlyList<FrameKey>, SelectResult>(_etabs.SelectFrames), items);
 
         return _etabs.SelectFrames(items);
+    }
+
+    private FrameSectionsResult GetFrameSectionsOnUiThread()
+    {
+        if (_dispatcher.InvokeRequired)
+            return (FrameSectionsResult)_dispatcher.Invoke(new Func<FrameSectionsResult>(_etabs.GetFrameSections));
+
+        return _etabs.GetFrameSections();
     }
 
     private void ShowConnectionResult()
@@ -496,6 +505,76 @@ internal sealed class EtabsConnection : IDisposable
         }
     }
 
+    // For every frame object, returns its section property name plus the section's depth (h/T3)
+    // and width (b/T2) via FrameObj.GetSection + PropFrame.GetRectangle — exactly how the desktop
+    // beam checks read section geometry (works for any rectangular concrete section, not just ones
+    // whose name encodes dimensions). Dims are in the model's length unit; the web side scales.
+    public FrameSectionsResult GetFrameSections()
+    {
+        if (!EnsureModelReady(out var error))
+            return new FrameSectionsResult(true, false, error, Array.Empty<FrameSectionInfo>());
+
+        try
+        {
+            var sap = _sapModel!;
+            var frameProp = _sapModelInterface!.GetProperty("FrameObj")!;
+            var frame = frameProp.GetValue(sap)!;
+            var frameType = frameProp.PropertyType;
+
+            var propFrameProp = _sapModelInterface.GetProperty("PropFrame")!;
+            var propFrame = propFrameProp.GetValue(sap)!;
+            var propFrameType = propFrameProp.PropertyType;
+
+            var getNameList = frameType.GetMethods().First(m => m.Name == "GetNameList");
+            var nameArgs = new object?[] { 0, null };
+            getNameList.Invoke(frame, nameArgs);
+            var names = (string[]?)nameArgs[1] ?? Array.Empty<string>();
+
+            var getSection = frameType.GetMethods().First(m => m.Name == "GetSection" && m.GetParameters().Length == 3);
+            var getLabel = frameType.GetMethods().First(m => m.Name == "GetLabelFromName");
+            var getRectangle = propFrameType.GetMethods().First(m => m.Name == "GetRectangle" && m.GetParameters().Length == 8);
+
+            var sectionDims = new Dictionary<string, (double H, double B)>(StringComparer.OrdinalIgnoreCase);
+            var list = new List<FrameSectionInfo>(names.Length);
+
+            foreach (var name in names)
+            {
+                // GetSection(Name, ref PropName, ref SAuto)
+                var secArgs = new object?[] { name, "", "" };
+                getSection.Invoke(frame, secArgs);
+                var prop = (string?)secArgs[1] ?? "";
+                if (string.IsNullOrEmpty(prop)) continue;
+
+                if (!sectionDims.TryGetValue(prop, out var dims))
+                {
+                    // GetRectangle(Name, ref FileName, ref MatProp, ref T3, ref T2, ref Color, ref Notes, ref GUID)
+                    var rectArgs = new object?[] { prop, "", "", 0.0, 0.0, 0, "", "" };
+                    var ret = getRectangle.Invoke(propFrame, rectArgs);
+                    double h = 0, b = 0;
+                    if (ret is 0) { h = (double)(rectArgs[3] ?? 0.0); b = (double)(rectArgs[4] ?? 0.0); }
+                    dims = (h, b);
+                    sectionDims[prop] = dims;
+                }
+
+                var labelArgs = new object?[] { name, "", "" };
+                getLabel.Invoke(frame, labelArgs);
+
+                list.Add(new FrameSectionInfo(
+                    name,
+                    ((string?)labelArgs[1] ?? "").Trim(),
+                    ((string?)labelArgs[2] ?? "").Trim(),
+                    prop, dims.H, dims.B));
+            }
+
+            return new FrameSectionsResult(true, true, null, list.ToArray());
+        }
+        catch (Exception ex)
+        {
+            AgentLog.Write($"GetFrameSections failed: {ex}");
+            return new FrameSectionsResult(true, false, ex.Message, Array.Empty<FrameSectionInfo>());
+        }
+    }
+
     // Reuses ConnectAndRead so every data endpoint shares the same connect/reconnect logic
     // and always operates against a live, readable model.
     private bool EnsureModelReady(out string? error)
@@ -695,6 +774,7 @@ internal sealed class LocalBridgeServer : IDisposable
     private readonly Func<string[], StoryDriftsResult> _getStoryDrifts;
     private readonly Func<string, string[], TableResult> _getTable;
     private readonly Func<IReadOnlyList<FrameKey>, SelectResult> _selectFrames;
+    private readonly Func<FrameSectionsResult> _getFrameSections;
     private readonly CancellationTokenSource _cancellation = new();
     private TcpListener? _listener;
 
@@ -704,7 +784,8 @@ internal sealed class LocalBridgeServer : IDisposable
         Func<StoriesResult> getStories,
         Func<string[], StoryDriftsResult> getStoryDrifts,
         Func<string, string[], TableResult> getTable,
-        Func<IReadOnlyList<FrameKey>, SelectResult> selectFrames)
+        Func<IReadOnlyList<FrameKey>, SelectResult> selectFrames,
+        Func<FrameSectionsResult> getFrameSections)
     {
         _getSnapshot = getSnapshot;
         _getCombinations = getCombinations;
@@ -712,6 +793,7 @@ internal sealed class LocalBridgeServer : IDisposable
         _getStoryDrifts = getStoryDrifts;
         _getTable = getTable;
         _selectFrames = selectFrames;
+        _getFrameSections = getFrameSections;
     }
 
     public void Start()
@@ -802,6 +884,12 @@ internal sealed class LocalBridgeServer : IDisposable
                         return;
                     }
 
+                    if (path == "/api/etabs/frame-sections")
+                    {
+                        await WriteResponseAsync(stream, 200, "OK", _getFrameSections(), origin, cancellationToken);
+                        return;
+                    }
+
                     await WriteResponseAsync(stream, 404, "Not Found", new { error = "Endpoint not found." }, origin, cancellationToken);
                     return;
                 }
@@ -842,6 +930,24 @@ internal sealed class LocalBridgeServer : IDisposable
                         if (req is null) { await WriteResponseAsync(stream, 400, "Bad Request", new { error = "Invalid request body." }, origin, cancellationToken); return; }
                         var bytes = IkinciMertebeExcelReport.Build(req.Ch, req.R, req.D, req.Rows);
                         await WriteBinaryResponseAsync(stream, 200, "OK", bytes, "IkinciMertebe_Sonuc.xlsx", origin, cancellationToken);
+                        return;
+                    }
+
+                    if (path == "/api/etabs/export/beam-shear")
+                    {
+                        var req = JsonSerializer.Deserialize<BeamShearExportRequest>(json, JsonOptions);
+                        if (req is null) { await WriteResponseAsync(stream, 400, "Bad Request", new { error = "Invalid request body." }, origin, cancellationToken); return; }
+                        var bytes = BeamShearExcelReport.Build(req.Fck, req.Fyk, req.UseVc, req.Rows);
+                        await WriteBinaryResponseAsync(stream, 200, "OK", bytes, "Kiris_Kesme_Raporu.xlsx", origin, cancellationToken);
+                        return;
+                    }
+
+                    if (path == "/api/etabs/export/beam-axial")
+                    {
+                        var req = JsonSerializer.Deserialize<BeamAxialExportRequest>(json, JsonOptions);
+                        if (req is null) { await WriteResponseAsync(stream, 400, "Bad Request", new { error = "Invalid request body." }, origin, cancellationToken); return; }
+                        var bytes = BeamAxialExcelReport.Build(req.Fck, req.Limit, req.Rows);
+                        await WriteBinaryResponseAsync(stream, 200, "OK", bytes, "Kiris_Eksenel_Raporu.xlsx", origin, cancellationToken);
                         return;
                     }
 
@@ -1021,7 +1127,7 @@ internal sealed record EtabsSnapshot(
 
 internal static class AgentInfo
 {
-    public const string Version = "1.1.0";
+    public const string Version = "1.2.0";
 }
 
 internal sealed record NameListResult(bool AgentOnline, bool EtabsConnected, string? Error, string[] Names);
@@ -1039,6 +1145,10 @@ internal sealed record TableResult(bool AgentOnline, bool EtabsConnected, string
 internal sealed record FrameKey(string Story, string Label);
 
 internal sealed record SelectResult(bool AgentOnline, bool EtabsConnected, string? Error, int SelectedCount);
+
+internal sealed record FrameSectionInfo(string Unique, string Label, string Story, string Section, double H, double B);
+
+internal sealed record FrameSectionsResult(bool AgentOnline, bool EtabsConnected, string? Error, FrameSectionInfo[] Sections);
 
 internal sealed record SelectFramesRequest(FrameKey[] Items);
 
@@ -1312,6 +1422,177 @@ internal static class IkinciMertebeExcelReport
             var ok = ws.ConditionalFormatting.AddEqual(range);
             ok.Formula = "\"OK\"";
             ok.Style.Fill.BackgroundColor.Color = DrawingColor.LightGreen;
+        }
+
+        ws.Cells.AutoFitColumns();
+        return package.GetAsByteArray();
+    }
+}
+
+internal sealed record BeamShearExportRow(string Story, string Label, string Section, double Vd, double B, double H, double D, int N, int Phi, double S);
+
+internal sealed record BeamShearExportRequest(double Fck, double Fyk, bool UseVc, BeamShearExportRow[] Rows);
+
+// Kiriş Kesme report — mirrors the desktop ExportExcel(): geometry/forces and the editable
+// stirrup design (n legs, φ, spacing) are hard values, while Vr is an Excel formula referencing
+// those cells (fyd/fctd and the Vc contribution are baked constants, exactly as the desktop does),
+// and Durum is a formula. Editing n/φ/s/d in the sheet recomputes Vr and the pass/fail live.
+internal static class BeamShearExcelReport
+{
+    public static byte[] Build(double fck, double fyk, bool useVc, IReadOnlyList<BeamShearExportRow> rows)
+    {
+        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+        using var package = new ExcelPackage();
+        var ws = package.Workbook.Worksheets.Add("Kiris Kesme Raporu");
+
+        ws.Cells[1, 1, 1, 12].Merge = true;
+        ws.Cells[1, 1].Value = "KİRİŞ KESME GÜVENLİĞİ KONTROLÜ";
+        ws.Cells[1, 1].Style.Font.Size = 14;
+        ws.Cells[1, 1].Style.Font.Bold = true;
+        ws.Cells[1, 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+        ws.Cells[1, 1].Style.Fill.PatternType = ExcelFillStyle.Solid;
+        ws.Cells[1, 1].Style.Fill.BackgroundColor.SetColor(DrawingColor.FromArgb(204, 255, 204));
+
+        ws.Cells[2, 1].Value = "fck:";
+        ws.Cells[2, 2].Value = fck;
+        ws.Cells[2, 3].Value = "fyk:";
+        ws.Cells[2, 4].Value = fyk;
+        ws.Cells[2, 5].Value = "Vc:";
+        ws.Cells[2, 6].Value = useVc ? "Var" : "Yok";
+
+        string[] headers = { "Story", "Beam", "Section", "Vd (kN)", "b(cm)", "h(cm)", "d(cm)", "Kolu (n)", "Çap (mm)", "Aralık (s)", "Vr (kN)", "Durum" };
+        for (int i = 0; i < headers.Length; i++)
+        {
+            ws.Cells[3, i + 1].Value = headers[i];
+            ws.Cells[3, i + 1].Style.Font.Bold = true;
+            ws.Cells[3, i + 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            ws.Cells[3, i + 1].Style.Fill.PatternType = ExcelFillStyle.Solid;
+            ws.Cells[3, i + 1].Style.Fill.BackgroundColor.SetColor(DrawingColor.FromArgb(240, 240, 240));
+        }
+
+        var fyd = fyk / 1.15;
+        var fctd = 0.35 * Math.Sqrt(fck) / 1.5;
+        var ci = System.Globalization.CultureInfo.InvariantCulture;
+
+        int row = 4;
+        foreach (var item in rows)
+        {
+            ws.Cells[row, 1].Value = item.Story;
+            ws.Cells[row, 2].Value = item.Label;
+            ws.Cells[row, 3].Value = item.Section;
+            ws.Cells[row, 4].Value = item.Vd;
+            ws.Cells[row, 5].Value = item.B;
+            ws.Cells[row, 6].Value = item.H;
+            ws.Cells[row, 7].Value = item.D;
+            ws.Cells[row, 8].Value = item.N;
+            ws.Cells[row, 9].Value = item.Phi;
+            ws.Cells[row, 10].Value = item.S;
+
+            var vcComponent = useVc ? 0.65 * fctd * (item.B / 100.0) * (item.D / 100.0) * 1000 * 0.8 : 0;
+            ws.Cells[row, 11].Formula = $"((H{row}*3.14159265*(I{row}/10)^2)/4/J{row})*G{row}*{fyd.ToString(ci)}*0.1 + {vcComponent.ToString(ci)}";
+            ws.Cells[row, 12].Formula = $"IF(D{row}<=K{row},\"OK\", \"NOT OK\")";
+            row++;
+        }
+
+        int lastRow = row - 1;
+        if (rows.Count > 0)
+        {
+            var vdRange = ws.Cells[$"D4:D{lastRow}"];
+            var condScale = vdRange.ConditionalFormatting.AddThreeColorScale();
+            condScale.LowValue.Color = DrawingColor.LightGreen;
+            condScale.MiddleValue.Color = DrawingColor.Yellow;
+            condScale.HighValue.Color = DrawingColor.Salmon;
+
+            var statusRange = ws.Cells[$"L4:L{lastRow}"];
+            var condOk = statusRange.ConditionalFormatting.AddEqual();
+            condOk.Formula = "\"OK\"";
+            condOk.Style.Font.Color.Color = DrawingColor.Green;
+            var condNotOk = statusRange.ConditionalFormatting.AddNotEqual();
+            condNotOk.Formula = "\"OK\"";
+            condNotOk.Style.Font.Color.Color = DrawingColor.Red;
+            condNotOk.Style.Font.Bold = true;
+        }
+
+        ws.Cells.AutoFitColumns();
+        return package.GetAsByteArray();
+    }
+}
+
+internal sealed record BeamAxialExportRow(string Story, string Label, string Unique, string LoadCase, string Section, double B, double D, double P);
+
+internal sealed record BeamAxialExportRequest(double Fck, double Limit, BeamAxialExportRow[] Rows);
+
+// Kiriş Eksenel report — geometry/forces are hard values; fck, Ac, Ac*fck, ratio and Durum are
+// Excel formulas referencing the fck (B2) and limit (M2) parameter cells, mirroring the desktop.
+internal static class BeamAxialExcelReport
+{
+    public static byte[] Build(double fck, double limit, IReadOnlyList<BeamAxialExportRow> rows)
+    {
+        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+        using var package = new ExcelPackage();
+        var ws = package.Workbook.Worksheets.Add("Kiris Eksenel Raporu");
+
+        ws.Cells[1, 1, 1, 13].Merge = true;
+        ws.Cells[1, 1].Value = "KİRİŞ EKSENEL YÜK KONTROLÜ";
+        ws.Cells[1, 1].Style.Font.Size = 14;
+        ws.Cells[1, 1].Style.Font.Bold = true;
+        ws.Cells[1, 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+        ws.Cells[1, 1].Style.Fill.PatternType = ExcelFillStyle.Solid;
+        ws.Cells[1, 1].Style.Fill.BackgroundColor.SetColor(DrawingColor.FromArgb(204, 255, 204));
+
+        ws.Cells[2, 1].Value = "fck";
+        ws.Cells[2, 2].Value = fck;
+        ws.Cells[2, 12].Value = "Sınır Oran";
+        ws.Cells[2, 13].Value = limit;
+        ws.Cells[2, 13].Style.Fill.PatternType = ExcelFillStyle.Solid;
+        ws.Cells[2, 13].Style.Fill.BackgroundColor.SetColor(DrawingColor.LightYellow);
+
+        string[] headers = { "Story", "Beam", "Unique Name", "fck", "Load Case", "Section", "b(cm)", "d(cm)", "Ac", "Ac*fck", "P", "ratio", "Durum" };
+        for (int i = 0; i < headers.Length; i++)
+        {
+            ws.Cells[3, i + 1].Value = headers[i];
+            ws.Cells[3, i + 1].Style.Font.Bold = true;
+            ws.Cells[3, i + 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            ws.Cells[3, i + 1].Style.Fill.PatternType = ExcelFillStyle.Solid;
+            ws.Cells[3, i + 1].Style.Fill.BackgroundColor.SetColor(DrawingColor.FromArgb(240, 240, 240));
+        }
+
+        int row = 4;
+        foreach (var item in rows)
+        {
+            ws.Cells[row, 1].Value = item.Story;
+            ws.Cells[row, 2].Value = item.Label;
+            ws.Cells[row, 3].Value = item.Unique;
+            ws.Cells[row, 4].Formula = "$B$2";
+            ws.Cells[row, 5].Value = item.LoadCase;
+            ws.Cells[row, 6].Value = item.Section;
+            ws.Cells[row, 7].Value = item.B;
+            ws.Cells[row, 8].Value = item.D;
+            ws.Cells[row, 9].Formula = $"G{row}*H{row}";
+            ws.Cells[row, 10].Formula = $"(I{row}*D{row})/10";
+            ws.Cells[row, 11].Value = item.P;
+            ws.Cells[row, 12].Formula = $"IF(J{row}<>0,K{row}/J{row},0)";
+            ws.Cells[row, 13].Formula = $"IF(L{row}<=$M$2,\"OK\",\"KOLON GİBİ DONATILACAK\")";
+            row++;
+        }
+
+        int lastRow = row - 1;
+        if (rows.Count > 0)
+        {
+            var ratioRange = ws.Cells[$"L4:L{lastRow}"];
+            var condScale = ratioRange.ConditionalFormatting.AddThreeColorScale();
+            condScale.LowValue.Color = DrawingColor.LightGreen;
+            condScale.MiddleValue.Color = DrawingColor.Yellow;
+            condScale.HighValue.Color = DrawingColor.Salmon;
+
+            var statusRange = ws.Cells[$"M4:M{lastRow}"];
+            var condOk = statusRange.ConditionalFormatting.AddEqual();
+            condOk.Formula = "\"OK\"";
+            condOk.Style.Font.Color.Color = DrawingColor.Green;
+            var condNotOk = statusRange.ConditionalFormatting.AddNotEqual();
+            condNotOk.Formula = "\"OK\"";
+            condNotOk.Style.Font.Color.Color = DrawingColor.Red;
+            condNotOk.Style.Font.Bold = true;
         }
 
         ws.Cells.AutoFitColumns();
