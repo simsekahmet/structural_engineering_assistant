@@ -180,6 +180,9 @@ table { width: 100%; border-collapse: collapse; font-size: 11px; }
 th, td { padding: 10px; border-bottom: 1px solid var(--border-soft); text-align: left; white-space: nowrap; }
 th { color: var(--muted); background: var(--surface-muted); font-size: 9px; text-transform: uppercase; letter-spacing: .05em; }
 .table-empty { height: 180px; color: var(--muted); text-align: center; white-space: normal; }
+.filter-row th { padding: 4px 6px; background: var(--surface-strong); border-bottom: 1px solid var(--border); }
+.table-filter-input, .table-filter-select { width: 100%; min-width: 54px; box-sizing: border-box; padding: 3px 5px; border: 1px solid var(--border); border-radius: 6px; color: var(--text); background: var(--surface); font: 400 10px/1.3 Arial, sans-serif; text-transform: none; letter-spacing: 0; }
+.table-filter-input:focus, .table-filter-select:focus { outline: none; border-color: var(--primary, #3b6ea8); }
 
 dialog { width: min(720px, calc(100vw - 30px)); padding: 0; border: 1px solid var(--border); border-radius: 18px; color: var(--text); background: var(--surface); box-shadow: 0 30px 80px rgba(14, 27, 49, .3); }
 dialog::backdrop { background: rgba(14, 24, 40, .56); backdrop-filter: blur(4px); }

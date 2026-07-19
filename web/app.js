@@ -50,6 +50,7 @@ const translations = {
     'moduleData.title': 'Model Data', 'moduleData.description': 'Dataset to be read from the ETABS model',
     'moduleData.waiting': 'Waiting for ETABS connection', 'moduleData.note': 'Module inputs will be retrieved securely from the active ETABS model through the local bridge.',
     'results.title': 'Check Results', 'results.description': 'Summary metrics and member-level results',
+    'filter.all': 'All', 'filter.placeholder': 'Filter…', 'filter.clear': 'Clear filters', 'filter.noMatch': 'No rows match the current filters.',
     'table.member': 'Member', 'table.story': 'Story', 'table.demand': 'Demand', 'table.capacity': 'Capacity', 'table.ratio': 'Ratio', 'table.status': 'Status',
     'table.empty': 'Results will appear here after a connection is established.',
     'moduleLog.title': 'Module Log', 'moduleLog.ready': 'Module shell is ready for web migration.',
@@ -197,6 +198,7 @@ const translations = {
     'moduleData.title': 'Model Verisi', 'moduleData.description': 'ETABS modelinden okunacak veri seti',
     'moduleData.waiting': 'ETABS bağlantısı bekleniyor', 'moduleData.note': 'Modül girdileri, yerel köprü üzerinden aktif ETABS modelinden güvenli biçimde alınacak.',
     'results.title': 'Tahkik Sonuçları', 'results.description': 'Özet metrikler ve eleman bazlı sonuçlar',
+    'filter.all': 'Tümü', 'filter.placeholder': 'Filtre…', 'filter.clear': 'Filtreleri temizle', 'filter.noMatch': 'Geçerli filtrelere uyan satır yok.',
     'table.member': 'Eleman', 'table.story': 'Kat', 'table.demand': 'Talep', 'table.capacity': 'Kapasite', 'table.ratio': 'Oran', 'table.status': 'Durum',
     'table.empty': 'Bağlantı kurulduktan sonra sonuçlar burada görüntülenecek.',
     'moduleLog.title': 'Modül Günlüğü', 'moduleLog.ready': 'Modül web uyarlaması için hazırlandı.',
@@ -559,6 +561,123 @@ async function downloadAgentExcel(path, body, fallbackName, timeoutMs = 15000) {
   a.download = fileName;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+// --- Excel-like column filtering for results tables -------------------------
+// installTableFilter(tbody) adds a secondary header row of per-column filter
+// controls: columns with a small set of distinct text values get a dropdown
+// (exact match), higher-cardinality text/number columns get a "contains" text
+// box, and columns whose body cells hold form controls (editable inputs, action
+// buttons) get no filter. Selections persist across tbody re-renders — keyed by
+// tbody id — so live cell edits and rebar re-groupings don't reset the filter.
+const tableFilterState = new Map();
+const FILTER_SELECT_MAX = 20;
+
+function escapeHtml(v) {
+  return String(v).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+}
+
+function filterCellText(cell) {
+  if (!cell) return '';
+  const control = cell.querySelector('input, select');
+  if (control) return control.value != null ? String(control.value) : '';
+  return cell.textContent.trim();
+}
+
+function isPureNumber(v) {
+  return /^-?\d+(?:[.,]\d+)?%?$/.test(v);
+}
+
+function applyTableFilter(table) {
+  const tbody = table.tBodies[0];
+  if (!tbody) return;
+  const filters = tableFilterState.get(tbody.id) || {};
+  let shown = 0;
+  const dataRows = [...tbody.rows].filter(r => !r.querySelector('.table-empty'));
+  for (const row of dataRows) {
+    let show = true;
+    for (const key of Object.keys(filters)) {
+      const f = filters[key];
+      if (!f || !f.value) continue;
+      const text = filterCellText(row.cells[Number(key)]).toLowerCase();
+      const val = f.value.toLowerCase();
+      if (f.type === 'select' ? text !== val : !text.includes(val)) { show = false; break; }
+    }
+    row.style.display = show ? '' : 'none';
+    if (show) shown++;
+  }
+  // Surface an empty-state row when a filter hides everything.
+  let noMatch = tbody.querySelector('.filter-no-match');
+  if (dataRows.length && shown === 0) {
+    if (!noMatch) {
+      noMatch = document.createElement('tr');
+      noMatch.className = 'filter-no-match';
+      const cell = document.createElement('td');
+      cell.colSpan = table.tHead.rows[0].cells.length;
+      cell.className = 'table-empty';
+      cell.textContent = t('filter.noMatch');
+      noMatch.appendChild(cell);
+      tbody.appendChild(noMatch);
+    }
+    noMatch.style.display = '';
+  } else if (noMatch) {
+    noMatch.style.display = 'none';
+  }
+}
+
+function installTableFilter(tbody) {
+  if (!tbody) return;
+  const table = tbody.closest('table');
+  if (!table || !table.tHead || !table.tHead.rows[0]) return;
+  const headRow = table.tHead.rows[0];
+
+  const existing = table.querySelector('.filter-row');
+  const dataRows = [...tbody.rows].filter(r => !r.querySelector('.table-empty') && !r.classList.contains('filter-no-match'));
+  if (dataRows.length === 0) { if (existing) existing.remove(); tableFilterState.delete(tbody.id); return; }
+
+  const colCount = headRow.cells.length;
+  const saved = tableFilterState.get(tbody.id) || {};
+  const nextState = {};
+  const filterRow = document.createElement('tr');
+  filterRow.className = 'filter-row';
+
+  for (let ci = 0; ci < colCount; ci++) {
+    const th = document.createElement('th');
+    const hasControl = dataRows.some(r => r.cells[ci] && r.cells[ci].querySelector('input, select, button'));
+    if (!hasControl) {
+      const values = dataRows.map(r => filterCellText(r.cells[ci])).filter(v => v !== '');
+      const distinct = [...new Set(values)];
+      const allNumeric = distinct.length > 0 && distinct.every(isPureNumber);
+      if (distinct.length > 1 && distinct.length <= FILTER_SELECT_MAX && !allNumeric) {
+        const sel = document.createElement('select');
+        sel.className = 'table-filter-select';
+        const sorted = distinct.sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+        sel.innerHTML = `<option value="">${t('filter.all')}</option>` +
+          sorted.map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
+        const prev = saved[ci];
+        if (prev && prev.type === 'select') sel.value = prev.value;
+        nextState[ci] = { type: 'select', value: sel.value };
+        sel.addEventListener('change', () => { nextState[ci].value = sel.value; applyTableFilter(table); });
+        th.appendChild(sel);
+      } else if (distinct.length > 1) {
+        const inp = document.createElement('input');
+        inp.type = 'text';
+        inp.className = 'table-filter-input';
+        inp.placeholder = t('filter.placeholder');
+        const prev = saved[ci];
+        if (prev && prev.type === 'text') inp.value = prev.value;
+        nextState[ci] = { type: 'text', value: inp.value };
+        inp.addEventListener('input', () => { nextState[ci].value = inp.value; applyTableFilter(table); });
+        th.appendChild(inp);
+      }
+    }
+    filterRow.appendChild(th);
+  }
+
+  if (existing) existing.remove();
+  table.tHead.appendChild(filterRow);
+  tableFilterState.set(tbody.id, nextState);
+  applyTableFilter(table);
 }
 
 // TBDY 2018 lambda: interpolates between DD-2 and DD-3 spectra depending on Tp vs TA.
@@ -1815,6 +1934,7 @@ function renderColumnAxialResultsTable() {
     input.addEventListener('input', () => columnAxialRecalcRow(parseInt(input.dataset.index, 10)));
   });
 
+  installTableFilter(body);
   columnAxialUpdateSummary();
 }
 
@@ -2239,6 +2359,7 @@ function renderBeamShearResultsTable() {
     : `<tr><td colspan="12" class="table-empty">${t('drift.table.empty')}</td></tr>`;
 
   $$('.bs-edit', body).forEach(input => input.addEventListener('input', () => beamShearRecalcRow(parseInt(input.dataset.index, 10))));
+  installTableFilter(body);
   beamShearUpdateBanner();
 }
 
@@ -2419,6 +2540,7 @@ function renderBeamAxialResultsTable() {
     : `<tr><td colspan="11" class="table-empty">${t('drift.table.empty')}</td></tr>`;
 
   $$('.ba-edit', body).forEach(input => input.addEventListener('input', () => beamAxialRecalcRow(parseInt(input.dataset.index, 10))));
+  installTableFilter(body);
   beamAxialUpdateBanner();
 }
 
@@ -2668,6 +2790,8 @@ function renderColumnScheduleResultsTable() {
       if (col) columnScheduleSelectInModel([col]);
     });
   });
+
+  installTableFilter(body);
 }
 
 function renderColumnSchedulePlan() {
