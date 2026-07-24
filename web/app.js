@@ -17,6 +17,7 @@ const moduleDefinitions = [
 
 const translations = {
   en: {
+    'brand.name': 'Structural Engineering Assistant',
     'brand.subtitle': 'ETABS checks and reporting platform',
     'brand.home': 'Structural Engineering Assistant home', 'nav.aria': 'Application menu',
     'model.activeTitle': 'Active ETABS model', 'model.active': 'Active model', 'model.waiting': 'Waiting for connection',
@@ -167,8 +168,9 @@ const translations = {
     'columnSchedule.ratio.over': 'ρ > 4% — above TBDY 2018 maximum longitudinal ratio'
   },
   tr: {
+    'brand.name': 'Yapısal Tasarım Asistanı',
     'brand.subtitle': 'ETABS tahkik ve raporlama platformu',
-    'brand.home': 'Structural Engineering Assistant ana sayfa', 'nav.aria': 'Uygulama menüsü',
+    'brand.home': 'Yapısal Tasarım Asistanı ana sayfa', 'nav.aria': 'Uygulama menüsü',
     'model.activeTitle': 'Aktif ETABS modeli', 'model.active': 'Aktif model', 'model.waiting': 'Bağlantı bekleniyor',
     'action.connect': "ETABS'a Bağlan", 'action.clear': 'Temizle', 'action.showAll': 'Tümünü göster →', 'action.showLess': 'Daha az göster ↑',
     'action.viewArchitecture': 'Bağlantı mimarisini görüntüle', 'action.dashboard': '← Dashboard', 'action.close': 'Kapat', 'action.understood': 'Anladım',
@@ -193,7 +195,7 @@ const translations = {
     'terminal.etabsNotFound': 'Windows agent çalışıyor ancak açık bir ETABS modeli bulunamadı.',
     'terminal.notFound': 'Yerel köprü bulunamadı. Windows agent kurulup çalıştırıldıktan sonra yeniden deneyin.',
     'about.title': 'Platform Hakkında', 'about.subtitle': 'Amaç, mimari ve güncel uygulama durumu',
-    'about.purpose.title': 'Mühendislik çalışma alanı', 'about.purpose.text': 'Structural Engineering Assistant; ETABS tahkiklerini, eleman donelerini, sonuçları ve dışa aktarımları tek bir web arayüzünde birleştirir.',
+    'about.purpose.title': 'Mühendislik çalışma alanı', 'about.purpose.text': 'Yapısal Tasarım Asistanı; ETABS tahkiklerini, eleman donelerini, sonuçları ve dışa aktarımları tek bir web arayüzünde birleştirir.',
     'about.connection.title': 'Yerel ETABS köprüsü', 'about.connection.text': 'Tarayıcılar ETABS COM API’ye doğrudan erişemediği için güvenli bir Windows agent bu arayüzü bilgisayarınızda açık olan modele bağlar.',
     'about.status.title': 'Mevcut sürüm', 'about.status.text': 'Arayüz ve ETABS bağlantı agent’ı kullanılabilir; mühendislik tahkikleri yerel köprü üzerinden aktif model üzerinde çalışır.',
     'about.note.label': 'Önemli:', 'about.note.text': 'Mühendislik sonuçları sorumlu inşaat mühendisi tarafından kontrol edilmeli ve onaylanmalıdır.',
@@ -432,8 +434,8 @@ function applyLanguage(language) {
   currentLanguage = language === 'tr' ? 'tr' : 'en';
   localStorage.setItem('sea-language', currentLanguage);
   document.documentElement.lang = currentLanguage;
-  document.title = 'Structural Engineering Assistant';
   applyTranslationsToDom();
+  document.title = t('brand.name');
   $('.brand').setAttribute('aria-label', t('brand.home'));
   $('#themeToggle').setAttribute('aria-label', currentLanguage === 'tr' ? 'Açık / koyu tema değiştir' : 'Switch light / dark mode');
   $('#languageToggle').setAttribute('aria-label', currentLanguage === 'tr' ? 'İngilizce / Türkçe değiştir' : 'Switch English / Turkish');
