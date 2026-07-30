@@ -186,6 +186,11 @@ th { color: var(--muted); background: var(--surface-muted); font-size: 9px; text
 .field-unit { text-transform: none; letter-spacing: 0; opacity: .8; }
 .field-spacer { display: block; height: 12px; }
 
+.doc-links { display: flex; flex-direction: column; gap: 3px; margin: 9px 0 11px; }
+.doc-links a { color: var(--muted); font-size: 9.5px; text-decoration: none; }
+.doc-links a:hover { color: var(--primary-dark); text-decoration: underline; }
+.doc-links a::before { content: '↗ '; opacity: .7; }
+
 .preflight-table { width: 100%; border-collapse: collapse; margin: 14px 0 18px; font-size: 11px; }
 .preflight-table td { padding: 8px 6px; border-bottom: 1px solid var(--border-soft); vertical-align: top; white-space: normal; }
 .preflight-table .pf-icon { width: 26px; font-size: 13px; }
