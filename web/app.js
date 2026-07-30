@@ -45,18 +45,62 @@ const translations = {
     'terminal.notFound': 'Local bridge not found. Install and run the Windows agent, then try again.',
     'about.title': 'About the Platform', 'about.subtitle': 'Purpose, architecture, and current implementation status',
     'about.purpose.title': 'Engineering workspace', 'about.purpose.text': 'Structural Engineering Assistant brings ETABS checks, member schedules, results, and exports into one web interface.',
-    'about.connection.title': 'Local ETABS bridge', 'about.connection.text': 'Because browsers cannot access the ETABS COM API directly, a secure Windows agent will connect this interface to the model open on your computer.',
+    'about.connection.title': 'Local ETABS bridge', 'about.connection.text': 'Because browsers cannot access the ETABS COM API directly, a Windows agent connects this interface to the model open on your computer. It listens only on 127.0.0.1:5218, accepts requests only from this site’s origin, and every call is written to a local log.',
     'about.status.title': 'Current version', 'about.status.text': 'The interface and ETABS connection agent are available, and engineering checks run against the active model through the local bridge.',
     'about.note.label': 'Important:', 'about.note.text': 'Engineering results must be reviewed and approved by the responsible structural engineer.',
     'moduleData.title': 'Model Data', 'moduleData.description': 'Dataset to be read from the ETABS model',
-    'moduleData.waiting': 'Waiting for ETABS connection', 'moduleData.note': 'Module inputs will be retrieved securely from the active ETABS model through the local bridge.',
+    'moduleData.waiting': 'Waiting for ETABS connection', 'moduleData.note': 'Module inputs are read from the active ETABS model through the local bridge.',
     'results.title': 'Check Results', 'results.description': 'Summary metrics and member-level results',
     'filter.all': 'All', 'filter.placeholder': 'Filter…', 'filter.clear': 'Clear filters', 'filter.noMatch': 'No rows match the current filters.',
+    'calcBasis.title': 'Calculation basis', 'calcBasis.reference': 'Code reference',
+    'calcBasis.note': 'Intermediate values are listed so the result can be re-derived by hand. The responsible engineer remains accountable for the check.',
+    'validate.range': '{field} must be between {min} and {max}. Entered: {value}.',
+    'validate.positive': '{field} must be greater than zero. Entered: {value}.',
+    'validate.dOverR': 'D (overstrength factor) cannot exceed R (behaviour factor). Entered D = {d}, R = {r}. TBDY 2018 Table 4.1 always lists D ≤ R.',
+    'validate.cornerPeriod': 'The corner period TB = SD1/SDS = {tb} s is outside the usual 0.1–1.5 s band. Check that SDS and SD1 belong to the same earthquake level and are in g.',
+    'validate.storyHeight': 'Story height {value} m is not physically plausible. Expected 1.5–10 m — check the model unit system.',
+    'validate.zeroMass': 'Total mass read from the model is zero. Run the analysis and confirm the mass source is defined.',
+    'validate.zeroShear': 'Base shear read from the model is zero. Confirm the earthquake load cases were analysed.',
+    'validate.fck': 'Concrete strength fck = {value} MPa is outside the 10–90 MPa range covered by TS 500. Check the unit (MPa, not kN/m²).',
+    'validate.fyk': 'Reinforcement strength fyk = {value} MPa is outside the 200–700 MPa range. TS 500 S420 corresponds to 420 MPa.',
+    'validate.spacing': 'Stirrup spacing {value} cm is not plausible. Expected 5–40 cm.',
+    'validate.barDia': 'Bar diameter {value} mm is not plausible. Expected 6–40 mm.',
+    'spectrum.basis.peakAt': 'Peak occurs at', 'spectrum.basis.peakCheck': 'Peak SaR = g·Sae/Ra',
+    'drift.basis.rigid': 'rigid infill', 'drift.basis.flexible': 'flexible joint',
+    'drift.basis.limitUsed': 'Limit applied', 'drift.basis.worst': 'Governing story', 'drift.basis.ofLimit': 'of limit',
+    'pdelta.basis.worst': 'Governing story', 'pdelta.basis.ofLimit': 'of limit',
+    'pdelta.basis.limitFormula': 'Limit = 0.12·D/(Ch·R)',
+    'pdelta.basis.driftNote': 'Δi/hi is read directly from the ETABS story-drift table, so hi is already divided out.',
+    'columnAxial.basis.worst': 'Governing column', 'beam.basis.worst': 'Governing beam',
+    'columnAxial.basis.signNote': 'Nd is taken as the compression (Min) value from the ETABS element-force table and used as a magnitude.',
+    'beam.basis.vcOff': 'Vc contribution switched off by the user (Vcr = 0)',
+    'beamAxial.basis.clause': 'members whose axial load exceeds the beam limit must be detailed as columns',
+    'beamAxial.basis.rule': 'If the ratio exceeds the limit, the member is detailed as a column.',
+    'beamAxial.basis.asColumn': 'DETAIL AS COLUMN',
+    'columnSchedule.basis.rho': 'Governing column',
+    'module.notImplemented.title': 'Not implemented yet',
+    'module.notImplemented.text': 'This module is a user-interface shell only — no calculation has been migrated for it yet, so connecting to ETABS would not produce a result. See the module status page for the current scope.',
+    'module.notImplemented.button': 'Calculation not available',
+    'preflight.title': 'Pre-flight check', 'preflight.subtitle': 'Conditions that decide whether a check is meaningful',
+    'preflight.agent': 'Windows agent', 'preflight.versionMatch': 'Web / agent compatibility',
+    'preflight.compatible': 'Compatible', 'preflight.versionMismatch': 'Mismatch — web v{web} vs agent v{agent}. Update the agent from the Releases page.',
+    'preflight.etabsVersion': 'ETABS version', 'preflight.model': 'Active model',
+    'preflight.lock': 'Model lock', 'preflight.locked': 'Locked', 'preflight.unlocked': 'Unlocked',
+    'preflight.lockedNote': 'Normal after analysis. Reading results is unaffected.',
+    'preflight.units': 'Unit system',
+    'preflight.unitsWrong': 'All modules assume kN, m, C. Switch the ETABS units before running any check — results read in other units will be wrong.',
+    'preflight.unitsUnknown': 'Could not be read. Confirm ETABS is set to kN, m, C before relying on results.',
+    'preflight.analysis': 'Analysis results', 'preflight.analysisDone': 'All load cases finished',
+    'preflight.analysisStale': 'Not all load cases have run', 'preflight.analysisNote': 'Run the analysis in ETABS, otherwise member forces may be missing or stale.',
+    'preflight.unknown': 'Unknown',
+    'preflight.verdict.ok': 'Environment looks suitable for running checks.',
+    'preflight.verdict.blocked': 'Unit system is not kN-m — fix this before trusting any result.',
+    'preflight.continue': 'Continue',
     'table.member': 'Member', 'table.story': 'Story', 'table.demand': 'Demand', 'table.capacity': 'Capacity', 'table.ratio': 'Ratio', 'table.status': 'Status',
     'table.empty': 'Results will appear here after a connection is established.',
     'moduleLog.title': 'Module Log', 'moduleLog.ready': 'Module shell is ready for web migration.',
-    'dialog.title': 'ETABS Web Connection', 'dialog.subtitle': 'Recommended secure local bridge architecture', 'architecture.web': 'Web Interface',
-    'dialog.note': 'A browser cannot access COM objects directly. The local Windows tray agent reads the active ETABS model and returns approved data to the web interface as JSON.',
+    'dialog.title': 'ETABS Web Connection', 'dialog.subtitle': 'Local bridge architecture', 'architecture.web': 'Web Interface',
+    'dialog.note': 'A browser cannot access COM objects directly. The local Windows tray agent reads the active ETABS model and returns data to the web interface as JSON. It is bound to the loopback address only and rejects requests from any other origin; the single endpoint that touches the model does nothing but select objects.',
     'module.spectrum.title': 'Design Spectrum', 'module.spectrum.description': 'Create the horizontal elastic design spectrum using TBDY 2018 parameters and transfer it to the ETABS model.',
     'module.increment.title': 'Scaling Calculation', 'module.increment.description': 'Calculate dynamic scaling factors from modal results and base shear forces.',
     'module.drift.title': 'Interstory Drift', 'module.drift.description': 'Calculate effective interstory drifts and compare them with TBDY 2018 limits.',
@@ -196,18 +240,62 @@ const translations = {
     'terminal.notFound': 'Yerel köprü bulunamadı. Windows agent kurulup çalıştırıldıktan sonra yeniden deneyin.',
     'about.title': 'Platform Hakkında', 'about.subtitle': 'Amaç, mimari ve güncel uygulama durumu',
     'about.purpose.title': 'Mühendislik çalışma alanı', 'about.purpose.text': 'Yapısal Tasarım Asistanı; ETABS tahkiklerini, eleman donelerini, sonuçları ve dışa aktarımları tek bir web arayüzünde birleştirir.',
-    'about.connection.title': 'Yerel ETABS köprüsü', 'about.connection.text': 'Tarayıcılar ETABS COM API’ye doğrudan erişemediği için güvenli bir Windows agent bu arayüzü bilgisayarınızda açık olan modele bağlar.',
+    'about.connection.title': 'Yerel ETABS köprüsü', 'about.connection.text': 'Tarayıcılar ETABS COM API’ye doğrudan erişemediği için bir Windows agent bu arayüzü bilgisayarınızda açık olan modele bağlar. Yalnızca 127.0.0.1:5218 adresini dinler, sadece bu sitenin origin’inden gelen istekleri kabul eder ve her çağrı yerel bir günlüğe yazılır.',
     'about.status.title': 'Mevcut sürüm', 'about.status.text': 'Arayüz ve ETABS bağlantı agent’ı kullanılabilir; mühendislik tahkikleri yerel köprü üzerinden aktif model üzerinde çalışır.',
     'about.note.label': 'Önemli:', 'about.note.text': 'Mühendislik sonuçları sorumlu inşaat mühendisi tarafından kontrol edilmeli ve onaylanmalıdır.',
     'moduleData.title': 'Model Verisi', 'moduleData.description': 'ETABS modelinden okunacak veri seti',
-    'moduleData.waiting': 'ETABS bağlantısı bekleniyor', 'moduleData.note': 'Modül girdileri, yerel köprü üzerinden aktif ETABS modelinden güvenli biçimde alınacak.',
+    'moduleData.waiting': 'ETABS bağlantısı bekleniyor', 'moduleData.note': 'Modül girdileri, yerel köprü üzerinden aktif ETABS modelinden okunur.',
     'results.title': 'Tahkik Sonuçları', 'results.description': 'Özet metrikler ve eleman bazlı sonuçlar',
     'filter.all': 'Tümü', 'filter.placeholder': 'Filtre…', 'filter.clear': 'Filtreleri temizle', 'filter.noMatch': 'Geçerli filtrelere uyan satır yok.',
+    'calcBasis.title': 'Hesap esası', 'calcBasis.reference': 'Yönetmelik dayanağı',
+    'calcBasis.note': 'Sonucun elle yeniden türetilebilmesi için ara değerler listelenmiştir. Tahkikin sorumluluğu sorumlu mühendise aittir.',
+    'validate.range': '{field} değeri {min} ile {max} arasında olmalıdır. Girilen: {value}.',
+    'validate.positive': '{field} sıfırdan büyük olmalıdır. Girilen: {value}.',
+    'validate.dOverR': 'D (dayanım fazlalığı katsayısı) R (taşıyıcı sistem davranış katsayısı) değerini aşamaz. Girilen D = {d}, R = {r}. TBDY 2018 Tablo 4.1’de daima D ≤ R’dir.',
+    'validate.cornerPeriod': 'Köşe periyodu TB = SD1/SDS = {tb} s, alışılmış 0,1–1,5 s aralığının dışında. SDS ve SD1’in aynı deprem düzeyine ait ve g biriminde olduğunu kontrol edin.',
+    'validate.storyHeight': 'Kat yüksekliği {value} m fiziksel olarak makul değil. Beklenen 1,5–10 m — model birim sistemini kontrol edin.',
+    'validate.zeroMass': 'Modelden okunan toplam kütle sıfır. Analizi çalıştırın ve kütle kaynağının tanımlı olduğunu doğrulayın.',
+    'validate.zeroShear': 'Modelden okunan taban kesme kuvveti sıfır. Deprem yükleme durumlarının analiz edildiğini doğrulayın.',
+    'validate.fck': 'Beton dayanımı fck = {value} MPa, TS 500 kapsamındaki 10–90 MPa aralığının dışında. Birimi kontrol edin (MPa, kN/m² değil).',
+    'validate.fyk': 'Donatı dayanımı fyk = {value} MPa, 200–700 MPa aralığının dışında. TS 500 S420 için 420 MPa’dır.',
+    'validate.spacing': 'Etriye aralığı {value} cm makul değil. Beklenen 5–40 cm.',
+    'validate.barDia': 'Donatı çapı {value} mm makul değil. Beklenen 6–40 mm.',
+    'spectrum.basis.peakAt': 'Tepe noktası periyodu', 'spectrum.basis.peakCheck': 'Tepe SaR = g·Sae/Ra',
+    'drift.basis.rigid': 'rijit dolgu', 'drift.basis.flexible': 'esnek derz',
+    'drift.basis.limitUsed': 'Uygulanan sınır', 'drift.basis.worst': 'Belirleyici kat', 'drift.basis.ofLimit': 'sınırın',
+    'pdelta.basis.worst': 'Belirleyici kat', 'pdelta.basis.ofLimit': 'sınırın',
+    'pdelta.basis.limitFormula': 'Sınır = 0,12·D/(Ch·R)',
+    'pdelta.basis.driftNote': 'Δi/hi doğrudan ETABS kat ötelemesi tablosundan okunur; hi zaten bölünmüş durumdadır.',
+    'columnAxial.basis.worst': 'Belirleyici kolon', 'beam.basis.worst': 'Belirleyici kiriş',
+    'columnAxial.basis.signNote': 'Nd, ETABS eleman kuvvetleri tablosundan basınç (Min) değeri olarak alınır ve mutlak değeriyle kullanılır.',
+    'beam.basis.vcOff': 'Vc katkısı kullanıcı tarafından kapatıldı (Vcr = 0)',
+    'beamAxial.basis.clause': 'eksenel yükü kiriş sınırını aşan elemanlar kolon gibi donatılmalıdır',
+    'beamAxial.basis.rule': 'Oran sınırı aşarsa eleman kolon gibi donatılır.',
+    'beamAxial.basis.asColumn': 'KOLON GİBİ DONATILACAK',
+    'columnSchedule.basis.rho': 'Belirleyici kolon',
+    'module.notImplemented.title': 'Henüz uygulanmadı',
+    'module.notImplemented.text': 'Bu modül yalnızca arayüz iskeletidir — hesabı henüz aktarılmadığından ETABS’e bağlanmak bir sonuç üretmez. Güncel kapsam için modül durumu sayfasına bakın.',
+    'module.notImplemented.button': 'Hesap mevcut değil',
+    'preflight.title': 'Ön kontrol', 'preflight.subtitle': 'Tahkikin anlamlı olup olmadığını belirleyen koşullar',
+    'preflight.agent': 'Windows agent', 'preflight.versionMatch': 'Web / agent uyumu',
+    'preflight.compatible': 'Uyumlu', 'preflight.versionMismatch': 'Uyumsuz — web v{web}, agent v{agent}. Agent’ı Releases sayfasından güncelleyin.',
+    'preflight.etabsVersion': 'ETABS sürümü', 'preflight.model': 'Aktif model',
+    'preflight.lock': 'Model kilidi', 'preflight.locked': 'Kilitli', 'preflight.unlocked': 'Kilitli değil',
+    'preflight.lockedNote': 'Analiz sonrası normaldir. Sonuç okumayı etkilemez.',
+    'preflight.units': 'Birim sistemi',
+    'preflight.unitsWrong': 'Tüm modüller kN, m, C varsayar. Herhangi bir tahkik çalıştırmadan önce ETABS birimlerini değiştirin — başka birimde okunan sonuçlar hatalı olur.',
+    'preflight.unitsUnknown': 'Okunamadı. Sonuçlara güvenmeden önce ETABS’in kN, m, C olduğunu doğrulayın.',
+    'preflight.analysis': 'Analiz sonuçları', 'preflight.analysisDone': 'Tüm yükleme durumları tamamlandı',
+    'preflight.analysisStale': 'Tüm yükleme durumları çalıştırılmamış', 'preflight.analysisNote': 'ETABS’te analizi çalıştırın; aksi halde eleman kuvvetleri eksik veya güncel olmayabilir.',
+    'preflight.unknown': 'Bilinmiyor',
+    'preflight.verdict.ok': 'Ortam tahkik çalıştırmaya uygun görünüyor.',
+    'preflight.verdict.blocked': 'Birim sistemi kN-m değil — sonuçlara güvenmeden önce düzeltin.',
+    'preflight.continue': 'Devam et',
     'table.member': 'Eleman', 'table.story': 'Kat', 'table.demand': 'Talep', 'table.capacity': 'Kapasite', 'table.ratio': 'Oran', 'table.status': 'Durum',
     'table.empty': 'Bağlantı kurulduktan sonra sonuçlar burada görüntülenecek.',
     'moduleLog.title': 'Modül Günlüğü', 'moduleLog.ready': 'Modül web uyarlaması için hazırlandı.',
-    'dialog.title': 'ETABS Web Bağlantısı', 'dialog.subtitle': 'Önerilen güvenli yerel köprü mimarisi', 'architecture.web': 'Web Arayüzü',
-    'dialog.note': "Tarayıcı COM nesnelerine doğrudan erişemez. Yerel Windows tray agent aktif ETABS modelini okur ve izin verilen verileri JSON olarak web arayüzüne döndürür.",
+    'dialog.title': 'ETABS Web Bağlantısı', 'dialog.subtitle': 'Yerel köprü mimarisi', 'architecture.web': 'Web Arayüzü',
+    'dialog.note': "Tarayıcı COM nesnelerine doğrudan erişemez. Yerel Windows tray agent aktif ETABS modelini okur ve verileri JSON olarak web arayüzüne döndürür. Yalnızca loopback adresine bağlıdır ve başka origin’den gelen istekleri reddeder; modele dokunan tek uç yalnızca eleman seçimi yapar.",
     'module.spectrum.title': 'Tasarım Spektrumu', 'module.spectrum.description': 'TBDY 2018 parametreleriyle yatay elastik tasarım spektrumunu oluşturun ve ETABS modeline aktarın.',
     'module.increment.title': 'Artırım Hesabı', 'module.increment.description': 'Modal sonuçlar ve taban kesme kuvvetleri üzerinden dinamik büyütme katsayılarını hesaplayın.',
     'module.drift.title': 'Göreli Kat Ötelemesi', 'module.drift.description': 'Etkin göreli kat ötelemelerini hesaplayın ve TBDY 2018 sınırlarıyla karşılaştırın.',
@@ -436,6 +524,9 @@ function applyLanguage(language) {
   document.documentElement.lang = currentLanguage;
   applyTranslationsToDom();
   document.title = t('brand.name');
+  // Version badge is driven by version.js so it can never drift from the source of truth.
+  const badge = $('#versionBadge');
+  if (badge) badge.textContent = `v${APP_VERSION}`;
   $('.brand').setAttribute('aria-label', t('brand.home'));
   $('#themeToggle').setAttribute('aria-label', currentLanguage === 'tr' ? 'Açık / koyu tema değiştir' : 'Switch light / dark mode');
   $('#languageToggle').setAttribute('aria-label', currentLanguage === 'tr' ? 'İngilizce / Türkçe değiştir' : 'Switch English / Turkish');
@@ -457,7 +548,12 @@ function setActiveView(id) {
   const module = moduleDefinitions.find(item => item.id === id);
   if (!module) return setActiveView('dashboard');
   $('#moduleTitle').textContent = t(`module.${module.key}.title`);
-  $('#moduleCategory').textContent = t(module.categoryKey).toUpperCase();
+  // Display-only casing: Turkish needs the locale-aware mapping (i→İ, not i→I).
+  // Never use this on strings matched against ETABS data — see the toUpperCase()
+  // calls in the combo/direction filters, which must stay locale-invariant.
+  $('#moduleCategory').textContent = currentLanguage === 'tr'
+    ? t(module.categoryKey).toLocaleUpperCase('tr-TR')
+    : t(module.categoryKey).toUpperCase();
   $('#moduleDescription').textContent = t(`module.${module.key}.description`);
   dashboard.classList.remove('active');
   moduleView.classList.add('active');
@@ -468,12 +564,23 @@ function setActiveView(id) {
   if (renderer) {
     renderer();
   } else {
+    // UI-only shell: no calculation is implemented yet, so the connect button would
+    // promise something the module cannot deliver. Disable it and say so plainly
+    // instead of leaving a live control that leads nowhere.
     $('#setupPanel').innerHTML = defaultSetupPanelHtml;
     $('#resultsPanel').innerHTML = defaultResultsPanelHtml;
     applyTranslationsToDom($('#setupPanel'));
     applyTranslationsToDom($('#resultsPanel'));
     const connectBtn = $('[data-connect]', $('#setupPanel'));
-    if (connectBtn) connectBtn.addEventListener('click', connectToEtabs);
+    if (connectBtn) {
+      connectBtn.disabled = true;
+      connectBtn.textContent = t('module.notImplemented.button');
+      connectBtn.setAttribute('aria-disabled', 'true');
+    }
+    const waiting = $('.empty-state h3', $('#setupPanel'));
+    if (waiting) waiting.textContent = t('module.notImplemented.title');
+    const note = $('.empty-state p', $('#setupPanel'));
+    if (note) note.textContent = t('module.notImplemented.text');
   }
 }
 
@@ -507,12 +614,79 @@ async function connectToEtabs() {
     $('#bridgeStatus').textContent = t('status.connected');
     $('#bridgeStatus').classList.add('connected');
     log(t('terminal.connected', { model }), 'ok');
+    showPreflight(data);
   } catch (error) {
     $('#architectureDialog').showModal();
     log(t('terminal.notFound'), 'error');
   } finally {
     setConnectButtonsLoading(false);
   }
+}
+
+// --- Pre-flight check -------------------------------------------------------
+// Surfaces the environment facts that silently decide whether a check is even
+// meaningful — agent/web version match, model lock, whether the analysis has run,
+// and above all the ACTIVE UNIT SYSTEM: every module assumes kN-m, and ETABS
+// returns table values in the model's present units, so a model left in kip-in
+// would produce plausible-looking but wrong numbers.
+function preflightRow(state, labelKey, value, detail = '') {
+  const icon = { ok: '✅', warn: '⚠️', fail: '❌', unknown: '❔' }[state];
+  return `<tr class="pf-${state}">
+      <td class="pf-icon">${icon}</td>
+      <td class="pf-label">${t(labelKey)}</td>
+      <td class="pf-value">${value}${detail ? `<small>${detail}</small>` : ''}</td>
+    </tr>`;
+}
+
+function buildPreflightRows(data) {
+  const rows = [];
+  const unknown = t('preflight.unknown');
+
+  rows.push(preflightRow('ok', 'preflight.agent', `v${data.agentVersion || '?'}`));
+
+  // Web and agent ship together; a mismatch means one side was not updated.
+  const webMajorMinor = APP_VERSION.split('.').slice(0, 2).join('.');
+  const agentMajorMinor = String(data.agentVersion || '').split('.').slice(0, 2).join('.');
+  rows.push(agentMajorMinor && webMajorMinor === agentMajorMinor
+    ? preflightRow('ok', 'preflight.versionMatch', `${t('preflight.compatible')} (web v${APP_VERSION})`)
+    : preflightRow('warn', 'preflight.versionMatch', t('preflight.versionMismatch', { web: APP_VERSION, agent: data.agentVersion || '?' })));
+
+  rows.push(data.etabsVersion
+    ? preflightRow('ok', 'preflight.etabsVersion', data.etabsVersion)
+    : preflightRow('unknown', 'preflight.etabsVersion', unknown));
+
+  rows.push(preflightRow('ok', 'preflight.model', data.modelName || unknown));
+
+  // A locked model is normal after analysis; it only blocks editing, not reading.
+  rows.push(data.modelLocked === null || data.modelLocked === undefined
+    ? preflightRow('unknown', 'preflight.lock', unknown)
+    : preflightRow('ok', 'preflight.lock', t(data.modelLocked ? 'preflight.locked' : 'preflight.unlocked'),
+        data.modelLocked ? t('preflight.lockedNote') : ''));
+
+  if (data.unitsSupported === true) {
+    rows.push(preflightRow('ok', 'preflight.units', data.units));
+  } else if (data.unitsSupported === false) {
+    rows.push(preflightRow('fail', 'preflight.units', data.units, t('preflight.unitsWrong')));
+  } else {
+    rows.push(preflightRow('unknown', 'preflight.units', unknown, t('preflight.unitsUnknown')));
+  }
+
+  if (data.analysisComplete === true) rows.push(preflightRow('ok', 'preflight.analysis', t('preflight.analysisDone')));
+  else if (data.analysisComplete === false) rows.push(preflightRow('warn', 'preflight.analysis', t('preflight.analysisStale'), t('preflight.analysisNote')));
+  else rows.push(preflightRow('unknown', 'preflight.analysis', unknown));
+
+  return rows.join('');
+}
+
+function showPreflight(data) {
+  const dialog = $('#preflightDialog');
+  if (!dialog) return;
+  $('#preflightRows').innerHTML = buildPreflightRows(data);
+  const blocking = data.unitsSupported === false;
+  const verdict = $('#preflightVerdict');
+  verdict.textContent = t(blocking ? 'preflight.verdict.blocked' : 'preflight.verdict.ok');
+  verdict.className = `status-banner ${blocking ? 'fail' : 'ok'}`;
+  dialog.showModal();
 }
 
 // ---------------------------------------------------------------------------
@@ -567,6 +741,86 @@ async function downloadAgentExcel(path, body, fallbackName, timeoutMs = 15000) {
   a.download = fileName;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+// --- Accessible number fields + engineering input validation ----------------
+// numberField() emits a properly associated <label for>/<input id> pair plus an
+// error paragraph wired via aria-describedby, so screen readers announce both the
+// field name and the reason a value was rejected. Use it instead of hand-written
+// <div class="field"> markup.
+function numberField(id, labelKey, { step = 'any', min, max, unit } = {}) {
+  const attrs = [
+    `type="number"`, `step="${step}"`, `id="${id}"`,
+    min !== undefined ? `min="${min}"` : '',
+    max !== undefined ? `max="${max}"` : '',
+    `aria-describedby="${id}-err"`
+  ].filter(Boolean).join(' ');
+  const label = unit ? `${t(labelKey)} <span class="field-unit">(${unit})</span>` : t(labelKey);
+  return `<div class="field">
+      <label for="${id}">${label}</label>
+      <input ${attrs}>
+      <p class="field-error" id="${id}-err" role="alert" hidden></p>
+    </div>`;
+}
+
+function checkboxField(id, labelKey) {
+  return `<label class="field-checkbox" for="${id}"><input type="checkbox" id="${id}"> ${t(labelKey)}</label>`;
+}
+
+function clearFieldErrors(root = document) {
+  $$('.field-error', root).forEach(el => { el.hidden = true; el.textContent = ''; });
+  $$('input[aria-invalid]', root).forEach(el => el.removeAttribute('aria-invalid'));
+}
+
+function showFieldError(id, message) {
+  const input = $('#' + id);
+  const errorEl = $(`#${id}-err`);
+  if (errorEl) { errorEl.textContent = message; errorEl.hidden = false; }
+  if (input) input.setAttribute('aria-invalid', 'true');
+}
+
+// Runs a list of {id, ok, message} rules. Reports EVERY failing field at once (not
+// just the first) so the engineer can fix them in one pass, focuses the first one,
+// and returns true only when everything passed.
+function validateFields(rules, root = document) {
+  clearFieldErrors(root);
+  // Keep only the first failure per field, so the toast and the inline message
+  // under the input always report the same reason.
+  const seen = new Set();
+  const failures = rules.filter(rule => {
+    if (rule.ok || seen.has(rule.id)) return false;
+    seen.add(rule.id);
+    return true;
+  });
+  if (failures.length === 0) return true;
+  failures.forEach(f => showFieldError(f.id, f.message));
+  const first = $('#' + failures[0].id);
+  if (first) first.focus();
+  log(failures[0].message, 'error');
+  return false;
+}
+
+const inRange = (v, lo, hi) => Number.isFinite(v) && v >= lo && v <= hi;
+
+// --- "Calculation basis" disclosure -----------------------------------------
+// Every module documents the code clause, the equations it evaluates and the
+// intermediate values behind the headline number, so the engineer can re-derive
+// the result by hand instead of trusting a black box.
+function calcBasis(codeRef, equations, values = []) {
+  const eqHtml = equations.map(e => `<li><code>${e}</code></li>`).join('');
+  const valHtml = values.length
+    ? `<table class="calc-values"><tbody>${values
+        .map(([k, v]) => `<tr><th scope="row">${k}</th><td>${v}</td></tr>`).join('')}</tbody></table>`
+    : '';
+  return `<details class="calc-basis">
+      <summary>${t('calcBasis.title')}</summary>
+      <div class="calc-basis-body">
+        <p class="calc-ref"><strong>${t('calcBasis.reference')}:</strong> ${codeRef}</p>
+        <ul class="calc-eq">${eqHtml}</ul>
+        ${valHtml}
+        <p class="calc-note">${t('calcBasis.note')}</p>
+      </div>
+    </details>`;
 }
 
 // --- Excel-like column filtering for results tables -------------------------
@@ -763,15 +1017,15 @@ function renderDriftSetupPanel() {
   panel.innerHTML = `
     <div class="panel-heading compact"><div><span class="step-number">1</span><div><h2>${t('drift.params.title')}</h2><p>${t('moduleData.description')}</p></div></div></div>
     <div class="field-grid">
-      <div class="field"><label>${t('drift.params.sdsDD2')}</label><input type="number" step="any" id="driftSdsDD2"></div>
-      <div class="field"><label>${t('drift.params.sdsDD3')}</label><input type="number" step="any" id="driftSdsDD3"></div>
-      <div class="field"><label>${t('drift.params.sd1DD2')}</label><input type="number" step="any" id="driftSd1DD2"></div>
-      <div class="field"><label>${t('drift.params.sd1DD3')}</label><input type="number" step="any" id="driftSd1DD3"></div>
-      <div class="field"><label>${t('drift.params.k')}</label><input type="number" step="any" id="driftK"></div>
-      <div class="field"><label>${t('drift.params.tp')}</label><input type="number" step="any" id="driftTp"></div>
-      <label class="field-checkbox"><input type="checkbox" id="driftEsnekDerz"> ${t('drift.params.flexibleJoint')}</label>
-      <label class="field-checkbox"><input type="checkbox" id="driftBodrum"> ${t('drift.params.basement')}</label>
-      <div class="field"><label>${t('drift.params.basementCount')}</label><input type="number" min="0" id="driftBodrumKat"></div>
+      ${numberField('driftSdsDD2', 'drift.params.sdsDD2', { min: 0 })}
+      ${numberField('driftSdsDD3', 'drift.params.sdsDD3', { min: 0 })}
+      ${numberField('driftSd1DD2', 'drift.params.sd1DD2', { min: 0 })}
+      ${numberField('driftSd1DD3', 'drift.params.sd1DD3', { min: 0 })}
+      ${numberField('driftK', 'drift.params.k', { min: 0.5, max: 1 })}
+      ${numberField('driftTp', 'drift.params.tp', { min: 0, max: 10, unit: 's' })}
+      ${checkboxField('driftEsnekDerz', 'drift.params.flexibleJoint')}
+      ${checkboxField('driftBodrum', 'drift.params.basement')}
+      ${numberField('driftBodrumKat', 'drift.params.basementCount', { step: 1, min: 0, max: 10 })}
     </div>
     <div class="combo-picker">
       <div class="combo-picker-heading"><h3>${t('drift.combos.title')}</h3>
@@ -870,6 +1124,41 @@ function renderDriftResultsTable(result) {
 
   const exportBtn = $('#driftExport');
   if (exportBtn) exportBtn.disabled = false;
+
+  const { sdsDD2, sdsDD3, sd1DD2, sd1DD3, k, tp, esnekDerz } = driftState;
+  const taDD2 = sdsDD2 ? sd1DD2 / sdsDD2 : 0;
+  const worst = sorted.reduce((a, b) => (b.lambdaDrift / b.limit > a.lambdaDrift / a.limit ? b : a), sorted[0]);
+  renderCalcBasis('#driftResultsBody', 'driftBasis', calcBasis(
+    'TBDY 2018 §4.9.1 (Denk. 4.32–4.33), Tablo 4.9',
+    [
+      'λ = SDS,DD-3 / SDS,DD-2      (Tp &lt; TA)',
+      'λ = SD1,DD-3 / SD1,DD-2      (Tp ≥ TA)',
+      'TA = SD1,DD-2 / SDS,DD-2',
+      'δi,max / hi ≤ 0.008·κ        (' + t('drift.basis.rigid') + ')',
+      'δi,max / hi ≤ 0.016·κ        (' + t('drift.basis.flexible') + ')'
+    ],
+    [
+      ['TA = SD1/SDS (DD-2)', `${sd1DD2} / ${sdsDD2} = ${taDD2.toFixed(4)} s`],
+      ['Tp', `${tp} s → ${tp < taDD2 ? 'Tp < TA' : 'Tp ≥ TA'}`],
+      ['λ', `${tp < taDD2 ? `${sdsDD3} / ${sdsDD2}` : `${sd1DD3} / ${sd1DD2}`} = <strong>${result.lambda.toFixed(4)}</strong>`],
+      ['κ', `${k}`],
+      [t('drift.basis.limitUsed'), `${esnekDerz ? '0.016' : '0.008'} · ${k} = <strong>${result.limit.toFixed(5)}</strong>`],
+      ...(worst ? [[t('drift.basis.worst'),
+        `${worst.story} / ${worst.direction}: λ·δ/h = ${result.lambda.toFixed(4)} · ${worst.drift.toFixed(5)} = ${worst.lambdaDrift.toFixed(5)} ` +
+        `(${(worst.lambdaDrift / worst.limit * 100).toFixed(1)}% ${t('drift.basis.ofLimit')})`]] : [])
+    ]));
+}
+
+// Places a calculation-basis block right after the given table body's wrapper,
+// replacing any previous one so repeated runs don't stack duplicates.
+function renderCalcBasis(bodySelector, blockId, html) {
+  const body = $(bodySelector);
+  if (!body) return;
+  const wrap = body.closest('.table-wrap') || body.closest('table');
+  if (!wrap) return;
+  const existing = $('#' + blockId);
+  if (existing) existing.remove();
+  wrap.insertAdjacentHTML('afterend', `<div id="${blockId}">${html}</div>`);
 }
 
 async function fetchDriftCombosAndStories() {
@@ -900,6 +1189,18 @@ async function runDriftCheck() {
     log(t('drift.error.noCombos'), 'error');
     return;
   }
+
+  const { sdsDD2, sdsDD3, sd1DD2, sd1DD3, k, tp } = driftState;
+  const validated = validateFields([
+    { id: 'driftSdsDD2', ok: inRange(sdsDD2, 0.05, 4), message: t('validate.range', { field: 'SDS (DD-2)', min: '0.05 g', max: '4 g', value: sdsDD2 }) },
+    { id: 'driftSdsDD3', ok: inRange(sdsDD3, 0.02, 4), message: t('validate.range', { field: 'SDS (DD-3)', min: '0.02 g', max: '4 g', value: sdsDD3 }) },
+    { id: 'driftSd1DD2', ok: inRange(sd1DD2, 0.02, 3), message: t('validate.range', { field: 'SD1 (DD-2)', min: '0.02 g', max: '3 g', value: sd1DD2 }) },
+    { id: 'driftSd1DD3', ok: inRange(sd1DD3, 0.01, 3), message: t('validate.range', { field: 'SD1 (DD-3)', min: '0.01 g', max: '3 g', value: sd1DD3 }) },
+    // TBDY 2018 Eq. 4.33: κ is 1.0 for concrete frames, 0.5 for the masonry-infill case.
+    { id: 'driftK', ok: inRange(k, 0.5, 1), message: t('validate.range', { field: 'κ', min: 0.5, max: 1, value: k }) },
+    { id: 'driftTp', ok: inRange(tp, 0.05, 10), message: t('validate.range', { field: 'Tp', min: '0.05 s', max: '10 s', value: tp }) }
+  ], panel);
+  if (!validated) return;
 
   btn.disabled = true;
   try {
@@ -1108,11 +1409,11 @@ function renderPdeltaSetupPanel() {
   panel.innerHTML = `
     <div class="panel-heading compact"><div><span class="step-number">1</span><div><h2>${t('pdelta.params.title')}</h2><p>${t('moduleData.description')}</p></div></div></div>
     <div class="field-grid">
-      <div class="field"><label>${t('pdelta.params.ch')}</label><input type="number" step="any" id="pdCh"></div>
-      <div class="field"><label>${t('pdelta.params.r')}</label><input type="number" step="any" id="pdR"></div>
-      <div class="field"><label>${t('pdelta.params.d')}</label><input type="number" step="any" id="pdD"></div>
-      <label class="field-checkbox"><input type="checkbox" id="pdBodrum"> ${t('drift.params.basement')}</label>
-      <div class="field"><label>${t('drift.params.basementCount')}</label><input type="number" min="0" id="pdBodrumKat"></div>
+      ${numberField('pdCh', 'pdelta.params.ch', { min: 0.1, max: 3 })}
+      ${numberField('pdR', 'pdelta.params.r', { min: 1, max: 10 })}
+      ${numberField('pdD', 'pdelta.params.d', { min: 1, max: 4 })}
+      ${checkboxField('pdBodrum', 'drift.params.basement')}
+      ${numberField('pdBodrumKat', 'drift.params.basementCount', { step: 1, min: 0, max: 10 })}
     </div>
     <div class="combo-picker">
       <div class="combo-picker-heading"><h3>${t('drift.combos.title')}</h3>
@@ -1199,6 +1500,28 @@ function renderPdeltaResultsTable(result) {
   banner.className = `status-banner ${result.allOk ? 'ok' : 'fail'}`;
   const exportBtn = $('#pdExport');
   if (exportBtn) exportBtn.disabled = false;
+
+  const { ch, r, d } = pdeltaState;
+  const limit = result.items.length ? result.items[0].limit : 0;
+  const worst = result.items.reduce((a, b) => (b.theta > a.theta ? b : a), result.items[0]);
+  renderCalcBasis('#pdResultsBody', 'pdBasis', calcBasis(
+    'TBDY 2018 §4.9.2 (Denk. 4.34)',
+    [
+      'θi = (Δi · Σ Wj) / (Vi · hi)',
+      t('pdelta.basis.driftNote'),
+      'θi ≤ 0.12 · D / (Ch · R)'
+    ],
+    [
+      ['Ch / R / D', `${ch} / ${r} / ${d}`],
+      [t('pdelta.basis.limitFormula'), `0.12 · ${d} / (${ch} · ${r}) = <strong>${limit.toFixed(5)}</strong>`],
+      ...(worst ? [[t('pdelta.basis.worst'),
+        `${worst.story} / ${worst.direction} / ${worst.loadCase}`],
+        ['Σ Wj', `${worst.wij.toFixed(2)} kN`],
+        ['Vi', `${worst.vi.toFixed(2)} kN`],
+        ['Δi/hi', `${worst.driftRatio.toFixed(6)}`],
+        ['θi', `${worst.driftRatio.toFixed(6)} · ${worst.wij.toFixed(2)} / ${worst.vi.toFixed(2)} = <strong>${worst.theta.toFixed(6)}</strong> ` +
+          `(${limit ? (worst.theta / limit * 100).toFixed(1) : '—'}% ${t('pdelta.basis.ofLimit')})`]] : [])
+    ]));
 }
 
 async function pdeltaFetchCombos() {
@@ -1223,6 +1546,16 @@ async function runPdeltaCheck() {
     log(t('drift.error.noCombos'), 'error');
     return;
   }
+
+  const { ch, r, d } = pdeltaState;
+  const validated = validateFields([
+    { id: 'pdCh', ok: inRange(ch, 0.1, 3), message: t('validate.range', { field: 'Ch', min: 0.1, max: 3, value: ch }) },
+    { id: 'pdR', ok: inRange(r, 1, 10), message: t('validate.range', { field: 'R', min: 1, max: 10, value: r }) },
+    { id: 'pdD', ok: inRange(d, 1, 4), message: t('validate.range', { field: 'D', min: 1, max: 4, value: d }) },
+    { id: 'pdD', ok: !(d > 0 && r > 0 && d > r), message: t('validate.dOverR', { d, r }) }
+  ], $('#setupPanel'));
+  if (!validated) return;
+
   btn.disabled = true;
   try {
     const result = await pdeltaFetchAndCompute();
@@ -1314,11 +1647,11 @@ function renderSpectrumSetupPanel() {
   panel.innerHTML = `
     <div class="panel-heading compact"><div><span class="step-number">1</span><div><h2>${t('spectrum.params.title')}</h2><p>${t('moduleData.description')}</p></div></div></div>
     <div class="field-grid">
-      <div class="field"><label>${t('spectrum.params.sds')}</label><input type="number" step="any" id="spSds"></div>
-      <div class="field"><label>${t('spectrum.params.sd1')}</label><input type="number" step="any" id="spSd1"></div>
-      <div class="field"><label>${t('spectrum.params.r')}</label><input type="number" step="any" id="spR"></div>
-      <div class="field"><label>${t('spectrum.params.d')}</label><input type="number" step="any" id="spD"></div>
-      <div class="field"><label>${t('spectrum.params.i')}</label><input type="number" step="any" id="spI"></div>
+      ${numberField('spSds', 'spectrum.params.sds', { min: 0 })}
+      ${numberField('spSd1', 'spectrum.params.sd1', { min: 0 })}
+      ${numberField('spR', 'spectrum.params.r', { min: 1, max: 10 })}
+      ${numberField('spD', 'spectrum.params.d', { min: 1, max: 4 })}
+      ${numberField('spI', 'spectrum.params.i', { min: 1, max: 1.5 })}
     </div>
     <div class="panel-actions">
       <button class="button button-primary full-width" type="button" id="spCalculate">${t('drift.calculate')}</button>
@@ -1375,22 +1708,73 @@ function spectrumChartSvg() {
 function renderSpectrumSummary() {
   const el = $('#spSummary');
   if (!el) return;
-  const { sds, sd1, accelerations } = spectrumState;
+  const { sds, sd1, r, d, i, periods, accelerations } = spectrumState;
   const ta = 0.2 * sd1 / sds, tb = sd1 / sds;
   const peak = Math.max(...accelerations);
+  const peakIdx = accelerations.indexOf(peak);
+  const peakT = periods[peakIdx];
+
+  // Re-derive the peak point term by term so the engineer can check the headline
+  // number against the equations shown right below it.
+  const peakSae = peakT <= ta ? sds * (0.4 + 0.6 * peakT / ta)
+    : peakT <= tb ? sds
+    : peakT <= 6 ? sd1 / peakT
+    : 6 * sd1 / (peakT * peakT);
+  const peakRa = peakT <= tb ? d + ((r / i) - d) * (peakT / tb) : r / i;
+
   el.innerHTML = `
     <span><small>TA</small><strong>${ta.toFixed(3)} s</strong></span>
     <span><small>TB</small><strong>${tb.toFixed(3)} s</strong></span>
     <span><small>${t('spectrum.summary.peak')}</small><strong>${peak.toFixed(3)} m/s²</strong></span>
     <span><small>${t('spectrum.summary.points')}</small><strong>${accelerations.length}</strong></span>`;
+
+  const basis = calcBasis(
+    'TBDY 2018 §2.3.4 (Sae), §4.3.4 / Denk. 4.1 (Ra), §2.3.8',
+    [
+      'T ≤ TA  :  Sae(T) = SDS · (0.4 + 0.6·T/TA)',
+      'TA &lt; T ≤ TB  :  Sae(T) = SDS',
+      'TB &lt; T ≤ 6 s  :  Sae(T) = SD1 / T',
+      'T &gt; 6 s  :  Sae(T) = 6·SD1 / T²',
+      'TA = 0.2·SD1/SDS ,  TB = SD1/SDS',
+      'T ≤ TB  :  Ra(T) = D + (R/I − D)·T/TB',
+      'T &gt; TB  :  Ra(T) = R / I',
+      'SaR(T) = g · Sae(T) / Ra(T)   ,  g = 9.81 m/s²'
+    ],
+    [
+      ['SDS / SD1', `${sds} g / ${sd1} g`],
+      ['R / I / D', `${r} / ${i} / ${d}`],
+      ['TA = 0.2·SD1/SDS', `0.2 · ${sd1} / ${sds} = ${ta.toFixed(4)} s`],
+      ['TB = SD1/SDS', `${sd1} / ${sds} = ${tb.toFixed(4)} s`],
+      [t('spectrum.basis.peakAt'), `T = ${peakT.toFixed(3)} s`],
+      ['Sae(T)', `${peakSae.toFixed(4)} g`],
+      ['Ra(T)', `${peakRa.toFixed(4)}`],
+      [t('spectrum.basis.peakCheck'), `9.81 · ${peakSae.toFixed(4)} / ${peakRa.toFixed(4)} = <strong>${peak.toFixed(3)} m/s²</strong>`]
+    ]);
+
+  const chartWrap = $('#spChart');
+  if (chartWrap) {
+    const existing = $('#spBasis');
+    if (existing) existing.remove();
+    chartWrap.insertAdjacentHTML('afterend', `<div id="spBasis">${basis}</div>`);
+  }
 }
 
 function runSpectrumCalc() {
   const { sds, sd1, r, d, i } = spectrumState;
-  if (sds <= 0 || sd1 <= 0 || r <= 0 || i <= 0) {
-    log(t('spectrum.error.invalid'), 'error');
-    return;
-  }
+  const tb = sds > 0 ? sd1 / sds : 0;
+  const ok = validateFields([
+    { id: 'spSds', ok: inRange(sds, 0.05, 4), message: t('validate.range', { field: 'SDS', min: '0.05 g', max: '4 g', value: sds }) },
+    { id: 'spSd1', ok: inRange(sd1, 0.02, 3), message: t('validate.range', { field: 'SD1', min: '0.02 g', max: '3 g', value: sd1 }) },
+    { id: 'spR', ok: inRange(r, 1, 10), message: t('validate.range', { field: 'R', min: 1, max: 10, value: r }) },
+    { id: 'spD', ok: inRange(d, 1, 4), message: t('validate.range', { field: 'D', min: 1, max: 4, value: d }) },
+    { id: 'spI', ok: inRange(i, 1, 1.5), message: t('validate.range', { field: 'I', min: 1, max: 1.5, value: i }) },
+    // TBDY 2018 Table 4.1 never pairs an overstrength factor above the behaviour factor.
+    { id: 'spD', ok: !(d > 0 && r > 0 && d > r), message: t('validate.dOverR', { d, r }) },
+    // A wild TB almost always means SDS/SD1 came from different hazard levels or wrong units.
+    { id: 'spSd1', ok: !(sds > 0 && sd1 > 0) || inRange(tb, 0.1, 1.5), message: t('validate.cornerPeriod', { tb: tb.toFixed(3) }) }
+  ], $('#setupPanel'));
+  if (!ok) return;
+
   const result = spectrumCompute(sds, sd1, r, d, i);
   spectrumState.periods = result.periods;
   spectrumState.accelerations = result.accelerations;
@@ -1599,12 +1983,17 @@ function incrementCalculate(direction) {
   const mt = incrementState.mt;
   const t0 = direction === 'X' ? incrementState.tx : incrementState.ty;
   const vt = direction === 'X' ? incrementState.vtX : incrementState.vtY;
-  if (mt <= 0 || t0 <= 0 || vt <= 0) {
-    log(t('increment.error.invalidInputs'), 'error');
-    return;
-  }
-
+  const periodId = direction === 'X' ? 'incTx' : 'incTy';
+  const shearId = direction === 'X' ? 'incVtX' : 'incVtY';
   const hn = incrementState.hn, ct = incrementState.ct;
+
+  if (!validateFields([
+    { id: 'incMt', ok: mt > 0, message: t('validate.zeroMass') },
+    { id: shearId, ok: vt > 0, message: t('validate.zeroShear') },
+    { id: periodId, ok: inRange(t0, 0.05, 10), message: t('validate.range', { field: `T (${direction})`, min: '0.05 s', max: '10 s', value: t0 }) },
+    { id: 'incHn', ok: hn === 0 || inRange(hn, 1.5, 500), message: t('validate.storyHeight', { value: hn }) }
+  ], $('#setupPanel'))) return;
+
   let period = t0, warning = '';
   if (hn > 0 && ct > 0) {
     const tMax = Math.pow(hn, 0.75) * ct * 1.4;
@@ -1641,6 +2030,28 @@ function incrementRenderResult(direction) {
     <p>Wt: <strong>${result.wt.toFixed(2)} kN</strong></p>
     <p>VTmax: <strong>${result.vtMax.toFixed(2)} kN</strong></p>
     <p class="increment-beta">${t('increment.result.beta')}: <strong>${result.beta.toFixed(3)}</strong></p>`;
+
+  const vt = direction === 'X' ? incrementState.vtX : incrementState.vtY;
+  const { mt, hn, ct } = incrementState;
+  el.insertAdjacentHTML('beforeend', calcBasis(
+    'TBDY 2018 §4.7.3 (Denk. 4.19), Tablo 4.3 / §4.7.2',
+    [
+      'Tp,max = 1.4 · Ct · Hn^0.75',
+      'Wt  = SaR(T) · mt',
+      'VTmax = 0.04 · SDS · g · I · mt',
+      'VT,hesap = max(Wt , VTmax)',
+      'β = 0.9 · VT,hesap / VT,analiz'
+    ],
+    [
+      ['mt', `${mt} t`],
+      ...(hn > 0 && ct > 0 ? [['Tp,max', `1.4 · ${ct} · ${hn}^0.75 = ${(Math.pow(hn, 0.75) * ct * 1.4).toFixed(3)} s`]] : []),
+      [t('increment.result.period', { direction }), `${result.period.toFixed(3)} s${result.warning ? ' ⚠' : ''}`],
+      ['SaR(T)', `${result.sae.toFixed(4)} m/s²`],
+      ['Wt', `${result.sae.toFixed(4)} · ${mt} = ${result.wt.toFixed(2)} kN`],
+      ['VTmax', `0.04 · ${spectrumState.sds} · 9.81 · ${spectrumState.i} · ${mt} = ${result.vtMax.toFixed(2)} kN`],
+      ['VT,analiz', `${vt} kN`],
+      ['β', `0.9 · ${Math.max(result.wt, result.vtMax).toFixed(2)} / ${vt} = <strong>${result.beta.toFixed(3)}</strong>`]
+    ]));
 }
 
 function renderIncrementModule() {
@@ -1653,12 +2064,12 @@ function renderIncrementSetupPanel() {
   panel.innerHTML = `
     <div class="panel-heading compact"><div><span class="step-number">1</span><div><h2>${t('increment.params.title')}</h2><p>${t('moduleData.description')}</p></div></div></div>
     <div class="field-grid">
-      <label class="field-checkbox"><input type="checkbox" id="incBodrum"> ${t('drift.params.basement')}</label>
-      <div class="field"><label>${t('drift.params.basementCount')}</label><input type="number" min="0" id="incBodrumKat"></div>
-      <div class="field"><label>${t('increment.params.mt')}</label><input type="number" step="any" id="incMt"></div>
-      <div class="field"><label>&nbsp;</label><button class="button button-secondary" type="button" id="incFetchMt">${t('increment.fetch')}</button></div>
-      <div class="field"><label>${t('increment.params.hn')}</label><input type="number" step="any" id="incHn"></div>
-      <div class="field"><label>${t('increment.params.ct')}</label><input type="number" step="any" id="incCt"></div>
+      ${checkboxField('incBodrum', 'drift.params.basement')}
+      ${numberField('incBodrumKat', 'drift.params.basementCount', { step: 1, min: 0, max: 10 })}
+      ${numberField('incMt', 'increment.params.mt', { min: 0 })}
+      <div class="field"><span class="field-spacer" aria-hidden="true">&nbsp;</span><button class="button button-secondary" type="button" id="incFetchMt">${t('increment.fetch')}</button></div>
+      ${numberField('incHn', 'increment.params.hn', { min: 0 })}
+      ${numberField('incCt', 'increment.params.ct', { min: 0 })}
     </div>
     <div class="combo-picker">
       <div class="combo-picker-heading"><h3>${t('drift.combos.title')}</h3>
@@ -1670,10 +2081,10 @@ function renderIncrementSetupPanel() {
     <div class="increment-direction">
       <h3 class="increment-direction-title x">${t('increment.direction.x')}</h3>
       <div class="field-grid two">
-        <div class="field"><label>${t('increment.params.tx')}</label><input type="number" step="any" id="incTx"></div>
-        <div class="field"><label>&nbsp;</label><button class="button button-secondary" type="button" id="incFetchTx">${t('increment.fetch')}</button></div>
-        <div class="field"><label>${t('increment.params.vtx')}</label><input type="number" step="any" id="incVtX"></div>
-        <div class="field"><label>&nbsp;</label><button class="button button-secondary" type="button" id="incFetchVtX">${t('increment.fetch')}</button></div>
+        ${numberField('incTx', 'increment.params.tx', { min: 0, unit: 's' })}
+        <div class="field"><span class="field-spacer" aria-hidden="true">&nbsp;</span><button class="button button-secondary" type="button" id="incFetchTx">${t('increment.fetch')}</button></div>
+        ${numberField('incVtX', 'increment.params.vtx', { min: 0, unit: 'kN' })}
+        <div class="field"><span class="field-spacer" aria-hidden="true">&nbsp;</span><button class="button button-secondary" type="button" id="incFetchVtX">${t('increment.fetch')}</button></div>
       </div>
       <p class="increment-modal-info" id="incModalInfoX"></p>
       <button class="button button-primary full-width" type="button" id="incCalcX">${t('increment.calculate', { direction: 'X' })}</button>
@@ -1681,10 +2092,10 @@ function renderIncrementSetupPanel() {
     <div class="increment-direction">
       <h3 class="increment-direction-title y">${t('increment.direction.y')}</h3>
       <div class="field-grid two">
-        <div class="field"><label>${t('increment.params.ty')}</label><input type="number" step="any" id="incTy"></div>
-        <div class="field"><label>&nbsp;</label><button class="button button-secondary" type="button" id="incFetchTy">${t('increment.fetch')}</button></div>
-        <div class="field"><label>${t('increment.params.vty')}</label><input type="number" step="any" id="incVtY"></div>
-        <div class="field"><label>&nbsp;</label><button class="button button-secondary" type="button" id="incFetchVtY">${t('increment.fetch')}</button></div>
+        ${numberField('incTy', 'increment.params.ty', { min: 0, unit: 's' })}
+        <div class="field"><span class="field-spacer" aria-hidden="true">&nbsp;</span><button class="button button-secondary" type="button" id="incFetchTy">${t('increment.fetch')}</button></div>
+        ${numberField('incVtY', 'increment.params.vty', { min: 0, unit: 'kN' })}
+        <div class="field"><span class="field-spacer" aria-hidden="true">&nbsp;</span><button class="button button-secondary" type="button" id="incFetchVtY">${t('increment.fetch')}</button></div>
       </div>
       <p class="increment-modal-info" id="incModalInfoY"></p>
       <button class="button button-primary full-width" type="button" id="incCalcY">${t('increment.calculate', { direction: 'Y' })}</button>
@@ -1839,10 +2250,10 @@ function renderColumnAxialSetupPanel() {
   panel.innerHTML = `
     <div class="panel-heading compact"><div><span class="step-number">1</span><div><h2>${t('columnAxial.params.title')}</h2><p>${t('moduleData.description')}</p></div></div></div>
     <div class="field-grid">
-      <div class="field"><label>${t('columnAxial.params.fck')}</label><input type="number" step="any" id="caFck"></div>
-      <div class="field"><label>${t('columnAxial.params.limit')}</label><input type="number" step="any" id="caLimit"></div>
-      <label class="field-checkbox"><input type="checkbox" id="caBodrum"> ${t('drift.params.basement')}</label>
-      <div class="field"><label>${t('drift.params.basementCount')}</label><input type="number" min="0" id="caBodrumKat"></div>
+      ${numberField('caFck', 'columnAxial.params.fck', { min: 10, max: 90 })}
+      ${numberField('caLimit', 'columnAxial.params.limit', { min: 0.1, max: 1 })}
+      ${checkboxField('caBodrum', 'drift.params.basement')}
+      ${numberField('caBodrumKat', 'drift.params.basementCount', { step: 1, min: 0, max: 10 })}
     </div>
     <div class="combo-picker">
       <div class="combo-picker-heading"><h3>${t('drift.combos.title')}</h3>
@@ -1942,6 +2353,28 @@ function renderColumnAxialResultsTable() {
 
   installTableFilter(body);
   columnAxialUpdateSummary();
+
+  if (results.length) {
+    const worst = results.reduce((a, b) => (b.ndRatio > a.ndRatio ? b : a), results[0]);
+    renderCalcBasis('#caResultsBody', 'caBasis', calcBasis(
+      'TBDY 2018 §7.3.1 (Denk. 7.3)',
+      [
+        'Ac = b · d',
+        'Nd,max ≤ 0.40 · Ac · fck   →   Nd / (Ac·fck) ≤ 0.40',
+        t('columnAxial.basis.signNote')
+      ],
+      [
+        ['fck', `${columnAxialState.fck} MPa`],
+        [t('columnAxial.params.limit'), `${columnAxialState.limit}`],
+        [t('columnAxial.basis.worst'), `${worst.story} / ${worst.column} / ${worst.loadCase}`],
+        ['b × d', `${worst.b} × ${worst.d} cm`],
+        ['Ac', `${worst.b} · ${worst.d} = ${worst.ac.toFixed(2)} cm²`],
+        ['Ac·fck', `${worst.ac.toFixed(2)} · ${columnAxialState.fck} / 10 = ${worst.acFck.toFixed(2)} kN`],
+        ['Nd', `${worst.nd.toFixed(2)} kN`],
+        ['Nd/(Ac·fck)', `${worst.nd.toFixed(2)} / ${worst.acFck.toFixed(2)} = <strong>${worst.ndRatio.toFixed(4)}</strong> ` +
+          `(${t('columnAxial.params.limit')} ${worst.limit.toFixed(2)} → ${worst.isOk ? 'OK' : 'NOT OK'})`]
+      ]));
+  }
 }
 
 function columnAxialRecalcRow(index) {
@@ -2075,6 +2508,13 @@ async function runColumnAxialCheck() {
     log(t('drift.error.noCombos'), 'error');
     return;
   }
+
+  const { fck, limit } = columnAxialState;
+  if (!validateFields([
+    { id: 'caFck', ok: inRange(fck, 10, 90), message: t('validate.fck', { value: fck }) },
+    { id: 'caLimit', ok: inRange(limit, 0.1, 1), message: t('validate.range', { field: t('columnAxial.params.limit'), min: 0.1, max: 1, value: limit }) }
+  ], $('#setupPanel'))) return;
+
   const btn = $('#caCalculate');
   if (btn) btn.disabled = true;
   try {
@@ -2214,10 +2654,10 @@ function renderBeamShearSetupPanel() {
   panel.innerHTML = `
     <div class="panel-heading compact"><div><span class="step-number">1</span><div><h2>${t('beam.params.title')}</h2><p>${t('moduleData.description')}</p></div></div></div>
     <div class="field-grid">
-      <div class="field"><label>${t('beam.params.fck')}</label><input type="number" step="any" id="bsFck"></div>
-      <div class="field"><label>${t('beam.params.fyk')}</label><input type="number" step="any" id="bsFyk"></div>
-      <div class="field"><label>${t('beam.params.dprime')}</label><input type="number" step="any" id="bsDprime"></div>
-      <label class="field-checkbox"><input type="checkbox" id="bsUseVc"> ${t('beam.params.useVc')}</label>
+      ${numberField('bsFck', 'beam.params.fck', { min: 10, max: 90 })}
+      ${numberField('bsFyk', 'beam.params.fyk', { min: 200, max: 700 })}
+      ${numberField('bsDprime', 'beam.params.dprime', { min: 1, max: 15 })}
+      ${checkboxField('bsUseVc', 'beam.params.useVc')}
     </div>
     <div class="combo-picker">
       <div class="combo-picker-heading"><h3>${t('drift.combos.title')}</h3>
@@ -2293,6 +2733,14 @@ async function beamSelectFailing(results) {
 
 async function runBeamShearCheck() {
   if (beamShearState.selected.length === 0) { log(t('drift.error.noCombos'), 'error'); return; }
+
+  const { fck, fyk, dprime } = beamShearState;
+  if (!validateFields([
+    { id: 'bsFck', ok: inRange(fck, 10, 90), message: t('validate.fck', { value: fck }) },
+    { id: 'bsFyk', ok: inRange(fyk, 200, 700), message: t('validate.fyk', { value: fyk }) },
+    { id: 'bsDprime', ok: inRange(dprime, 1, 15), message: t('validate.range', { field: "d'", min: '1 cm', max: '15 cm', value: dprime }) }
+  ], $('#setupPanel'))) return;
+
   const btn = $('#bsCalculate');
   if (btn) btn.disabled = true;
   try {
@@ -2367,6 +2815,36 @@ function renderBeamShearResultsTable() {
   $$('.bs-edit', body).forEach(input => input.addEventListener('input', () => beamShearRecalcRow(parseInt(input.dataset.index, 10))));
   installTableFilter(body);
   beamShearUpdateBanner();
+
+  if (results.length) {
+    const { fck, fyk, useVc } = beamShearState;
+    const fyd = fyk / 1.15, fctd = 0.35 * Math.sqrt(fck) / 1.5;
+    const worst = results.reduce((a, b) => (b.vd / b.vr > a.vd / a.vr ? b : a), results[0]);
+    const bM = worst.b / 100, dM = worst.d / 100;
+    const vc = useVc ? 0.65 * fctd * bM * dM * 1000 : 0;
+    const aswS = worst.n * Math.PI * Math.pow(worst.phi / 10, 2) / 4 / (worst.s || 1);
+    renderCalcBasis('#bsResultsBody', 'bsBasis', calcBasis(
+      'TS 500 §8.1.3–8.1.5, TBDY 2018 §7.4.5',
+      [
+        'fyd = fyk / 1.15 ,  fctd = 0.35·√fck / 1.5',
+        'Vc  = 0.65 · fctd · b · d        Vcr = 0.80 · Vc',
+        '(Asw/s) = n · π · Ø² / 4 / s',
+        'Vw  = (Asw/s) · d · fyd',
+        'Vr  = Vw + Vcr      ≤  Vmax = 0.85 · b · h · √fck',
+        'Vd ≤ Vr'
+      ],
+      [
+        ['fck / fyk', `${fck} / ${fyk} MPa`],
+        ['fyd', `${fyk} / 1.15 = ${fyd.toFixed(2)} MPa`],
+        ['fctd', `0.35·√${fck} / 1.5 = ${fctd.toFixed(4)} MPa`],
+        [t('beam.basis.worst'), `${worst.story} / ${worst.label} (${worst.section})`],
+        ['b × h → d', `${worst.b.toFixed(1)} × ${worst.h.toFixed(1)} → ${worst.d.toFixed(1)} cm`],
+        ['Vcr', useVc ? `0.80 · 0.65 · ${fctd.toFixed(4)} · ${bM.toFixed(3)} · ${dM.toFixed(3)} · 1000 = ${(0.8 * vc).toFixed(2)} kN` : t('beam.basis.vcOff')],
+        ['Asw/s', `${worst.n} · π · ${worst.phi}²/100 / 4 / ${worst.s} = ${aswS.toFixed(4)} cm²/cm`],
+        ['Vr', `<strong>${worst.vr.toFixed(2)} kN</strong>`],
+        ['Vd', `${worst.vd.toFixed(2)} kN → ${worst.ok ? 'OK' : 'NOT OK'} (Vd/Vr = ${(worst.vd / worst.vr).toFixed(3)})`]
+      ]));
+  }
 }
 
 function beamShearRecalcRow(index) {
@@ -2438,8 +2916,8 @@ function renderBeamAxialSetupPanel() {
   panel.innerHTML = `
     <div class="panel-heading compact"><div><span class="step-number">1</span><div><h2>${t('beam.params.title')}</h2><p>${t('moduleData.description')}</p></div></div></div>
     <div class="field-grid">
-      <div class="field"><label>${t('beam.params.fck')}</label><input type="number" step="any" id="baFck"></div>
-      <div class="field"><label>${t('beamAxial.params.limit')}</label><input type="number" step="any" id="baLimit"></div>
+      ${numberField('baFck', 'beam.params.fck', { min: 10, max: 90 })}
+      ${numberField('baLimit', 'beamAxial.params.limit', { min: 0.01, max: 1 })}
     </div>
     <div class="combo-picker">
       <div class="combo-picker-heading"><h3>${t('drift.combos.title')}</h3>
@@ -2470,6 +2948,13 @@ function renderBeamAxialSetupPanel() {
 
 async function runBeamAxialCheck() {
   if (beamAxialState.selected.length === 0) { log(t('drift.error.noCombos'), 'error'); return; }
+
+  const { fck, limit } = beamAxialState;
+  if (!validateFields([
+    { id: 'baFck', ok: inRange(fck, 10, 90), message: t('validate.fck', { value: fck }) },
+    { id: 'baLimit', ok: inRange(limit, 0.01, 1), message: t('validate.range', { field: t('beamAxial.params.limit'), min: 0.01, max: 1, value: limit }) }
+  ], $('#setupPanel'))) return;
+
   const btn = $('#baCalculate');
   if (btn) btn.disabled = true;
   try {
@@ -2548,6 +3033,27 @@ function renderBeamAxialResultsTable() {
   $$('.ba-edit', body).forEach(input => input.addEventListener('input', () => beamAxialRecalcRow(parseInt(input.dataset.index, 10))));
   installTableFilter(body);
   beamAxialUpdateBanner();
+
+  if (results.length) {
+    const worst = results.reduce((a, b) => (b.ratio > a.ratio ? b : a), results[0]);
+    renderCalcBasis('#baResultsBody', 'baBasis', calcBasis(
+      'TBDY 2018 §7.3 — ' + t('beamAxial.basis.clause'),
+      [
+        'Ac = b · d',
+        'Nd / (Ac · fck) ≤ 0.10',
+        t('beamAxial.basis.rule')
+      ],
+      [
+        ['fck', `${beamAxialState.fck} MPa`],
+        [t('beamAxial.params.limit'), `${beamAxialState.limit}`],
+        [t('beam.basis.worst'), `${worst.story} / ${worst.label} (${worst.section})`],
+        ['b × d', `${worst.b.toFixed(1)} × ${worst.d.toFixed(1)} cm`],
+        ['Ac', `${worst.ac.toFixed(1)} cm²`],
+        ['Ac·fck', `${worst.ac.toFixed(1)} · ${beamAxialState.fck} / 10 = ${worst.capacity.toFixed(1)} kN`],
+        ['Nd', `${worst.p.toFixed(2)} kN`],
+        ['Nd/(Ac·fck)', `${worst.p.toFixed(2)} / ${worst.capacity.toFixed(1)} = <strong>${worst.ratio.toFixed(4)}</strong> → ${worst.ok ? 'OK' : t('beamAxial.basis.asColumn')}`]
+      ]));
+  }
 }
 
 function beamAxialRecalcRow(index) {
@@ -2872,6 +3378,27 @@ function renderColumnScheduleResultsTable() {
   });
 
   installTableFilter(body);
+
+  if (sorted.length) {
+    const worst = sorted.reduce((a, b) => (calculateRebarRatio(b) > calculateRebarRatio(a) ? b : a), sorted[0]);
+    const parts = extractRebarParts(worst.rebarLabel) || { count: 0, dia: 0 };
+    const rho = calculateRebarRatio(worst);
+    renderCalcBasis('#csResultsBody', 'csBasis', calcBasis(
+      'TBDY 2018 §7.3.2 (ρ sınırları), TS 500 §7.4',
+      [
+        'As = n · π · Ø² / 4',
+        'Ac = b · h',
+        'ρ  = As / Ac · 100  [%]',
+        '0.01 ≤ ρ ≤ 0.04    (%1 ≤ ρ ≤ %4)'
+      ],
+      [
+        [t('columnSchedule.basis.rho'), `${worst.type || ''} / ${worst.story} / ${worst.section}`],
+        [t('columnSchedule.table.rebar'), `${worst.rebarLabel} → n = ${parts.count}, Ø = ${parts.dia} mm`],
+        ['As', `${parts.count} · π · ${parts.dia}²/4 = ${(parts.count * Math.PI * Math.pow(parts.dia / 1000, 2) / 4 * 1e4).toFixed(2)} cm²`],
+        ['Ac', `${(worst.width * 100).toFixed(0)} · ${(worst.depth * 100).toFixed(0)} = ${(worst.width * worst.depth * 1e4).toFixed(0)} cm²`],
+        ['ρ', `<strong>${rho.toFixed(3)} %</strong> → ${columnScheduleRatioStatus(rho) === 'ok' ? 'OK' : (columnScheduleRatioStatus(rho) === 'under' ? 'ρ < %1' : 'ρ > %4')}`]
+      ]));
+  }
 }
 
 function renderColumnSchedulePlan() {

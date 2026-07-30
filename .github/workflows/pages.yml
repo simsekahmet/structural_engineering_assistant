@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "web/**"
+      - "scripts/check-version.sh"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -26,6 +27,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Check version consistency
+        run: bash scripts/check-version.sh
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload static site

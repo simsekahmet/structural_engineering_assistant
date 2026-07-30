@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Sockets;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
 using System.Text;
@@ -916,8 +917,20 @@ internal sealed class EtabsConnection : IDisposable
             var filename = (string?)getFilename?.Invoke(_sapModel, new object[] { true });
             var modelName = string.IsNullOrWhiteSpace(filename) ? "Untitled ETABS model" : Path.GetFileName(filename);
             var isLocked = (bool)(_sapModelInterface.GetMethod("GetModelIsLocked")?.Invoke(_sapModel, null) ?? false);
+
+            // Pre-flight extras. Each is best-effort: an older ETABS build that lacks one of
+            // these entry points must not invalidate an otherwise healthy connection.
+            var etabsVersion = TryGetEtabsVersion();
+            var unitsCode = TryGetPresentUnits();
+            var analysisComplete = TryGetAnalysisComplete();
+
             // Keep the full local file path inside the agent; the web UI only needs the model name.
-            snapshot = new EtabsSnapshot(true, true, modelName, null, isLocked, null, AgentInfo.Version);
+            snapshot = new EtabsSnapshot(
+                true, true, modelName, null, isLocked, null, AgentInfo.Version,
+                etabsVersion,
+                unitsCode is null ? null : EtabsUnits.Describe(unitsCode.Value),
+                unitsCode is null ? null : EtabsUnits.IsSupported(unitsCode.Value),
+                analysisComplete);
             return true;
         }
         catch (Exception ex)
@@ -926,6 +939,55 @@ internal sealed class EtabsConnection : IDisposable
             ReleaseComObjects();
             return false;
         }
+    }
+
+    // cSapModel.GetVersion(ref string Version, ref double MyVersionNumber) -> 0 on success.
+    private string? TryGetEtabsVersion()
+    {
+        try
+        {
+            var method = _sapModelInterface!.GetMethod("GetVersion");
+            if (method is null) return null;
+            var args = new object?[] { "", 0.0 };
+            var ret = method.Invoke(_sapModel, args);
+            if (ret is int code && code != 0) return null;
+            var version = args[0] as string;
+            return string.IsNullOrWhiteSpace(version) ? null : version;
+        }
+        catch (Exception ex) { AgentLog.Write($"GetVersion failed: {ex.Message}"); return null; }
+    }
+
+    // cSapModel.GetPresentUnits() -> eUnits enum value.
+    private int? TryGetPresentUnits()
+    {
+        try
+        {
+            var method = _sapModelInterface!.GetMethod("GetPresentUnits");
+            if (method is null) return null;
+            var value = method.Invoke(_sapModel, null);
+            return value is null ? null : Convert.ToInt32(value);
+        }
+        catch (Exception ex) { AgentLog.Write($"GetPresentUnits failed: {ex.Message}"); return null; }
+    }
+
+    // Analyze.GetCaseStatus(ref int NumberItems, ref string[] CaseName, ref int[] Status).
+    // Status 4 = "Finished"; results are only trustworthy when every case has run.
+    private bool? TryGetAnalysisComplete()
+    {
+        try
+        {
+            var analyze = _sapModelInterface!.GetProperty("Analyze")?.GetValue(_sapModel);
+            if (analyze is null) return null;
+            var method = analyze.GetType().GetMethod("GetCaseStatus");
+            if (method is null) return null;
+
+            var args = new object?[] { 0, Array.Empty<string>(), Array.Empty<int>() };
+            var ret = method.Invoke(analyze, args);
+            if (ret is int code && code != 0) return null;
+            if (args[2] is not int[] statuses || statuses.Length == 0) return null;
+            return statuses.All(s => s == 4);
+        }
+        catch (Exception ex) { AgentLog.Write($"GetCaseStatus failed: {ex.Message}"); return null; }
     }
 
     private void ReleaseComObjects()
@@ -1029,9 +1091,16 @@ internal sealed class LocalBridgeServer : IDisposable
                 var (method, path, query, headers, body) = request.Value;
 
                 headers.TryGetValue("Origin", out var origin);
-                if (origin is not null && !AllowedOrigins.Contains(origin))
+
+                // An Origin header is REQUIRED, not just checked when present. Browsers always
+                // send one cross-origin, so the only callers omitting it are non-browser clients
+                // (curl, other local processes) — which have no legitimate reason to drive this
+                // bridge and would otherwise slip past the allowlist entirely.
+                if (origin is null || !AllowedOrigins.Contains(origin))
                 {
-                    await WriteResponseAsync(stream, 403, "Forbidden", new { error = "Origin is not allowed." }, null, cancellationToken);
+                    AgentLog.Write($"REJECTED {method} {path} origin={origin ?? "(none)"}");
+                    await WriteResponseAsync(stream, 403, "Forbidden",
+                        new { error = "Origin is missing or not allowed." }, null, cancellationToken);
                     return;
                 }
 
@@ -1040,6 +1109,11 @@ internal sealed class LocalBridgeServer : IDisposable
                     await WriteResponseAsync(stream, 204, "No Content", null, origin, cancellationToken);
                     return;
                 }
+
+                // Request log: every accepted call is recorded so the engineer can audit what the
+                // web UI asked ETABS to do. WRITE marks the only endpoint that touches the model.
+                var isWrite = path == "/api/etabs/select-frames";
+                AgentLog.Write($"{(isWrite ? "WRITE" : "READ ")} {method} {path} origin={origin}");
 
                 if (method == "GET")
                 {
@@ -1332,7 +1406,11 @@ internal sealed record EtabsSnapshot(
     string? ModelPath,
     bool? ModelLocked,
     string? Error,
-    string AgentVersion)
+    string AgentVersion,
+    string? EtabsVersion = null,
+    string? Units = null,
+    bool? UnitsSupported = null,
+    bool? AnalysisComplete = null)
 {
     public static EtabsSnapshot NotConnected(string error) =>
         new(true, false, null, null, null, error, AgentInfo.Version);
@@ -1340,7 +1418,34 @@ internal sealed record EtabsSnapshot(
 
 internal static class AgentInfo
 {
-    public const string Version = "1.5.0";
+    // Single source of truth: the <Version> in the .csproj flows into
+    // AssemblyInformationalVersion ("1.5.0+<commit sha>"); strip the build metadata.
+    public static readonly string Version =
+        (typeof(AgentInfo).Assembly
+            .GetCustomAttribute<System.Reflection.AssemblyInformationalVersionAttribute>()
+            ?.InformationalVersion ?? "0.0.0")
+        .Split('+')[0];
+}
+
+// ETABS reports the model's active unit system as an eUnits enum. Every calculation
+// module assumes forces in kN and lengths in m (table values come back in PRESENT units),
+// so a model left in kip-in would silently produce wrong numbers — the pre-flight check
+// surfaces this before the engineer runs anything.
+internal static class EtabsUnits
+{
+    private static readonly string[] Names =
+    {
+        "", "lb, in, F", "lb, ft, F", "kip, in, F", "kip, ft, F", "kN, mm, C", "kN, m, C",
+        "kgf, mm, C", "kgf, m, C", "N, mm, C", "N, m, C", "Ton, mm, C", "Ton, m, C",
+        "kN, cm, C", "kgf, cm, C", "N, cm, C", "Ton, cm, C"
+    };
+
+    public const int KnMc = 6;
+
+    public static string Describe(int code) =>
+        code > 0 && code < Names.Length ? Names[code] : $"Unknown ({code})";
+
+    public static bool IsSupported(int code) => code == KnMc;
 }
 
 internal sealed record NameListResult(bool AgentOnline, bool EtabsConnected, string? Error, string[] Names);

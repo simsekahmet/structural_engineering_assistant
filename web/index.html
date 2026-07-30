@@ -7,7 +7,7 @@
   <meta name="description" content="Web-based structural engineering checks and reporting for ETABS models.">
   <title>Structural Engineering Assistant</title>
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="styles.css?v=1.5.1">
+  <link rel="stylesheet" href="styles.css?v=1.6.0">
 </head>
 <body>
   <div class="app-shell">
@@ -68,7 +68,7 @@
         <a class="nav-item" href="#foundation-schedule" data-view="foundation-schedule"><span class="nav-icon">▰</span><span data-i18n="module.foundationSchedule.title">Foundation Schedule</span></a>
       </nav>
       <div class="sidebar-footer">
-        <span class="version-badge" id="versionBadge">v1.5.1</span>
+        <span class="version-badge" id="versionBadge">v1.6.0</span>
         <p class="footer-note"><strong data-i18n="about.note.label">Important:</strong> <span data-i18n="about.note.text">Engineering results must be reviewed and approved by the responsible structural engineer.</span></p>
       </div>
     </aside>
@@ -185,6 +185,16 @@
     </form>
   </dialog>
 
-  <script src="app.js?v=1.5.1" defer></script>
+  <dialog id="preflightDialog">
+    <form method="dialog">
+      <div class="dialog-heading"><div><div><h2 data-i18n="preflight.title">Pre-flight check</h2><p data-i18n="preflight.subtitle">Conditions that decide whether a check is meaningful</p></div></div><button class="dialog-close" data-i18n-aria-label="action.close" aria-label="Close">×</button></div>
+      <div class="status-banner ok" id="preflightVerdict"></div>
+      <table class="preflight-table"><tbody id="preflightRows"></tbody></table>
+      <button class="button button-primary full-width" value="close" data-i18n="preflight.continue">Continue</button>
+    </form>
+  </dialog>
+
+  <script src="version.js?v=1.6.0"></script>
+  <script src="app.js?v=1.6.0" defer></script>
 </body>
 </html>
