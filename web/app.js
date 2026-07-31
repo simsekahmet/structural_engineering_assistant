@@ -52,6 +52,12 @@ const translations = {
     'moduleData.waiting': 'Waiting for ETABS connection', 'moduleData.note': 'Module inputs are read from the active ETABS model through the local bridge.',
     'results.title': 'Check Results', 'results.description': 'Summary metrics and member-level results',
     'filter.all': 'All', 'filter.placeholder': 'Filter…', 'filter.clear': 'Clear filters', 'filter.noMatch': 'No rows match the current filters.',
+    'combos.available': 'Available combinations', 'combos.selected': 'Combinations to check',
+    'combos.add': 'Add selected', 'combos.remove': 'Remove selected',
+    'combos.loading': 'Loading combinations from the model…',
+    'combos.count': '{total} combinations in the model · {selected} selected',
+    'combos.loadFailed': 'Combinations could not be loaded: {error}',
+    'action.reset': 'Reset results', 'status.reset': 'Results cleared.',
     'calcBasis.title': 'Calculation basis', 'calcBasis.reference': 'Code reference',
     'calcBasis.note': 'Intermediate values are listed so the result can be re-derived by hand. The responsible engineer remains accountable for the check.',
     'validate.range': '{field} must be between {min} and {max}. Entered: {value}.',
@@ -77,6 +83,8 @@ const translations = {
     'wallAxial.status.passed': 'All walls are within the axial-load limit.', 'wallAxial.status.failed': '{count} wall(s) exceed the axial-load limit!',
     'wallAxial.error.noPierForces': 'No pier forces were returned. Confirm piers are assigned and the analysis has been run for the selected combinations.',
     'wallAxial.basis.worst': 'Governing pier',
+    'wallAxial.selectFailing': 'Select failing walls in model',
+    'wallAxial.status.selected': '{count} area object(s) selected in the model.',
     'wallAxial.basis.clause': 'wall axial load limit (0.35, versus 0.40 for columns)',
     'wallAxial.basis.lwNote': 'lw is the wall length end to end, read from PierLabel.GetSectionProperties (widthBot); bw is the thickness (thickBot).',
     'wallAxial.basis.pNote': 'Nd is the governing |P| across the selected combinations, from Results.PierForce.',
@@ -242,6 +250,12 @@ const translations = {
     'moduleData.waiting': 'ETABS bağlantısı bekleniyor', 'moduleData.note': 'Modül girdileri, yerel köprü üzerinden aktif ETABS modelinden okunur.',
     'results.title': 'Tahkik Sonuçları', 'results.description': 'Özet metrikler ve eleman bazlı sonuçlar',
     'filter.all': 'Tümü', 'filter.placeholder': 'Filtre…', 'filter.clear': 'Filtreleri temizle', 'filter.noMatch': 'Geçerli filtrelere uyan satır yok.',
+    'combos.available': 'Mevcut kombinasyonlar', 'combos.selected': 'Tahkik edilecekler',
+    'combos.add': 'Seçilenleri ekle', 'combos.remove': 'Seçilenleri çıkar',
+    'combos.loading': 'Kombinasyonlar modelden yükleniyor…',
+    'combos.count': 'Modelde {total} kombinasyon · {selected} seçili',
+    'combos.loadFailed': 'Kombinasyonlar yüklenemedi: {error}',
+    'action.reset': 'Sonuçları sıfırla', 'status.reset': 'Sonuçlar temizlendi.',
     'calcBasis.title': 'Hesap esası', 'calcBasis.reference': 'Yönetmelik dayanağı',
     'calcBasis.note': 'Sonucun elle yeniden türetilebilmesi için ara değerler listelenmiştir. Tahkikin sorumluluğu sorumlu mühendise aittir.',
     'validate.range': '{field} değeri {min} ile {max} arasında olmalıdır. Girilen: {value}.',
@@ -267,6 +281,8 @@ const translations = {
     'wallAxial.status.passed': 'Tüm perdeler eksenel yük sınırında.', 'wallAxial.status.failed': '{count} perde eksenel yük sınırını aşıyor!',
     'wallAxial.error.noPierForces': 'Perde kuvveti dönmedi. Perde (pier) atamalarının yapıldığını ve seçilen kombinasyonlar için analizin çalıştırıldığını doğrulayın.',
     'wallAxial.basis.worst': 'Belirleyici perde',
+    'wallAxial.selectFailing': 'Yetersiz Perdeleri Modelde Seç',
+    'wallAxial.status.selected': '{count} alan nesnesi modelde seçildi.',
     'wallAxial.basis.clause': 'perde eksenel yük sınırı (kolonlarda 0,40 iken perdede 0,35)',
     'wallAxial.basis.lwNote': 'lw, perdenin iki ucu arasındaki uzunluktur; PierLabel.GetSectionProperties (widthBot) ile okunur. bw ise kalınlıktır (thickBot).',
     'wallAxial.basis.pNote': 'Nd, seçilen kombinasyonlar içindeki belirleyici |P| değeridir (Results.PierForce).',
@@ -733,6 +749,108 @@ async function downloadAgentExcel(path, body, fallbackName, timeoutMs = 15000) {
   URL.revokeObjectURL(url);
 }
 
+// --- Shared load-combination picker -----------------------------------------
+// Two-list picker: everything the model defines on the left, the ones being checked
+// on the right, moved with the ›/‹ buttons (or a double-click). Combinations load
+// automatically when a module opens — there is no Fetch button — and the list is
+// cached so opening several modules does not re-query the agent each time.
+let comboCachePromise = null;
+
+async function loadCombos(force = false) {
+  if (force) comboCachePromise = null;
+  if (!comboCachePromise) {
+    comboCachePromise = fetchAgentJson('/api/etabs/combinations')
+      .then(res => {
+        if (!res.etabsConnected) throw new Error(res.error || t('drift.error.notConnected'));
+        return res.names || [];
+      })
+      .catch(err => { comboCachePromise = null; throw err; });
+  }
+  return comboCachePromise;
+}
+
+function comboPicker(prefix, hintKey = 'drift.combos.hint') {
+  return `
+    <div class="combo-dual">
+      <div class="combo-dual-heading">
+        <h3>${t('drift.combos.title')}</h3>
+        <span class="combo-info" tabindex="0" role="note" title="${t(hintKey)}" aria-label="${t(hintKey)}">i</span>
+      </div>
+      <div class="combo-dual-body">
+        <select class="combo-list" id="${prefix}Available" multiple size="9" aria-label="${t('combos.available')}"></select>
+        <div class="combo-dual-actions">
+          <button type="button" class="combo-move" id="${prefix}Add" title="${t('combos.add')}" aria-label="${t('combos.add')}">›</button>
+          <button type="button" class="combo-move" id="${prefix}Remove" title="${t('combos.remove')}" aria-label="${t('combos.remove')}">‹</button>
+        </div>
+        <select class="combo-list" id="${prefix}Selected" multiple size="9" aria-label="${t('combos.selected')}"></select>
+      </div>
+      <p class="combo-status" id="${prefix}ComboStatus" aria-live="polite">${t('combos.loading')}</p>
+    </div>`;
+}
+
+function paintComboPicker(prefix, state) {
+  const avail = $('#' + prefix + 'Available');
+  const sel = $('#' + prefix + 'Selected');
+  if (!avail || !sel) return;
+  const chosen = new Set(state.selected);
+  avail.innerHTML = state.combos.filter(c => !chosen.has(c))
+    .map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+  sel.innerHTML = state.selected
+    .map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+  const status = $('#' + prefix + 'ComboStatus');
+  if (status) status.textContent = t('combos.count', { total: state.combos.length, selected: state.selected.length });
+}
+
+async function initComboPicker(prefix, state, onChange) {
+  const avail = $('#' + prefix + 'Available');
+  const sel = $('#' + prefix + 'Selected');
+  const add = $('#' + prefix + 'Add');
+  const remove = $('#' + prefix + 'Remove');
+
+  const move = (from, toSelected) => {
+    const picked = [...from.selectedOptions].map(o => o.value);
+    if (picked.length === 0) return;
+    if (toSelected) {
+      const have = new Set(state.selected);
+      state.selected = [...state.selected, ...picked.filter(c => !have.has(c))];
+    } else {
+      const drop = new Set(picked);
+      state.selected = state.selected.filter(c => !drop.has(c));
+    }
+    paintComboPicker(prefix, state);
+    if (onChange) onChange();
+  };
+
+  if (add) add.addEventListener('click', () => move(avail, true));
+  if (remove) remove.addEventListener('click', () => move(sel, false));
+  if (avail) avail.addEventListener('dblclick', () => move(avail, true));
+  if (sel) sel.addEventListener('dblclick', () => move(sel, false));
+
+  paintComboPicker(prefix, state);
+  if (state.combos.length === 0) {
+    try {
+      state.combos = await loadCombos();
+      paintComboPicker(prefix, state);
+    } catch (error) {
+      const status = $('#' + prefix + 'ComboStatus');
+      if (status) status.textContent = t('combos.loadFailed', { error: error.message });
+    }
+  }
+}
+
+// --- Per-module reset -------------------------------------------------------
+// Clears computed results (and the combination selection) and re-renders the module
+// as a clean sheet. Entered parameters are deliberately kept — the engineer is
+// usually re-running the same building, not starting a different one.
+function resetModule(state, rerender, extraKeys = {}) {
+  state.selected = [];
+  state.lastResults = [];
+  state.lastResult = null;
+  Object.assign(state, extraKeys);
+  rerender();
+  log(t('status.reset'), 'ok');
+}
+
 // --- Accessible number fields + engineering input validation ----------------
 // numberField() emits a properly associated <label for>/<input id> pair plus an
 // error paragraph wired via aria-describedby, so screen readers announce both the
@@ -1017,21 +1135,16 @@ function renderDriftSetupPanel() {
       ${checkboxField('driftBodrum', 'drift.params.basement')}
       ${numberField('driftBodrumKat', 'drift.params.basementCount', { step: 1, min: 0, max: 10 })}
     </div>
-    <div class="combo-picker">
-      <div class="combo-picker-heading"><h3>${t('drift.combos.title')}</h3>
-        <button class="button button-secondary" type="button" id="driftFetchCombos">${t('drift.combos.fetch')}</button>
-      </div>
-      <select class="combo-select" id="driftComboSelect" multiple></select>
-      <p class="combo-hint">${t('drift.combos.hint')}</p>
-    </div>
+    ${comboPicker('drift', 'drift.combos.hint')}
     <div class="panel-actions">
       <button class="button button-primary full-width" type="button" id="driftCalculate">${t('drift.calculate')}</button>
+      <button class="button button-secondary full-width" type="button" id="driftReset" style="margin-top:8px">${t('action.reset')}</button>
     </div>`;
 
   bindDriftParamInputs(panel);
-  populateComboSelect();
-  $('#driftFetchCombos', panel).addEventListener('click', fetchDriftCombosAndStories);
+  initComboPicker('drift', driftState);
   $('#driftCalculate', panel).addEventListener('click', runDriftCheck);
+  $('#driftReset', panel).addEventListener('click', () => resetModule(driftState, renderDriftModule));
 }
 
 function bindDriftParamInputs(panel) {
@@ -1061,17 +1174,6 @@ function bindDriftParamInputs(panel) {
     bodrumKat.disabled = !bodrum.checked;
   });
   bodrumKat.addEventListener('input', () => { driftState.params.bodrumKat = parseInt(bodrumKat.value, 10) || 0; });
-}
-
-function populateComboSelect() {
-  const select = $('#driftComboSelect');
-  if (!select) return;
-  select.innerHTML = driftState.combos
-    .map(name => `<option value="${name}" ${driftState.selected.includes(name) ? 'selected' : ''}>${name}</option>`)
-    .join('');
-  select.addEventListener('change', () => {
-    driftState.selected = [...select.selectedOptions].map(o => o.value);
-  });
 }
 
 function renderDriftResultsPanel() {
@@ -1115,7 +1217,7 @@ function renderDriftResultsTable(result) {
   const exportBtn = $('#driftExport');
   if (exportBtn) exportBtn.disabled = false;
 
-  const { sdsDD2, sdsDD3, sd1DD2, sd1DD3, k, tp, esnekDerz } = driftState;
+  const { sdsDD2, sdsDD3, sd1DD2, sd1DD3, k, tp, esnekDerz } = driftState.params;
   const taDD2 = sdsDD2 ? sd1DD2 / sdsDD2 : 0;
   const worst = sorted.reduce((a, b) => (b.lambdaDrift / b.limit > a.lambdaDrift / a.limit ? b : a), sorted[0]);
   renderCalcBasis('#driftResultsBody', 'driftBasis', calcBasis(
@@ -1151,27 +1253,6 @@ function renderCalcBasis(bodySelector, blockId, html) {
   wrap.insertAdjacentHTML('afterend', `<div id="${blockId}">${html}</div>`);
 }
 
-async function fetchDriftCombosAndStories() {
-  const panel = $('#setupPanel');
-  const btn = $('#driftFetchCombos', panel);
-  btn.disabled = true;
-  try {
-    const [combosRes, storiesRes] = await Promise.all([
-      fetchAgentJson('/api/etabs/combinations'),
-      fetchAgentJson('/api/etabs/stories')
-    ]);
-    if (!combosRes.etabsConnected) throw new Error(combosRes.error || t('drift.error.notConnected'));
-    driftState.combos = combosRes.names;
-    driftState.stories = storiesRes.stories || [];
-    populateComboSelect();
-    log(t('drift.combos.fetched', { count: driftState.combos.length }), 'ok');
-  } catch (error) {
-    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
-  } finally {
-    btn.disabled = false;
-  }
-}
-
 async function runDriftCheck() {
   const panel = $('#setupPanel');
   const btn = $('#driftCalculate', panel);
@@ -1180,7 +1261,7 @@ async function runDriftCheck() {
     return;
   }
 
-  const { sdsDD2, sdsDD3, sd1DD2, sd1DD3, k, tp } = driftState;
+  const { sdsDD2, sdsDD3, sd1DD2, sd1DD3, k, tp } = driftState.params;
   const validated = validateFields([
     { id: 'driftSdsDD2', ok: inRange(sdsDD2, 0.05, 4), message: t('validate.range', { field: 'SDS (DD-2)', min: '0.05 g', max: '4 g', value: sdsDD2 }) },
     { id: 'driftSdsDD3', ok: inRange(sdsDD3, 0.02, 4), message: t('validate.range', { field: 'SDS (DD-3)', min: '0.02 g', max: '4 g', value: sdsDD3 }) },
@@ -1219,7 +1300,7 @@ async function runDriftCheck() {
   } catch (error) {
     log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
   } finally {
-    btn.disabled = false;
+    if (btn) btn.disabled = false;
   }
 }
 
@@ -1405,15 +1486,10 @@ function renderPdeltaSetupPanel() {
       ${checkboxField('pdBodrum', 'drift.params.basement')}
       ${numberField('pdBodrumKat', 'drift.params.basementCount', { step: 1, min: 0, max: 10 })}
     </div>
-    <div class="combo-picker">
-      <div class="combo-picker-heading"><h3>${t('drift.combos.title')}</h3>
-        <button class="button button-secondary" type="button" id="pdFetchCombos">${t('drift.combos.fetch')}</button>
-      </div>
-      <select class="combo-select" id="pdComboSelect" multiple></select>
-      <p class="combo-hint">${t('pdelta.combos.hint')}</p>
-    </div>
+    ${comboPicker('pd', 'pdelta.combos.hint')}
     <div class="panel-actions">
       <button class="button button-primary full-width" type="button" id="pdCalculate">${t('drift.calculate')}</button>
+      <button class="button button-secondary full-width" type="button" id="pdReset" style="margin-top:8px">${t('action.reset')}</button>
     </div>`;
 
   const bindNumber = (id, key, isInt = false) => {
@@ -1435,20 +1511,9 @@ function renderPdeltaSetupPanel() {
     bodrumKat.disabled = !bodrum.checked;
   });
 
-  pdeltaPopulateComboSelect();
-  $('#pdFetchCombos', panel).addEventListener('click', pdeltaFetchCombos);
+  initComboPicker('pd', pdeltaState);
   $('#pdCalculate', panel).addEventListener('click', runPdeltaCheck);
-}
-
-function pdeltaPopulateComboSelect() {
-  const select = $('#pdComboSelect');
-  if (!select) return;
-  select.innerHTML = pdeltaState.combos
-    .map(name => `<option value="${name}" ${pdeltaState.selected.includes(name) ? 'selected' : ''}>${name}</option>`)
-    .join('');
-  select.addEventListener('change', () => {
-    pdeltaState.selected = [...select.selectedOptions].map(o => o.value);
-  });
+  $('#pdReset', panel).addEventListener('click', () => resetModule(pdeltaState, renderPdeltaModule));
 }
 
 function renderPdeltaResultsPanel() {
@@ -1491,7 +1556,7 @@ function renderPdeltaResultsTable(result) {
   const exportBtn = $('#pdExport');
   if (exportBtn) exportBtn.disabled = false;
 
-  const { ch, r, d } = pdeltaState;
+  const { ch, r, d } = pdeltaState.params;
   const limit = result.items.length ? result.items[0].limit : 0;
   const worst = result.items.reduce((a, b) => (b.theta > a.theta ? b : a), result.items[0]);
   renderCalcBasis('#pdResultsBody', 'pdBasis', calcBasis(
@@ -1514,22 +1579,6 @@ function renderPdeltaResultsTable(result) {
     ]));
 }
 
-async function pdeltaFetchCombos() {
-  const btn = $('#pdFetchCombos');
-  btn.disabled = true;
-  try {
-    const res = await fetchAgentJson('/api/etabs/combinations');
-    if (!res.etabsConnected) throw new Error(res.error || t('drift.error.notConnected'));
-    pdeltaState.combos = res.names;
-    pdeltaPopulateComboSelect();
-    log(t('drift.combos.fetched', { count: pdeltaState.combos.length }), 'ok');
-  } catch (error) {
-    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
-  } finally {
-    btn.disabled = false;
-  }
-}
-
 async function runPdeltaCheck() {
   const btn = $('#pdCalculate');
   if (pdeltaState.selected.length === 0) {
@@ -1537,7 +1586,7 @@ async function runPdeltaCheck() {
     return;
   }
 
-  const { ch, r, d } = pdeltaState;
+  const { ch, r, d } = pdeltaState.params;
   const validated = validateFields([
     { id: 'pdCh', ok: inRange(ch, 0.1, 3), message: t('validate.range', { field: 'Ch', min: 0.1, max: 3, value: ch }) },
     { id: 'pdR', ok: inRange(r, 1, 10), message: t('validate.range', { field: 'R', min: 1, max: 10, value: r }) },
@@ -1557,7 +1606,7 @@ async function runPdeltaCheck() {
   } catch (error) {
     log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
   } finally {
-    btn.disabled = false;
+    if (btn) btn.disabled = false;
   }
 }
 
@@ -1645,6 +1694,7 @@ function renderSpectrumSetupPanel() {
     </div>
     <div class="panel-actions">
       <button class="button button-primary full-width" type="button" id="spCalculate">${t('drift.calculate')}</button>
+      <button class="button button-secondary full-width" type="button" id="spReset" style="margin-top:8px">${t('action.reset')}</button>
       <button class="button button-secondary full-width" type="button" id="spDownload" style="margin-top:8px" ${spectrumState.periods.length ? '' : 'disabled'}>${t('spectrum.download')}</button>
     </div>`;
 
@@ -1660,6 +1710,7 @@ function renderSpectrumSetupPanel() {
   bind('spI', 'i');
 
   $('#spCalculate', panel).addEventListener('click', runSpectrumCalc);
+  $('#spReset', panel).addEventListener('click', () => resetModule(spectrumState, renderSpectrumModule, { periods: [], accelerations: [] }));
   $('#spDownload', panel).addEventListener('click', downloadSpectrumTxt);
 }
 
@@ -1807,36 +1858,26 @@ const incrementState = {
   resultX: null, resultY: null
 };
 
-async function incrementFetchCombos() {
-  const btn = $('#incFetchCombos');
-  btn.disabled = true;
-  try {
-    const res = await fetchAgentJson('/api/etabs/combinations');
-    if (!res.etabsConnected) throw new Error(res.error || t('drift.error.notConnected'));
-    incrementState.combos = res.names;
-    incrementPopulateComboSelect();
-    log(t('drift.combos.fetched', { count: incrementState.combos.length }), 'ok');
-  } catch (error) {
-    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
-  } finally {
-    btn.disabled = false;
+// Pulls mass and both modal periods without the user asking. Failures are logged by
+// the individual fetchers; nothing here should block the module from rendering.
+async function incrementAutoFetchModelData() {
+  try { await incrementFetchMass(); } catch { /* reported by the fetcher */ }
+  try { await incrementFetchPeriod('X'); } catch { /* reported by the fetcher */ }
+  try { await incrementFetchPeriod('Y'); } catch { /* reported by the fetcher */ }
+  await incrementAutoFetchVt();
+}
+
+// Vt needs a combination naming the direction, so this is a no-op until one is picked.
+async function incrementAutoFetchVt() {
+  for (const dir of ['X', 'Y']) {
+    const hasCombo = incrementState.selected.some(c => c.toUpperCase().includes(dir));
+    if (!hasCombo) continue;
+    try { await incrementFetchVt(dir); } catch { /* reported by the fetcher */ }
   }
 }
 
-function incrementPopulateComboSelect() {
-  const select = $('#incComboSelect');
-  if (!select) return;
-  select.innerHTML = incrementState.combos
-    .map(name => `<option value="${name}" ${incrementState.selected.includes(name) ? 'selected' : ''}>${name}</option>`)
-    .join('');
-  select.addEventListener('change', () => {
-    incrementState.selected = [...select.selectedOptions].map(o => o.value);
-  });
-}
-
 async function incrementFetchMass() {
-  const btn = $('#incFetchMt');
-  btn.disabled = true;
+  const btn = null;
   try {
     const [massRes, storiesRes] = await Promise.all([
       fetchAgentJson(`/api/etabs/table?name=${encodeURIComponent('Mass Summary by Story')}`),
@@ -1864,13 +1905,12 @@ async function incrementFetchMass() {
   } catch (error) {
     log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
   } finally {
-    btn.disabled = false;
+    if (btn) btn.disabled = false;
   }
 }
 
 async function incrementFetchPeriod(direction) {
-  const btn = $(direction === 'X' ? '#incFetchTx' : '#incFetchTy');
-  btn.disabled = true;
+  const btn = null;
   try {
     const res = await fetchAgentJson(`/api/etabs/table?name=${encodeURIComponent('Modal Participating Mass Ratios')}`);
     if (!res.etabsConnected) throw new Error(res.error || t('drift.error.notConnected'));
@@ -1907,7 +1947,7 @@ async function incrementFetchPeriod(direction) {
   } catch (error) {
     log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
   } finally {
-    btn.disabled = false;
+    if (btn) btn.disabled = false;
   }
 }
 
@@ -1920,7 +1960,7 @@ function incrementRenderModalInfo(direction) {
 }
 
 async function incrementFetchVt(direction) {
-  const btn = $(direction === 'X' ? '#incFetchVtX' : '#incFetchVtY');
+  const btn = null;
   const dirFilter = direction === 'X' ? 'X' : 'Y';
   const matchingCombo = incrementState.selected.find(c => c.toUpperCase().includes(dirFilter));
   if (!matchingCombo) {
@@ -1928,7 +1968,6 @@ async function incrementFetchVt(direction) {
     return;
   }
 
-  btn.disabled = true;
   try {
     const res = await fetchAgentJson(`/api/etabs/table?name=${encodeURIComponent('Story Forces')}&combos=${encodeURIComponent(matchingCombo)}`);
     if (!res.etabsConnected) throw new Error(res.error || t('drift.error.notConnected'));
@@ -1960,7 +1999,7 @@ async function incrementFetchVt(direction) {
   } catch (error) {
     log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
   } finally {
-    btn.disabled = false;
+    if (btn) btn.disabled = false;
   }
 }
 
@@ -2057,24 +2096,15 @@ function renderIncrementSetupPanel() {
       ${checkboxField('incBodrum', 'drift.params.basement')}
       ${numberField('incBodrumKat', 'drift.params.basementCount', { step: 1, min: 0, max: 10 })}
       ${numberField('incMt', 'increment.params.mt', { min: 0 })}
-      <div class="field"><span class="field-spacer" aria-hidden="true">&nbsp;</span><button class="button button-secondary" type="button" id="incFetchMt">${t('increment.fetch')}</button></div>
       ${numberField('incHn', 'increment.params.hn', { min: 0 })}
       ${numberField('incCt', 'increment.params.ct', { min: 0 })}
     </div>
-    <div class="combo-picker">
-      <div class="combo-picker-heading"><h3>${t('drift.combos.title')}</h3>
-        <button class="button button-secondary" type="button" id="incFetchCombos">${t('drift.combos.fetch')}</button>
-      </div>
-      <select class="combo-select" id="incComboSelect" multiple></select>
-      <p class="combo-hint">${t('increment.combos.hint')}</p>
-    </div>
+    ${comboPicker('inc', 'increment.combos.hint')}
     <div class="increment-direction">
       <h3 class="increment-direction-title x">${t('increment.direction.x')}</h3>
       <div class="field-grid two">
         ${numberField('incTx', 'increment.params.tx', { min: 0, unit: 's' })}
-        <div class="field"><span class="field-spacer" aria-hidden="true">&nbsp;</span><button class="button button-secondary" type="button" id="incFetchTx">${t('increment.fetch')}</button></div>
         ${numberField('incVtX', 'increment.params.vtx', { min: 0, unit: 'kN' })}
-        <div class="field"><span class="field-spacer" aria-hidden="true">&nbsp;</span><button class="button button-secondary" type="button" id="incFetchVtX">${t('increment.fetch')}</button></div>
       </div>
       <p class="increment-modal-info" id="incModalInfoX"></p>
       <button class="button button-primary full-width" type="button" id="incCalcX">${t('increment.calculate', { direction: 'X' })}</button>
@@ -2083,12 +2113,13 @@ function renderIncrementSetupPanel() {
       <h3 class="increment-direction-title y">${t('increment.direction.y')}</h3>
       <div class="field-grid two">
         ${numberField('incTy', 'increment.params.ty', { min: 0, unit: 's' })}
-        <div class="field"><span class="field-spacer" aria-hidden="true">&nbsp;</span><button class="button button-secondary" type="button" id="incFetchTy">${t('increment.fetch')}</button></div>
         ${numberField('incVtY', 'increment.params.vty', { min: 0, unit: 'kN' })}
-        <div class="field"><span class="field-spacer" aria-hidden="true">&nbsp;</span><button class="button button-secondary" type="button" id="incFetchVtY">${t('increment.fetch')}</button></div>
       </div>
       <p class="increment-modal-info" id="incModalInfoY"></p>
       <button class="button button-primary full-width" type="button" id="incCalcY">${t('increment.calculate', { direction: 'Y' })}</button>
+    </div>
+    <div class="panel-actions">
+      <button class="button button-secondary full-width" type="button" id="incReset">${t('action.reset')}</button>
     </div>`;
 
   const bind = (id, key, isInt = false) => {
@@ -2110,15 +2141,15 @@ function renderIncrementSetupPanel() {
     bodrumKat.disabled = !bodrum.checked;
   });
 
-  incrementPopulateComboSelect();
-  $('#incFetchCombos', panel).addEventListener('click', incrementFetchCombos);
-  $('#incFetchMt', panel).addEventListener('click', incrementFetchMass);
-  $('#incFetchTx', panel).addEventListener('click', () => incrementFetchPeriod('X'));
-  $('#incFetchTy', panel).addEventListener('click', () => incrementFetchPeriod('Y'));
-  $('#incFetchVtX', panel).addEventListener('click', () => incrementFetchVt('X'));
-  $('#incFetchVtY', panel).addEventListener('click', () => incrementFetchVt('Y'));
+  // Mass and modal periods come straight from the model when the module opens.
+  // Vt additionally needs a direction-matching combination, so it is (re)read
+  // whenever the selection changes as well as once on open.
+  initComboPicker('inc', incrementState, incrementAutoFetchVt);
+  incrementAutoFetchModelData();
+
   $('#incCalcX', panel).addEventListener('click', () => incrementCalculate('X'));
   $('#incCalcY', panel).addEventListener('click', () => incrementCalculate('Y'));
+  $('#incReset', panel).addEventListener('click', () => resetModule(incrementState, renderIncrementModule, { resultX: null, resultY: null }));
 
   incrementRenderModalInfo('X');
   incrementRenderModalInfo('Y');
@@ -2245,15 +2276,10 @@ function renderColumnAxialSetupPanel() {
       ${checkboxField('caBodrum', 'drift.params.basement')}
       ${numberField('caBodrumKat', 'drift.params.basementCount', { step: 1, min: 0, max: 10 })}
     </div>
-    <div class="combo-picker">
-      <div class="combo-picker-heading"><h3>${t('drift.combos.title')}</h3>
-        <button class="button button-secondary" type="button" id="caFetchCombos">${t('drift.combos.fetch')}</button>
-      </div>
-      <select class="combo-select" id="caComboSelect" multiple></select>
-      <p class="combo-hint">${t('columnAxial.combos.hint')}</p>
-    </div>
+    ${comboPicker('ca', 'columnAxial.combos.hint')}
     <div class="panel-actions">
       <button class="button button-primary full-width" type="button" id="caCalculate">${t('columnAxial.calculate')}</button>
+      <button class="button button-secondary full-width" type="button" id="caReset" style="margin-top:8px">${t('action.reset')}</button>
     </div>
     <div class="panel-actions two-up">
       <button class="button button-secondary" type="button" id="caSelectFailing">${t('columnAxial.selectFailing')}</button>
@@ -2278,22 +2304,11 @@ function renderColumnAxialSetupPanel() {
     bodrumKat.disabled = !bodrum.checked;
   });
 
-  columnAxialPopulateComboSelect();
-  $('#caFetchCombos', panel).addEventListener('click', columnAxialFetchCombos);
+  initComboPicker('ca', columnAxialState);
   $('#caCalculate', panel).addEventListener('click', runColumnAxialCheck);
+  $('#caReset', panel).addEventListener('click', () => resetModule(columnAxialState, renderColumnAxialModule));
   $('#caSelectFailing', panel).addEventListener('click', columnAxialSelectFailing);
   $('#caExport', panel).addEventListener('click', columnAxialExportExcel);
-}
-
-function columnAxialPopulateComboSelect() {
-  const select = $('#caComboSelect');
-  if (!select) return;
-  select.innerHTML = columnAxialState.combos
-    .map(name => `<option value="${name}" ${columnAxialState.selected.includes(name) ? 'selected' : ''}>${name}</option>`)
-    .join('');
-  select.addEventListener('change', () => {
-    columnAxialState.selected = [...select.selectedOptions].map(o => o.value);
-  });
 }
 
 function renderColumnAxialResultsPanel() {
@@ -2413,22 +2428,6 @@ function columnAxialUpdateSummary() {
     banner.className = 'status-banner pending';
     failedList.textContent = t('columnAxial.failed.none');
     failedList.classList.remove('fail-text');
-  }
-}
-
-async function columnAxialFetchCombos() {
-  const btn = $('#caFetchCombos');
-  btn.disabled = true;
-  try {
-    const res = await fetchAgentJson('/api/etabs/combinations');
-    if (!res.etabsConnected) throw new Error(res.error || t('drift.error.notConnected'));
-    columnAxialState.combos = res.names;
-    columnAxialPopulateComboSelect();
-    log(t('drift.combos.fetched', { count: columnAxialState.combos.length }), 'ok');
-  } catch (error) {
-    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
-  } finally {
-    btn.disabled = false;
   }
 }
 
@@ -2649,15 +2648,10 @@ function renderBeamShearSetupPanel() {
       ${numberField('bsDprime', 'beam.params.dprime', { min: 1, max: 15 })}
       ${checkboxField('bsUseVc', 'beam.params.useVc')}
     </div>
-    <div class="combo-picker">
-      <div class="combo-picker-heading"><h3>${t('drift.combos.title')}</h3>
-        <button class="button button-secondary" type="button" id="bsFetchCombos">${t('drift.combos.fetch')}</button>
-      </div>
-      <select class="combo-select" id="bsComboSelect" multiple></select>
-      <p class="combo-hint">${t('beam.combos.hint')}</p>
-    </div>
+    ${comboPicker('bs', 'beam.combos.hint')}
     <div class="panel-actions">
       <button class="button button-primary full-width" type="button" id="bsCalculate">${t('columnAxial.calculate')}</button>
+      <button class="button button-secondary full-width" type="button" id="bsReset" style="margin-top:8px">${t('action.reset')}</button>
     </div>
     <div class="panel-actions two-up">
       <button class="button button-secondary" type="button" id="bsSelectFailing">${t('beamShear.selectFailing')}</button>
@@ -2676,36 +2670,11 @@ function renderBeamShearSetupPanel() {
   useVc.checked = beamShearState.useVc;
   useVc.addEventListener('change', () => { beamShearState.useVc = useVc.checked; });
 
-  beamComboSelect('#bsComboSelect', beamShearState);
-  $('#bsFetchCombos', panel).addEventListener('click', () => beamFetchCombos('#bsFetchCombos', '#bsComboSelect', beamShearState));
+  initComboPicker('bs', beamShearState);
   $('#bsCalculate', panel).addEventListener('click', runBeamShearCheck);
+  $('#bsReset', panel).addEventListener('click', () => resetModule(beamShearState, renderBeamShearModule));
   $('#bsSelectFailing', panel).addEventListener('click', () => beamSelectFailing(beamShearState.lastResults));
   $('#bsExport', panel).addEventListener('click', beamShearExportExcel);
-}
-
-function beamComboSelect(selector, state) {
-  const select = $(selector);
-  if (!select) return;
-  select.innerHTML = state.combos
-    .map(name => `<option value="${name}" ${state.selected.includes(name) ? 'selected' : ''}>${name}</option>`)
-    .join('');
-  select.addEventListener('change', () => { state.selected = [...select.selectedOptions].map(o => o.value); });
-}
-
-async function beamFetchCombos(btnSel, comboSel, state) {
-  const btn = $(btnSel);
-  btn.disabled = true;
-  try {
-    const res = await fetchAgentJson('/api/etabs/combinations');
-    if (!res.etabsConnected) throw new Error(res.error || t('drift.error.notConnected'));
-    state.combos = res.names;
-    beamComboSelect(comboSel, state);
-    log(t('drift.combos.fetched', { count: state.combos.length }), 'ok');
-  } catch (error) {
-    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
-  } finally {
-    btn.disabled = false;
-  }
 }
 
 async function beamSelectFailing(results) {
@@ -2755,7 +2724,8 @@ async function runBeamShearCheck() {
     const beams = [...byKey.values()];
     if (beams.length === 0) throw new Error(t('beam.error.noData'));
 
-    beamShearState.lastResults = beamShearCalculate(beams, sectionMap, beamShearState);
+    beamShearState.lastResults = beamShearCalculate(beams, sectionMap, beamShearState)
+      .sort((x, y) => y.story.localeCompare(x.story) || x.label.localeCompare(y.label) || x.case.localeCompare(y.case));
     renderBeamShearResultsTable();
     recordLastCheck('beam-shear');
     const failCount = beamShearState.lastResults.filter(r => !r.ok).length;
@@ -2909,15 +2879,10 @@ function renderBeamAxialSetupPanel() {
       ${numberField('baFck', 'beam.params.fck', { min: 10, max: 90 })}
       ${numberField('baLimit', 'beamAxial.params.limit', { min: 0.01, max: 1 })}
     </div>
-    <div class="combo-picker">
-      <div class="combo-picker-heading"><h3>${t('drift.combos.title')}</h3>
-        <button class="button button-secondary" type="button" id="baFetchCombos">${t('drift.combos.fetch')}</button>
-      </div>
-      <select class="combo-select" id="baComboSelect" multiple></select>
-      <p class="combo-hint">${t('beam.combos.hint')}</p>
-    </div>
+    ${comboPicker('ba', 'beam.combos.hint')}
     <div class="panel-actions">
       <button class="button button-primary full-width" type="button" id="baCalculate">${t('columnAxial.calculate')}</button>
+      <button class="button button-secondary full-width" type="button" id="baReset" style="margin-top:8px">${t('action.reset')}</button>
     </div>
     <div class="panel-actions two-up">
       <button class="button button-secondary" type="button" id="baSelectFailing">${t('beamAxial.selectFailing')}</button>
@@ -2929,9 +2894,9 @@ function renderBeamAxialSetupPanel() {
   fck.addEventListener('input', () => { beamAxialState.fck = parseFloat(fck.value) || 0; });
   limit.addEventListener('input', () => { beamAxialState.limit = parseFloat(limit.value) || 0; });
 
-  beamComboSelect('#baComboSelect', beamAxialState);
-  $('#baFetchCombos', panel).addEventListener('click', () => beamFetchCombos('#baFetchCombos', '#baComboSelect', beamAxialState));
+  initComboPicker('ba', beamAxialState);
   $('#baCalculate', panel).addEventListener('click', runBeamAxialCheck);
+  $('#baReset', panel).addEventListener('click', () => resetModule(beamAxialState, renderBeamAxialModule));
   $('#baSelectFailing', panel).addEventListener('click', () => beamSelectFailing(beamAxialState.lastResults));
   $('#baExport', panel).addEventListener('click', beamAxialExportExcel);
 }
@@ -2974,7 +2939,7 @@ async function runBeamAxialCheck() {
       const d = (sec ? sec.h : 0) * 100;
       const c = beamAxialComputeRow(b, d, beam.p, beamAxialState.fck, beamAxialState.limit);
       return { story: beam.story, label: beam.label, unique: beam.unique, case: beam.case, section: sec ? sec.section : '', b, d, p: beam.p, ...c };
-    }).sort((a, b) => b.ratio - a.ratio);
+    }).sort((x, y) => y.story.localeCompare(x.story) || x.label.localeCompare(y.label) || x.case.localeCompare(y.case));
 
     renderBeamAxialResultsTable();
     recordLastCheck('beam-axial');
@@ -3121,18 +3086,14 @@ function renderWallAxialSetupPanel() {
       ${numberField('waFck', 'columnAxial.params.fck', { min: 10, max: 90 })}
       ${numberField('waLimit', 'columnAxial.params.limit', { min: 0.05, max: 1 })}
     </div>
-    <div class="combo-picker">
-      <div class="combo-picker-heading"><h3>${t('drift.combos.title')}</h3>
-        <button class="button button-secondary" type="button" id="waFetchCombos">${t('drift.combos.fetch')}</button>
-      </div>
-      <select class="combo-select" id="waComboSelect" multiple></select>
-      <p class="combo-hint">${t('wallAxial.combos.hint')}</p>
-    </div>
+    ${comboPicker('wa', 'wallAxial.combos.hint')}
     <div class="panel-actions">
       <button class="button button-primary full-width" type="button" id="waCalculate">${t('drift.calculate')}</button>
+      <button class="button button-secondary full-width" type="button" id="waReset" style="margin-top:8px">${t('action.reset')}</button>
     </div>
-    <div class="panel-actions">
-      <button class="button button-secondary full-width" type="button" id="waExport">${t('columnAxial.export')}</button>
+    <div class="panel-actions two-up">
+      <button class="button button-secondary" type="button" id="waSelectFailing">${t('wallAxial.selectFailing')}</button>
+      <button class="button button-secondary" type="button" id="waExport">${t('columnAxial.export')}</button>
     </div>`;
 
   const bind = (id, key) => {
@@ -3143,21 +3104,11 @@ function renderWallAxialSetupPanel() {
   bind('waFck', 'fck');
   bind('waLimit', 'limit');
 
-  wallAxialPopulateComboSelect();
-  $('#waFetchCombos', panel).addEventListener('click', wallAxialFetchCombos);
+  initComboPicker('wa', wallAxialState);
   $('#waCalculate', panel).addEventListener('click', runWallAxialCheck);
+  $('#waReset', panel).addEventListener('click', () => resetModule(wallAxialState, renderWallAxialModule));
   $('#waExport', panel).addEventListener('click', wallAxialExportExcel);
-}
-
-function wallAxialPopulateComboSelect() {
-  const select = $('#waComboSelect');
-  if (!select) return;
-  select.innerHTML = wallAxialState.combos
-    .map(name => `<option value="${name}" ${wallAxialState.selected.includes(name) ? 'selected' : ''}>${name}</option>`)
-    .join('');
-  select.addEventListener('change', () => {
-    wallAxialState.selected = [...select.selectedOptions].map(o => o.value);
-  });
+  $('#waSelectFailing', panel).addEventListener('click', wallAxialSelectFailing);
 }
 
 function renderWallAxialResultsPanel() {
@@ -3224,22 +3175,6 @@ function renderWallAxialResultsTable() {
   }
 }
 
-async function wallAxialFetchCombos() {
-  const btn = $('#waFetchCombos');
-  btn.disabled = true;
-  try {
-    const res = await fetchAgentJson('/api/etabs/combinations');
-    if (!res.etabsConnected) throw new Error(res.error || t('drift.error.notConnected'));
-    wallAxialState.combos = res.names;
-    wallAxialPopulateComboSelect();
-    log(t('drift.combos.fetched', { count: wallAxialState.combos.length }), 'ok');
-  } catch (error) {
-    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
-  } finally {
-    btn.disabled = false;
-  }
-}
-
 async function runWallAxialCheck() {
   if (wallAxialState.selected.length === 0) { log(t('drift.error.noCombos'), 'error'); return; }
 
@@ -3289,6 +3224,25 @@ async function runWallAxialCheck() {
     recordLastCheck('wall-axial');
     const failCount = results.filter(r => !r.ok).length;
     log(failCount > 0 ? t('wallAxial.status.failed', { count: failCount }) : t('wallAxial.status.passed'), failCount > 0 ? 'error' : 'ok');
+  } catch (error) {
+    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+// Marks the failing piers in the ETABS model. Piers are Area objects, so this uses the
+// agent's AreaObj-based select-piers endpoint rather than select-frames.
+async function wallAxialSelectFailing() {
+  const failing = wallAxialState.lastResults.filter(r => !r.ok);
+  if (failing.length === 0) { log(t('wallAxial.status.passed'), 'ok'); return; }
+  const btn = $('#waSelectFailing');
+  if (btn) btn.disabled = true;
+  try {
+    const items = failing.map(r => ({ story: r.story, pier: r.pier }));
+    const res = await postAgentJson('/api/etabs/select-piers', { items }, 90000);
+    if (!res.etabsConnected) throw new Error(res.error || t('drift.error.notConnected'));
+    log(t('wallAxial.status.selected', { count: res.selectedCount }), 'ok');
   } catch (error) {
     log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
   } finally {

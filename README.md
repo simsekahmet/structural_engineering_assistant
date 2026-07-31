@@ -19,7 +19,7 @@ https://simsekahmet.github.io/structural_engineering_assistant/
 
 ### What the agent does and does not do
 
-The agent binds to `127.0.0.1:5218` only, so it is not reachable from the local network or the internet. It requires an `Origin` header on every request and accepts only the deployed site and local development origins — requests without an Origin (curl and other non-browser clients) are rejected. Every accepted call is logged to `%TEMP%\StructuralEngineeringAssistant.Agent.log` with a READ/WRITE marker. Exactly one endpoint writes to the model, `/api/etabs/select-frames`, and it only changes the selection — never geometry, sections or design data.
+The agent binds to `127.0.0.1:5218` only, so it is not reachable from the local network or the internet. It requires an `Origin` header on every request and accepts only the deployed site and local development origins — requests without an Origin (curl and other non-browser clients) are rejected. Every accepted call is logged to `%TEMP%\StructuralEngineeringAssistant.Agent.log` with a READ/WRITE marker. Two endpoints write to the model, `/api/etabs/select-frames` and `/api/etabs/select-piers`; both only change the selection — never geometry, sections or design data.
 
 There is no authentication token and no per-action confirmation prompt: any program already running under your Windows account can call the agent. That is not a meaningful escalation, since such a program could drive the ETABS COM API directly, but the agent is a local convenience rather than a security boundary. Close it when you are not using it.
 
@@ -31,6 +31,8 @@ There is no authentication token and no per-action confirmation prompt: any prog
 - [Release notes](https://github.com/simsekahmet/structural_engineering_assistant/releases)
 
 Every migrated module also carries an in-app **Calculation basis** panel citing the TBDY 2018 / TS 500 clause, the equations used and the intermediate values, so results can be re-derived by hand.
+
+Load combinations, story mass, modal periods and base shear are read from the model automatically when a module opens — there are no Fetch buttons. Combinations are chosen in a two-list picker (available on the left, selected on the right), and each module has a **Reset results** button that clears its computed output.
 
 ## Repository structure
 

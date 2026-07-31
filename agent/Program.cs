@@ -67,6 +67,7 @@ internal sealed class AgentApplicationContext : ApplicationContext
             GetCombinationsOnUiThread,
             GetAvailableTablesOnUiThread,
             GetPierForcesOnUiThread,
+            SelectPiersOnUiThread,
             GetPierSectionsOnUiThread,
             GetStoriesOnUiThread,
             GetStoryDriftsOnUiThread,
@@ -107,6 +108,14 @@ internal sealed class AgentApplicationContext : ApplicationContext
             return (NameListResult)_dispatcher.Invoke(new Func<NameListResult>(_etabs.GetCombinationsAndCases));
 
         return _etabs.GetCombinationsAndCases();
+    }
+
+    private SelectResult SelectPiersOnUiThread(IReadOnlyList<PierKey> items)
+    {
+        if (_dispatcher.InvokeRequired)
+            return (SelectResult)_dispatcher.Invoke(new Func<IReadOnlyList<PierKey>, SelectResult>(_etabs.SelectPiers), new object[] { items });
+
+        return _etabs.SelectPiers(items);
     }
 
     private PierForcesResult GetPierForcesOnUiThread(string[] combos)
@@ -641,6 +650,75 @@ internal sealed class EtabsConnection : IDisposable
     // Selects the given frame objects (matched by Story + Label) in the ETABS model and
     // refreshes the active view, so the user can see failing members highlighted. This is the
     // only write operation the agent performs; everything else is read-only.
+    // Selects the area objects making up the given (story, pier) pairs. Mirrors the
+    // desktop's SelectPiersOnModel: piers are Area objects, so FrameObj.SetSelected
+    // cannot reach them. Like SelectFrames, this deliberately does NOT call
+    // View.RefreshView — that reentrancy is what used to stall the whole bridge.
+    public SelectResult SelectPiers(IReadOnlyList<PierKey> items)
+    {
+        if (items.Count == 0)
+            return new SelectResult(true, true, "No items to select.", 0);
+        if (!EnsureModelReady(out var error))
+            return new SelectResult(true, false, error, 0);
+
+        try
+        {
+            var sap = _sapModel!;
+            var areaProp = _sapModelInterface!.GetProperty("AreaObj")!;
+            var area = areaProp.GetValue(sap)!;
+            var areaType = areaProp.PropertyType;
+
+            var selectProp = _sapModelInterface.GetProperty("SelectObj")!;
+            var select = selectProp.GetValue(sap)!;
+            try { selectProp.PropertyType.GetMethod("ClearSelection")!.Invoke(select, null); } catch { }
+
+            var getNamesOnStory = areaType.GetMethod("GetNameListOnStory");
+            var getPier = areaType.GetMethod("GetPier");
+            var setSelected = areaType.GetMethods().First(m => m.Name == "SetSelected");
+            if (getNamesOnStory is null || getPier is null)
+                return new SelectResult(true, true, "AreaObj pier lookup is not available in this ETABS build.", 0);
+
+            // Enumerate each story once even if several of its piers are requested.
+            var wanted = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
+            foreach (var item in items)
+            {
+                if (!wanted.TryGetValue(item.Story, out var set))
+                    wanted[item.Story] = set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                set.Add(item.Pier);
+            }
+
+            var selected = 0;
+            foreach (var (story, piers) in wanted)
+            {
+                var nameArgs = new object?[] { story, 0, Array.Empty<string>() };
+                try { getNamesOnStory.Invoke(area, nameArgs); }
+                catch (Exception ex) { AgentLog.Write($"GetNameListOnStory({story}) failed: {ex.Message}"); continue; }
+
+                var names = nameArgs[2] as string[] ?? Array.Empty<string>();
+                foreach (var uid in names)
+                {
+                    var pierArgs = new object?[] { uid, "" };
+                    try { getPier.Invoke(area, pierArgs); } catch { continue; }
+                    var assigned = (pierArgs[1] as string ?? "").Trim();
+                    if (assigned.Length == 0 || !piers.Contains(assigned)) continue;
+
+                    try { setSelected.Invoke(area, new object?[] { uid, true, 0 }); selected++; }
+                    catch
+                    {
+                        try { setSelected.Invoke(area, new object?[] { uid, true }); selected++; } catch { }
+                    }
+                }
+            }
+
+            return new SelectResult(true, true, null, selected);
+        }
+        catch (Exception ex)
+        {
+            AgentLog.Write($"SelectPiers failed: {ex}");
+            return new SelectResult(true, false, ex.Message, 0);
+        }
+    }
+
     public SelectResult SelectFrames(IReadOnlyList<FrameKey> items)
     {
         if (items.Count == 0)
@@ -1051,6 +1129,7 @@ internal sealed class LocalBridgeServer : IDisposable
     private readonly Func<NameListResult> _getCombinations;
     private readonly Func<NameListResult> _getAvailableTables;
     private readonly Func<string[], PierForcesResult> _getPierForces;
+    private readonly Func<IReadOnlyList<PierKey>, SelectResult> _selectPiers;
     private readonly Func<PierSectionsResult> _getPierSections;
     private readonly Func<StoriesResult> _getStories;
     private readonly Func<string[], StoryDriftsResult> _getStoryDrifts;
@@ -1065,6 +1144,7 @@ internal sealed class LocalBridgeServer : IDisposable
         Func<NameListResult> getCombinations,
         Func<NameListResult> getAvailableTables,
         Func<string[], PierForcesResult> getPierForces,
+        Func<IReadOnlyList<PierKey>, SelectResult> selectPiers,
         Func<PierSectionsResult> getPierSections,
         Func<StoriesResult> getStories,
         Func<string[], StoryDriftsResult> getStoryDrifts,
@@ -1076,6 +1156,7 @@ internal sealed class LocalBridgeServer : IDisposable
         _getCombinations = getCombinations;
         _getAvailableTables = getAvailableTables;
         _getPierForces = getPierForces;
+        _selectPiers = selectPiers;
         _getPierSections = getPierSections;
         _getStories = getStories;
         _getStoryDrifts = getStoryDrifts;
@@ -1147,7 +1228,7 @@ internal sealed class LocalBridgeServer : IDisposable
 
                 // Request log: every accepted call is recorded so the engineer can audit what the
                 // web UI asked ETABS to do. WRITE marks the only endpoint that touches the model.
-                var isWrite = path == "/api/etabs/select-frames";
+                var isWrite = path is "/api/etabs/select-frames" or "/api/etabs/select-piers";
                 AgentLog.Write($"{(isWrite ? "WRITE" : "READ ")} {method} {path} origin={origin}");
 
                 if (method == "GET")
@@ -1232,6 +1313,14 @@ internal sealed class LocalBridgeServer : IDisposable
                         var req = JsonSerializer.Deserialize<SelectFramesRequest>(json, JsonOptions);
                         var items = req?.Items ?? Array.Empty<FrameKey>();
                         await WriteResponseAsync(stream, 200, "OK", _selectFrames(items), origin, cancellationToken);
+                        return;
+                    }
+
+                    if (path == "/api/etabs/select-piers")
+                    {
+                        var req = JsonSerializer.Deserialize<SelectPiersRequest>(json, JsonOptions);
+                        if (req is null) { await WriteResponseAsync(stream, 400, "Bad Request", new { error = "Invalid request body." }, origin, cancellationToken); return; }
+                        await WriteResponseAsync(stream, 200, "OK", _selectPiers(req.Items), origin, cancellationToken);
                         return;
                     }
 
@@ -1527,6 +1616,10 @@ internal sealed record PierForcesResult(bool AgentOnline, bool EtabsConnected, s
 internal sealed record PierSectionRow(string Pier, string Story, double Lw, double Bw, string Material);
 
 internal sealed record PierSectionsResult(bool AgentOnline, bool EtabsConnected, string? Error, PierSectionRow[] Rows);
+
+internal sealed record PierKey(string Story, string Pier);
+
+internal sealed record SelectPiersRequest(PierKey[] Items);
 
 internal sealed record SelectFramesRequest(FrameKey[] Items);
 

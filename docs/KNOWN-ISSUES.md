@@ -1,6 +1,6 @@
 # Known issues and limitations
 
-Current as of **web v1.8.0 / agent v1.8.0**. Release notes live on the
+Current as of **web v1.9.0 / agent v1.9.0**. Release notes live on the
 [Releases page](https://github.com/simsekahmet/structural_engineering_assistant/releases).
 
 ## Limitations you must be aware of before relying on a result
@@ -50,8 +50,9 @@ network or the internet. It requires an `Origin` header on every request and acc
 only `https://simsekahmet.github.io` and the local development origins; requests with
 no Origin (curl and other non-browser clients) are rejected. Every accepted call is
 appended to `%TEMP%\StructuralEngineeringAssistant.Agent.log` with a READ/WRITE
-marker. Exactly one endpoint touches the model — `/api/etabs/select-frames` — and it
-only changes the selection; it does not modify geometry, sections or design data.
+marker. Two endpoints touch the model — `/api/etabs/select-frames` and
+`/api/etabs/select-piers` — and both only change the selection; neither modifies
+geometry, sections or design data.
 
 What is **not** implemented: there is no authentication token and no per-action user
 confirmation. Any program already running on your machine under your account can call

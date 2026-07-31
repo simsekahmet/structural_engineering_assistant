@@ -186,6 +186,18 @@ th { color: var(--muted); background: var(--surface-muted); font-size: 9px; text
 .field-unit { text-transform: none; letter-spacing: 0; opacity: .8; }
 .field-spacer { display: block; height: 12px; }
 
+.combo-dual { padding: 12px 17px 4px; }
+.combo-dual-heading { display: flex; align-items: center; gap: 7px; margin-bottom: 8px; }
+.combo-dual-heading h3 { margin: 0; color: var(--primary-dark); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
+.combo-info { width: 15px; height: 15px; flex: 0 0 auto; display: grid; place-items: center; border: 1px solid var(--border); border-radius: 50%; cursor: help; color: var(--muted); background: var(--surface-muted); font: 700 9px/1 Arial, sans-serif; }
+.combo-dual-body { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 9px; }
+.combo-list { width: 100%; min-height: 168px; padding: 4px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface-muted); color: var(--text); font-size: 11px; }
+.combo-list option { padding: 3px 6px; border-radius: 5px; }
+.combo-dual-actions { display: flex; flex-direction: column; gap: 6px; }
+.combo-move { width: 30px; height: 28px; display: grid; place-items: center; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; color: var(--primary-dark); background: var(--surface-strong); font: 700 15px/1 Arial, sans-serif; }
+.combo-move:hover { background: var(--primary-soft); }
+.combo-status { margin: 8px 0 0; color: var(--muted); font-size: 9.5px; }
+
 .doc-links { display: flex; flex-direction: column; gap: 3px; margin: 9px 0 11px; }
 .doc-links a { color: var(--muted); font-size: 9.5px; text-decoration: none; }
 .doc-links a:hover { color: var(--primary-dark); text-decoration: underline; }

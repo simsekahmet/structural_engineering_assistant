@@ -1,6 +1,6 @@
 # Module implementation status
 
-Last updated for **web v1.8.0 / agent v1.8.0**.
+Last updated for **web v1.9.0 / agent v1.9.0**.
 
 "Migrated" means the calculation itself runs against the live ETABS model and has
 been checked against an independent hand calculation. "UI only" means the screen
@@ -16,7 +16,7 @@ exists but no calculation is wired up — those modules disable their connect bu
 | Beam Shear (Kiriş Kesme) | ✅ Migrated | `kiris_kesme.cs` | Editable n/φ/s. |
 | Beam Axial Load (Kiriş Eksenel) | ✅ Migrated | `kiris_eksenel_yuk.cs` | |
 | Wall Shear (Perde Kesme) | ⬜ UI only | `perde_kesme.cs` | Area/Pier-object based; needs an Area equivalent of `select-frames`. |
-| Wall Axial Load (Perde Eksenel) | ✅ Migrated | `perde_eksenel.cs` | Limit 0.35 (not 0.40); d is the wall length end-to-end. Pier data comes from `Results.PierForce` + `PierLabel.GetSectionProperties`, not a display table. Read-only — no "select in model". |
+| Wall Axial Load (Perde Eksenel) | ✅ Migrated | `perde_eksenel.cs` | Limit 0.35 (not 0.40); d is the wall length end-to-end. Pier data comes from `Results.PierForce` + `PierLabel.GetSectionProperties`, not a display table. Includes "select failing walls in model" via the AreaObj-based select-piers endpoint. |
 | Column Schedule (Kolon Donesi) | ⬜ UI only | `kolon_donesi.cs`, `kolon_dwg_export.cs` | Was migrated in v1.3–v1.5 and **withdrawn in v1.7.0**: schedules are deferred until every analysis and member check ahead of them is verified. |
 | Wall Schedule (Perde Donesi) | ⬜ UI only | — | Empty placeholder in the desktop app too — nothing to migrate. |
 | Beam Schedule (Kiriş Donesi) | ⬜ UI only | — | Empty placeholder in the desktop app too. |
