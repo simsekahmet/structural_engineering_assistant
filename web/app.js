@@ -17,7 +17,7 @@ const translations = {
     'brand.home': 'Structural Engineering Assistant home', 'nav.aria': 'Application menu',
     'model.activeTitle': 'Active ETABS model', 'model.active': 'Active model', 'model.waiting': 'Waiting for connection',
     'action.connect': 'Connect to ETABS', 'action.clear': 'Clear', 'action.showAll': 'Show all →', 'action.showLess': 'Show less ↑',
-    'action.disconnect': 'Disconnect', 'terminal.disconnected': 'Disconnected from the ETABS model.',
+    'action.on': 'ON', 'action.off': 'OFF', 'action.disconnect': 'Disconnect', 'terminal.disconnected': 'Disconnected from the ETABS model.',
     'instances.title': 'Select ETABS model', 'instances.subtitle': 'More than one ETABS instance is running',
     'instances.connect': 'Connect',
     'action.viewArchitecture': 'View connection architecture', 'action.dashboard': '← Dashboard', 'action.close': 'Close', 'action.understood': 'Understood',
@@ -45,7 +45,7 @@ const translations = {
     'about.purpose.title': 'Engineering workspace', 'about.purpose.text': 'Structural Engineering Assistant brings ETABS analysis checks, member checks, results, and exports into one web interface.',
     'about.connection.title': 'Local ETABS bridge', 'about.connection.text': 'Because browsers cannot access the ETABS COM API directly, a Windows agent connects this interface to the model open on your computer. It listens only on 127.0.0.1:5218, accepts requests only from this site’s origin, and every call is written to a local log.',
     'about.status.title': 'Current version', 'about.status.text': 'The interface and ETABS connection agent are available, and engineering checks run against the active model through the local bridge.',
-    'about.note.label': 'Important:', 'about.note.text': 'Engineering results must be reviewed and approved by the responsible structural engineer.',
+    'about.note.label': 'Warning:', 'about.note.text': 'Engineering results must be reviewed and approved by the responsible structural engineer.',
     'moduleData.title': 'Model Data', 'moduleData.description': 'Dataset to be read from the ETABS model',
     'moduleData.waiting': 'Waiting for ETABS connection', 'moduleData.note': 'Module inputs are read from the active ETABS model through the local bridge.',
     'results.title': 'Check Results', 'results.description': 'Summary metrics and member-level results',
@@ -247,7 +247,7 @@ const translations = {
     'brand.home': 'Yapısal Tasarım Asistanı ana sayfa', 'nav.aria': 'Uygulama menüsü',
     'model.activeTitle': 'Aktif ETABS modeli', 'model.active': 'Aktif model', 'model.waiting': 'Bağlantı bekleniyor',
     'action.connect': "ETABS'a Bağlan", 'action.clear': 'Temizle', 'action.showAll': 'Tümünü göster →', 'action.showLess': 'Daha az göster ↑',
-    'action.disconnect': 'Bağlantıyı Kes', 'terminal.disconnected': 'ETABS model bağlantısı kesildi.',
+    'action.on': 'AÇIK', 'action.off': 'KAPALI', 'action.disconnect': 'Bağlantıyı Kes', 'terminal.disconnected': 'ETABS model bağlantısı kesildi.',
     'instances.title': 'ETABS Modeli Seçin', 'instances.subtitle': 'Birden fazla ETABS örneği çalışıyor',
     'instances.connect': 'Bağlan',
     'action.viewArchitecture': 'Bağlantı mimarisini görüntüle', 'action.dashboard': '← Ana Sayfa', 'action.close': 'Kapat', 'action.understood': 'Anladım',
@@ -275,7 +275,7 @@ const translations = {
     'about.purpose.title': 'Mühendislik çalışma alanı', 'about.purpose.text': 'Yapısal Tasarım Asistanı; ETABS analiz kontrollerini, eleman tahkiklerini, sonuçları ve dışa aktarımları tek bir web arayüzünde birleştirir.',
     'about.connection.title': 'Yerel ETABS köprüsü', 'about.connection.text': 'Tarayıcılar ETABS COM API’ye doğrudan erişemediği için bir Windows agent bu arayüzü bilgisayarınızda açık olan modele bağlar. Yalnızca 127.0.0.1:5218 adresini dinler, sadece bu sitenin origin’inden gelen istekleri kabul eder ve her çağrı yerel bir günlüğe yazılır.',
     'about.status.title': 'Mevcut sürüm', 'about.status.text': 'Arayüz ve ETABS bağlantı agent’ı kullanılabilir; mühendislik tahkikleri yerel köprü üzerinden aktif model üzerinde çalışır.',
-    'about.note.label': 'Önemli:', 'about.note.text': 'Mühendislik sonuçları sorumlu inşaat mühendisi tarafından kontrol edilmeli ve onaylanmalıdır.',
+    'about.note.label': 'Uyarı:', 'about.note.text': 'Mühendislik sonuçları sorumlu inşaat mühendisi tarafından kontrol edilmeli ve onaylanmalıdır.',
     'moduleData.title': 'Model Verisi', 'moduleData.description': 'ETABS modelinden okunacak veri seti',
     'moduleData.waiting': 'ETABS bağlantısı bekleniyor', 'moduleData.note': 'Modül girdileri, yerel köprü üzerinden aktif ETABS modelinden okunur.',
     'results.title': 'Tahkik Sonuçları', 'results.description': 'Özet metrikler ve eleman bazlı sonuçlar',
@@ -593,6 +593,8 @@ function applyLanguage(language) {
   // Version badge is driven by version.js so it can never drift from the source of truth.
   const badge = $('#versionBadge');
   if (badge) badge.textContent = `v${APP_VERSION}`;
+  const countStat = $('#moduleCountStat');
+  if (countStat) countStat.textContent = String(moduleDefinitions.length);
   $('.brand').setAttribute('aria-label', t('brand.home'));
   $('#themeToggle').setAttribute('aria-label', currentLanguage === 'tr' ? 'Açık / koyu tema değiştir' : 'Switch light / dark mode');
   $('#languageToggle').setAttribute('aria-label', currentLanguage === 'tr' ? 'İngilizce / Türkçe değiştir' : 'Switch English / Turkish');
@@ -920,10 +922,15 @@ function rigidStateDefaults() {
 
 function rigidSection(prefix, state) {
   return setupSection(`${prefix}RigidSection`, 'wallShear.section.rigid', `
-    <label class="field-checkbox" for="${prefix}Rijit">
-      <input type="checkbox" id="${prefix}Rijit" ${state.rijit ? 'checked' : ''}>
-      ${t('wallShear.rigid.active')}
-    </label>
+    <div class="rigid-row">
+      <span>${t('wallShear.rigid.active')}</span>
+      <button type="button" class="switch toggle-switch" id="${prefix}Rijit"
+              role="switch" aria-checked="${state.rijit}">
+        <span class="switch-label off">${t('action.off')}</span>
+        <span class="switch-label on">${t('action.on')}</span>
+        <span class="switch-thumb" aria-hidden="true"></span>
+      </button>
+    </div>
     <div id="${prefix}RijitBody" ${state.rijit ? '' : 'hidden'}>
       <div class="field-grid">
         <div class="field">
@@ -946,9 +953,10 @@ async function initRigidSection(prefix, state, allCombos) {
     if (note) note.textContent = state.rijitStory ? t('wallShear.rigid.note', { story: state.rijitStory }) : '';
   };
 
-  if (toggle) toggle.addEventListener('change', () => {
-    state.rijit = toggle.checked;
-    if (body) body.hidden = !toggle.checked;
+  if (toggle) toggle.addEventListener('click', () => {
+    state.rijit = !state.rijit;
+    toggle.setAttribute('aria-checked', String(state.rijit));
+    if (body) body.hidden = !state.rijit;
   });
 
   initComboPicker(`${prefix}Basement`, {
@@ -989,6 +997,16 @@ function rigidBasementStorySet(state, stories, fallback) {
   const cut = list.findIndex(x => x.name === state.rijitStory);
   if (cut < 0) return fallback;
   return new Set(list.filter((_, i) => i <= cut).map(x => x.name));
+}
+
+// Number of stories the rigid rule marks as basement, counted from the bottom.
+// Used where a module needs a count rather than a set (mass exclusion, Vt row).
+function rigidBasementCount(state, stories) {
+  if (!rigidIsActive(state)) return 0;
+  const list = (state.stories && state.stories.length) ? state.stories : (stories || []);
+  const cut = list.findIndex(x => x.name === state.rijitStory);
+  if (cut < 0) return 0;
+  return list.slice(0, cut + 1).filter(x => (x.name || '').toLowerCase() !== 'base').length;
 }
 
 function rigidIsActive(state) {
@@ -1400,8 +1418,6 @@ function renderDriftSetupPanel() {
       ${numberField('driftK', 'drift.params.k', { min: 0.5, max: 1 })}
       ${numberField('driftTp', 'drift.params.tp', { min: 0, max: 10, unit: 's' })}
       ${checkboxField('driftEsnekDerz', 'drift.params.flexibleJoint')}
-      ${checkboxField('driftBodrum', 'drift.params.basement')}
-      ${numberField('driftBodrumKat', 'drift.params.basementCount', { step: 1, min: 0, max: 10 })}
     </div>
     ${comboPicker('drift', 'drift.combos.hint')}
     ${rigidSection('drift', driftState)}
@@ -1435,16 +1451,6 @@ function bindDriftParamInputs(panel) {
   esnek.checked = driftState.params.esnekDerz;
   esnek.addEventListener('change', () => { driftState.params.esnekDerz = esnek.checked; });
 
-  const bodrum = $('#driftBodrum', panel);
-  const bodrumKat = $('#driftBodrumKat', panel);
-  bodrum.checked = driftState.params.bodrum;
-  bodrumKat.value = driftState.params.bodrumKat;
-  bodrumKat.disabled = !bodrum.checked;
-  bodrum.addEventListener('change', () => {
-    driftState.params.bodrum = bodrum.checked;
-    bodrumKat.disabled = !bodrum.checked;
-  });
-  bodrumKat.addEventListener('input', () => { driftState.params.bodrumKat = parseInt(bodrumKat.value, 10) || 0; });
 }
 
 function renderDriftResultsPanel() {
@@ -1557,13 +1563,11 @@ async function runDriftCheck() {
     if (!driftRes.etabsConnected) throw new Error(driftRes.error || t('drift.error.notConnected'));
 
     const groups = groupCombos(driftState.selected);
-    const legacyBasement = driftState.params.bodrum
-      ? determineBasementStories(driftState.stories, driftState.params.bodrumKat)
-      : new Set();
+    // Basement stories come from the rigid-basement rule alone.
     const rigid = rigidIsActive(driftState);
-    const basementNames = rigidBasementStorySet(driftState, driftState.stories, legacyBasement);
+    const basementNames = rigidBasementStorySet(driftState, driftState.stories, new Set());
     const filtered = filterDriftRows(driftRes.rows || [], groups, basementNames,
-      driftState.params.bodrum || rigid, rigid ? groupCombos(driftState.basementCombos) : null);
+      rigid, rigid ? groupCombos(driftState.basementCombos) : null);
     if (filtered.length === 0) throw new Error(t('drift.error.noData'));
 
     const result = calculateDriftItems(filtered, driftState.params);
@@ -1650,11 +1654,7 @@ function pdeltaBucketCombos(selected) {
 }
 
 function pdeltaComputeResult(forces, drifts, mass, stories, selected, params) {
-  const nonBase = stories.filter(s => s.name.toLowerCase() !== 'base');
   const basementNames = new Set();
-  if (params.bodrum && params.bodrumKat > 0) {
-    [...nonBase].sort((a, b) => a.elevation - b.elevation).slice(0, params.bodrumKat).forEach(s => basementNames.add(s.name));
-  }
 
   let { xUST, xALT, yUST, yALT } = pdeltaBucketCombos(selected);
   // Rigid rule: basement stories are defined by the chosen story and are driven by the
@@ -1768,8 +1768,6 @@ function renderPdeltaSetupPanel() {
       ${numberField('pdCh', 'pdelta.params.ch', { min: 0.1, max: 3 })}
       ${numberField('pdR', 'pdelta.params.r', { min: 1, max: 10 })}
       ${numberField('pdD', 'pdelta.params.d', { min: 1, max: 4 })}
-      ${checkboxField('pdBodrum', 'drift.params.basement')}
-      ${numberField('pdBodrumKat', 'drift.params.basementCount', { step: 1, min: 0, max: 10 })}
     </div>
     ${comboPicker('pd', 'pdelta.combos.hint')}
     ${rigidSection('pd', pdeltaState)}
@@ -1786,16 +1784,7 @@ function renderPdeltaSetupPanel() {
   bindNumber('pdCh', 'ch');
   bindNumber('pdR', 'r');
   bindNumber('pdD', 'd');
-  bindNumber('pdBodrumKat', 'bodrumKat', true);
 
-  const bodrum = $('#pdBodrum', panel);
-  const bodrumKat = $('#pdBodrumKat', panel);
-  bodrum.checked = pdeltaState.params.bodrum;
-  bodrumKat.disabled = !bodrum.checked;
-  bodrum.addEventListener('change', () => {
-    pdeltaState.params.bodrum = bodrum.checked;
-    bodrumKat.disabled = !bodrum.checked;
-  });
 
   initComboPicker('pd', pdeltaState);
   bindSetupSections(panel);
@@ -2140,7 +2129,6 @@ function downloadSpectrumTxt() {
 const incrementState = {
   ...rigidStateDefaults(),
   mt: 0, hn: 0, ct: 0.07,
-  bodrum: false, bodrumKat: 0,
   combos: [], selected: [],
   tx: 0, vtX: 0, ty: 0, vtY: 0,
   modalTopX: [], modalTopY: [],
@@ -2175,9 +2163,10 @@ async function incrementFetchMass(silent = false) {
     if (!massRes.etabsConnected) throw new Error(massRes.error || t('drift.error.notConnected'));
 
     const excluded = new Set(['base']);
-    if (incrementState.bodrum && incrementState.bodrumKat > 0) {
-      const basement = determineBasementStories(storiesRes.stories || [], incrementState.bodrumKat);
-      basement.forEach(name => excluded.add(name.toLowerCase()));
+    const basementCount = rigidBasementCount(incrementState, storiesRes.stories || []);
+    if (basementCount > 0) {
+      determineBasementStories(storiesRes.stories || [], basementCount)
+        .forEach(name => excluded.add(name.toLowerCase()));
     }
 
     const f = massRes.fields;
@@ -2282,8 +2271,7 @@ async function incrementFetchVt(direction, silent = false) {
     if (perStory.length === 0) throw new Error(t('increment.error.noStoryForces', { combo: matchingCombo }));
 
     perStory.reverse(); // table order is top->bottom; desktop reverses to bottom->top
-    const bodrumKat = incrementState.bodrum ? incrementState.bodrumKat : 0;
-    const targetRow = Math.min(bodrumKat, perStory.length - 1);
+    const targetRow = Math.min(rigidBasementCount(incrementState, incrementState.stories), perStory.length - 1);
     const target = perStory[targetRow];
     const vt = Math.abs(direction === 'X' ? target.vx : target.vy);
 
@@ -2387,8 +2375,6 @@ function renderIncrementSetupPanel() {
   panel.innerHTML = `
     <div class="panel-heading compact"><div><span class="step-number">1</span><div><h2>${t('increment.params.title')}</h2><p>${t('moduleData.description')}</p></div></div></div>
     <div class="field-grid">
-      ${checkboxField('incBodrum', 'drift.params.basement')}
-      ${numberField('incBodrumKat', 'drift.params.basementCount', { step: 1, min: 0, max: 10 })}
       ${numberField('incMt', 'increment.params.mt', { min: 0 })}
       ${numberField('incHn', 'increment.params.hn', { min: 0 })}
       ${numberField('incCt', 'increment.params.ct', { min: 0 })}
@@ -2425,16 +2411,6 @@ function renderIncrementSetupPanel() {
   bind('incMt', 'mt');
   bind('incHn', 'hn');
   bind('incCt', 'ct');
-  bind('incBodrumKat', 'bodrumKat', true);
-
-  const bodrum = $('#incBodrum', panel);
-  const bodrumKat = $('#incBodrumKat', panel);
-  bodrum.checked = incrementState.bodrum;
-  bodrumKat.disabled = !bodrum.checked;
-  bodrum.addEventListener('change', () => {
-    incrementState.bodrum = bodrum.checked;
-    bodrumKat.disabled = !bodrum.checked;
-  });
 
   // Mass and modal periods come straight from the model when the module opens.
   // Vt additionally needs a direction-matching combination, so it is (re)read
@@ -2571,8 +2547,6 @@ function renderColumnAxialSetupPanel() {
     <div class="field-grid">
       ${numberField('caFck', 'columnAxial.params.fck', { min: 10, max: 90 })}
       ${numberField('caLimit', 'columnAxial.params.limit', { min: 0.1, max: 1 })}
-      ${checkboxField('caBodrum', 'drift.params.basement')}
-      ${numberField('caBodrumKat', 'drift.params.basementCount', { step: 1, min: 0, max: 10 })}
     </div>
     ${comboPicker('ca', 'columnAxial.combos.hint')}
     ${rigidSection('ca', columnAxialState)}
@@ -2592,16 +2566,6 @@ function renderColumnAxialSetupPanel() {
   };
   bind('caFck', 'fck');
   bind('caLimit', 'limit');
-  bind('caBodrumKat', 'bodrumKat', true);
-
-  const bodrum = $('#caBodrum', panel);
-  const bodrumKat = $('#caBodrumKat', panel);
-  bodrum.checked = columnAxialState.bodrum;
-  bodrumKat.disabled = !bodrum.checked;
-  bodrum.addEventListener('change', () => {
-    columnAxialState.bodrum = bodrum.checked;
-    bodrumKat.disabled = !bodrum.checked;
-  });
 
   initComboPicker('ca', columnAxialState);
   bindSetupSections(panel);
@@ -2824,7 +2788,8 @@ async function runColumnAxialCheck() {
 
     const results = columnAxialCalculate(
       columnAxialState.columnForces, columnAxialState.frameAssignments, columnAxialState.stories,
-      columnAxialState.fck, columnAxialState.limit, columnAxialState.bodrum, columnAxialState.bodrumKat
+      columnAxialState.fck, columnAxialState.limit,
+      rigidIsActive(columnAxialState), rigidBasementCount(columnAxialState, columnAxialState.stories)
     );
     columnAxialState.lastResults = results;
     renderColumnAxialResultsTable();

@@ -7,7 +7,7 @@
   <meta name="description" content="Web-based structural engineering checks and reporting for ETABS models.">
   <title>Structural Engineering Assistant</title>
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="styles.css?v=1.11.0">
+  <link rel="stylesheet" href="styles.css?v=1.11.1">
 </head>
 <body>
   <div class="app-shell">
@@ -65,14 +65,14 @@
         <a class="nav-item" href="#beam-axial" data-view="beam-axial"><span class="nav-icon">⇥</span><span data-i18n="module.beamAxial.title">Beam Axial Load</span></a>
       </nav>
       <div class="sidebar-footer">
-        <span class="version-badge" id="versionBadge">v1.11.0</span>
+        <span class="version-badge" id="versionBadge">v1.11.1</span>
         <nav class="doc-links" data-i18n-aria-label="docs.aria" aria-label="Documentation">
           <a href="https://github.com/simsekahmet/structural_engineering_assistant/blob/main/docs/STATUS.md" target="_blank" rel="noopener" data-i18n="docs.status">Module status</a>
           <a href="https://github.com/simsekahmet/structural_engineering_assistant/blob/main/docs/VALIDATION.md" target="_blank" rel="noopener" data-i18n="docs.validation">Validation cases</a>
           <a href="https://github.com/simsekahmet/structural_engineering_assistant/blob/main/docs/KNOWN-ISSUES.md" target="_blank" rel="noopener" data-i18n="docs.known">Known issues</a>
           <a href="https://github.com/simsekahmet/structural_engineering_assistant/releases" target="_blank" rel="noopener" data-i18n="docs.releases">Release notes</a>
         </nav>
-        <p class="footer-note"><strong data-i18n="about.note.label">Important:</strong> <span data-i18n="about.note.text">Engineering results must be reviewed and approved by the responsible structural engineer.</span></p>
+        <p class="footer-note"><strong data-i18n="about.note.label">Warning:</strong> <span data-i18n="about.note.text">Engineering results must be reviewed and approved by the responsible structural engineer.</span></p>
       </div>
     </aside>
 
@@ -80,7 +80,6 @@
       <section class="view active" id="dashboard" aria-labelledby="dashboardTitle">
         <div class="page-heading">
           <div>
-            <span class="eyebrow" data-i18n="dashboard.eyebrow">PROJECT CENTER</span>
             <h1 id="dashboardTitle" data-i18n="dashboard.title">Structural Engineering Dashboard</h1>
             <p data-i18n="dashboard.description">Connect your ETABS model, manage engineering checks, and report results from one workspace.</p>
           </div>
@@ -89,16 +88,13 @@
 
         <div class="stat-grid">
           <article class="stat-card accent-blue">
-            <span class="stat-icon">◫</span><div><small data-i18n="model.active">Active model</small><strong id="activeModelStat">—</strong><span data-i18n="stat.connectionRequired">ETABS connection required</span></div>
+            <span class="stat-icon">◫</span><div><small data-i18n="model.active">Active model</small><strong id="activeModelStat">—</strong></div>
           </article>
           <article class="stat-card accent-violet">
-            <span class="stat-icon">✓</span><div><small data-i18n="stat.readyModules">Interface modules</small><strong>14</strong><span data-i18n="stat.migrationDefined">Calculation engines not migrated yet</span></div>
+            <span class="stat-icon">✓</span><div><small data-i18n="stat.readyModules">Interface modules</small><strong id="moduleCountStat">9</strong></div>
           </article>
           <article class="stat-card accent-green">
             <span class="stat-icon">◎</span><div><small data-i18n="stat.lastCheck">Last check</small><strong id="lastCheckStat">—</strong><span id="lastCheckSub" data-i18n="stat.noCheck">No check has been run</span></div>
-          </article>
-          <article class="stat-card accent-amber">
-            <span class="stat-icon">⇩</span><div><small data-i18n="stat.reports">Reports</small><strong>0</strong><span data-i18n="stat.reportTypes">Excel / PDF outputs</span></div>
           </article>
         </div>
 
@@ -144,7 +140,7 @@
               <p data-i18n="about.status.text">The interface and ETABS connection agent are available, and engineering checks run against the active model through the local bridge.</p>
             </article>
           </div>
-          <div class="about-note"><strong data-i18n="about.note.label">Important:</strong> <span data-i18n="about.note.text">Engineering results must be reviewed and approved by the responsible structural engineer.</span></div>
+          <div class="about-note"><strong data-i18n="about.note.label">Warning:</strong> <span data-i18n="about.note.text">Engineering results must be reviewed and approved by the responsible structural engineer.</span></div>
         </section>
       </section>
 
@@ -205,7 +201,7 @@
     </form>
   </dialog>
 
-  <script src="version.js?v=1.11.0"></script>
-  <script src="app.js?v=1.11.0" defer></script>
+  <script src="version.js?v=1.11.1"></script>
+  <script src="app.js?v=1.11.1" defer></script>
 </body>
 </html>
