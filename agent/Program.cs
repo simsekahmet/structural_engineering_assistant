@@ -976,15 +976,26 @@ internal sealed class EtabsConnection : IDisposable
     {
         try
         {
-            var analyze = _sapModelInterface!.GetProperty("Analyze")?.GetValue(_sapModel);
-            if (analyze is null) return null;
-            var method = analyze.GetType().GetMethod("GetCaseStatus");
-            if (method is null) return null;
+            var analyzeProp = _sapModelInterface!.GetProperty("Analyze");
+            if (analyzeProp is null) { AgentLog.Write("GetCaseStatus: Analyze property not found"); return null; }
+            var analyze = analyzeProp.GetValue(_sapModel);
+            if (analyze is null) { AgentLog.Write("GetCaseStatus: Analyze value was null"); return null; }
+
+            // The COM object is IUnknown-based, so GetType() gives the RCW, not the cAnalyze
+            // interface — resolve the method off the property's declared interface type instead.
+            var method = analyzeProp.PropertyType.GetMethod("GetCaseStatus")
+                         ?? analyze.GetType().GetMethod("GetCaseStatus");
+            if (method is null) { AgentLog.Write("GetCaseStatus: method not found on " + analyzeProp.PropertyType.FullName); return null; }
 
             var args = new object?[] { 0, Array.Empty<string>(), Array.Empty<int>() };
             var ret = method.Invoke(analyze, args);
-            if (ret is int code && code != 0) return null;
-            if (args[2] is not int[] statuses || statuses.Length == 0) return null;
+            if (ret is int code && code != 0) { AgentLog.Write($"GetCaseStatus: returned {code}"); return null; }
+            if (args[2] is not int[] statuses || statuses.Length == 0)
+            {
+                AgentLog.Write($"GetCaseStatus: status array was {(args[2]?.GetType().Name ?? "null")}");
+                return null;
+            }
+            AgentLog.Write($"GetCaseStatus: {statuses.Length} cases, statuses=[{string.Join(",", statuses)}]");
             return statuses.All(s => s == 4);
         }
         catch (Exception ex) { AgentLog.Write($"GetCaseStatus failed: {ex.Message}"); return null; }
