@@ -1,6 +1,6 @@
 # Known issues and limitations
 
-Current as of **web v1.7.0 / agent v1.7.0**. Release notes live on the
+Current as of **web v1.8.0 / agent v1.8.0**. Release notes live on the
 [Releases page](https://github.com/simsekahmet/structural_engineering_assistant/releases).
 
 ## Limitations you must be aware of before relying on a result

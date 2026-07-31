@@ -6,4 +6,4 @@
 //
 // The `?v=` query strings on styles.css / app.js in index.html are cache-busting
 // tokens that must match this value; scripts/check-version.sh fails CI if they drift.
-const APP_VERSION = '1.7.0';
+const APP_VERSION = '1.8.0';

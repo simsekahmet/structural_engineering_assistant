@@ -46,9 +46,9 @@ T = 0.100 s — the 0.001 difference is the sweep's step granularity, not a disc
 
 ---
 
-## VC-02 — Scaling Calculation (β), Tmax cap
+## VC-02 — Base Shear Amplification (β), Tmax cap
 
-**Module:** Scaling Calculation · **Code:** TBDY 2018 §4.7.3, Eq. 4.19
+**Module:** Base Shear Amplification · **Code:** TBDY 2018 §4.7.3, Eq. 4.19
 
 Verified during migration against the desktop `artirim_hesabi.cs` on a live model:
 the three raw ETABS reads (mass from "Mass Summary by Story" excluding base and
@@ -69,6 +69,40 @@ Verified during migration on a live model: 54 real columns were read, of which 2
 Ac, Ac·fck and ratio were reproduced by hand and matched the tool.
 
 **Result: PASS.** A written-out worked example is still to be added here.
+
+---
+
+## VC-04 — Wall Axial Load
+
+**Module:** Wall Axial Load · **Code:** TBDY 2018 §7.6 (wall limit 0.35)
+
+Reproduces a row from the reference desktop report:
+
+| Input | Value |
+| --- | --- |
+| Story / Pier / Combo | Story11 / P1 / ENVE_EQU |
+| fck | 40 MPa |
+| bw (thickness) | 63 cm |
+| lw (wall length, end to end) | 545 cm |
+| Nd (governing \|P\|) | 1312 kN |
+
+**Hand calculation**
+
+```
+Ac      = bw · lw        = 63 · 545        = 34 335 cm²
+Ac·fck  = Ac · fck · 0.1 = 34 335 · 40 · 0.1 = 137 340 kN
+Oran    = Nd / (Ac·fck)  = 1312 / 137 340   = 0.0096
+Durum   = 0.0096 ≤ 0.35  → OK
+```
+
+**Tool output:** Ac = 34 335 cm², ratio = 0.0096 → displayed as **0.01**, **OK**.
+
+**Note on Ac:** the reference report prints Ac = 34 200 cm² because its b and d columns
+are rounded for display (34 200 / 545 = 62.75 cm, not exactly 63). Using the rounded
+inputs shown gives 0.00955 and using the reference Ac gives 0.00959 — both round to the
+same displayed 0.01, so the difference is presentation, not method.
+
+**Result: PASS.**
 
 ---
 

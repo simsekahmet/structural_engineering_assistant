@@ -65,6 +65,9 @@ internal sealed class AgentApplicationContext : ApplicationContext
         _server = new LocalBridgeServer(
             GetSnapshotOnUiThread,
             GetCombinationsOnUiThread,
+            GetAvailableTablesOnUiThread,
+            GetPierForcesOnUiThread,
+            GetPierSectionsOnUiThread,
             GetStoriesOnUiThread,
             GetStoryDriftsOnUiThread,
             GetTableOnUiThread,
@@ -104,6 +107,30 @@ internal sealed class AgentApplicationContext : ApplicationContext
             return (NameListResult)_dispatcher.Invoke(new Func<NameListResult>(_etabs.GetCombinationsAndCases));
 
         return _etabs.GetCombinationsAndCases();
+    }
+
+    private PierForcesResult GetPierForcesOnUiThread(string[] combos)
+    {
+        if (_dispatcher.InvokeRequired)
+            return (PierForcesResult)_dispatcher.Invoke(new Func<string[], PierForcesResult>(_etabs.GetPierForces), new object[] { combos });
+
+        return _etabs.GetPierForces(combos);
+    }
+
+    private PierSectionsResult GetPierSectionsOnUiThread()
+    {
+        if (_dispatcher.InvokeRequired)
+            return (PierSectionsResult)_dispatcher.Invoke(new Func<PierSectionsResult>(_etabs.GetPierSections));
+
+        return _etabs.GetPierSections();
+    }
+
+    private NameListResult GetAvailableTablesOnUiThread()
+    {
+        if (_dispatcher.InvokeRequired)
+            return (NameListResult)_dispatcher.Invoke(new Func<NameListResult>(_etabs.GetAvailableTables));
+
+        return _etabs.GetAvailableTables();
     }
 
     private StoriesResult GetStoriesOnUiThread()
@@ -376,6 +403,169 @@ internal sealed class EtabsConnection : IDisposable
     // Generic ETABS database-table reader used by most calculation modules. Returns the raw
     // display table (fields + string rows). When combos are supplied, they are selected for
     // output first (needed for result tables such as Story Forces / Story Drifts).
+    // Pier axial forces for the selected combos. Piers are NOT frame objects and their
+    // results are not in any display table — ETABS exposes them only through the dedicated
+    // Results.PierForce call, which is what the desktop's perde_eksenel.cs uses.
+    public PierForcesResult GetPierForces(string[] combos)
+    {
+        if (!EnsureModelReady(out var error))
+            return new PierForcesResult(true, false, error, Array.Empty<PierForceRow>());
+
+        try
+        {
+            var sap = _sapModel!;
+            var resultsProp = _sapModelInterface!.GetProperty("Results")!;
+            var results = resultsProp.GetValue(sap)!;
+
+            if (combos.Length > 0)
+            {
+                var setupProp = resultsProp.PropertyType.GetProperty("Setup")!;
+                var setup = setupProp.GetValue(results)!;
+                var setupType = setupProp.PropertyType;
+                setupType.GetMethod("DeselectAllCasesAndCombosForOutput")!.Invoke(setup, null);
+                var setCombo = setupType.GetMethods().First(m => m.Name == "SetComboSelectedForOutput");
+                var setCase = setupType.GetMethods().First(m => m.Name == "SetCaseSelectedForOutput");
+                foreach (var c in combos)
+                {
+                    try { setCombo.Invoke(setup, new object?[] { c, true }); } catch { }
+                    try { setCase.Invoke(setup, new object?[] { c, true }); } catch { }
+                }
+            }
+
+            var pierForce = resultsProp.PropertyType.GetMethod("PierForce");
+            if (pierForce is null)
+                return new PierForcesResult(true, true, "Results.PierForce is not available in this ETABS build.", Array.Empty<PierForceRow>());
+
+            // (ref NumberResults, ref StoryName, ref PierName, ref LoadCase, ref StepType,
+            //  ref P, ref V2, ref V3, ref T, ref M2, ref M3)
+            var args = new object?[]
+            {
+                0, Array.Empty<string>(), Array.Empty<string>(), Array.Empty<string>(), Array.Empty<string>(),
+                Array.Empty<double>(), Array.Empty<double>(), Array.Empty<double>(),
+                Array.Empty<double>(), Array.Empty<double>(), Array.Empty<double>()
+            };
+            pierForce.Invoke(results, args);
+
+            var count = Convert.ToInt32(args[0] ?? 0);
+            var stories = args[1] as string[] ?? Array.Empty<string>();
+            var piers = args[2] as string[] ?? Array.Empty<string>();
+            var cases = args[3] as string[] ?? Array.Empty<string>();
+            var p = args[5] as double[] ?? Array.Empty<double>();
+            var v2 = args[6] as double[] ?? Array.Empty<double>();
+            var v3 = args[7] as double[] ?? Array.Empty<double>();
+
+            var rows = new List<PierForceRow>(count);
+            for (int i = 0; i < count; i++)
+            {
+                rows.Add(new PierForceRow(
+                    (stories.Length > i ? stories[i] : "").Trim(),
+                    (piers.Length > i ? piers[i] : "").Trim(),
+                    cases.Length > i ? cases[i] : "",
+                    p.Length > i ? p[i] : 0,
+                    v2.Length > i ? v2[i] : 0,
+                    v3.Length > i ? v3[i] : 0));
+            }
+            return new PierForcesResult(true, true, null, rows.ToArray());
+        }
+        catch (Exception ex)
+        {
+            AgentLog.Write($"GetPierForces failed: {ex}");
+            return new PierForcesResult(true, false, ex.Message, Array.Empty<PierForceRow>());
+        }
+    }
+
+    // Per-pier, per-story section geometry. widthBot is the wall LENGTH (lw, end-to-end)
+    // and thickBot the thickness (bw); both come back in model units (m) and are converted
+    // to cm here to match the desktop report.
+    public PierSectionsResult GetPierSections()
+    {
+        if (!EnsureModelReady(out var error))
+            return new PierSectionsResult(true, false, error, Array.Empty<PierSectionRow>());
+
+        try
+        {
+            var sap = _sapModel!;
+            var pierProp = _sapModelInterface!.GetProperty("PierLabel")!;
+            var pierLabel = pierProp.GetValue(sap)!;
+            var pierType = pierProp.PropertyType;
+
+            var nameArgs = new object?[] { 0, Array.Empty<string>() };
+            pierType.GetMethod("GetNameList")!.Invoke(pierLabel, nameArgs);
+            var names = nameArgs[1] as string[] ?? Array.Empty<string>();
+
+            var getSection = pierType.GetMethod("GetSectionProperties");
+            if (getSection is null)
+                return new PierSectionsResult(true, true, "PierLabel.GetSectionProperties is not available.", Array.Empty<PierSectionRow>());
+
+            var rows = new List<PierSectionRow>();
+            foreach (var pier in names)
+            {
+                // (Name, ref NumberStories, ref StoryName, ref AxisAngle, ref NumAreaObjs, ref NumLineObjs,
+                //  ref WidthBot, ref ThickBot, ref WidthTop, ref ThickTop, ref MatProp,
+                //  ref CGBotX, ref CGBotY, ref CGBotZ, ref CGTopX, ref CGTopY, ref CGTopZ)
+                var a = new object?[]
+                {
+                    pier, 0, Array.Empty<string>(), Array.Empty<double>(), Array.Empty<int>(), Array.Empty<int>(),
+                    Array.Empty<double>(), Array.Empty<double>(), Array.Empty<double>(), Array.Empty<double>(), Array.Empty<string>(),
+                    Array.Empty<double>(), Array.Empty<double>(), Array.Empty<double>(),
+                    Array.Empty<double>(), Array.Empty<double>(), Array.Empty<double>()
+                };
+                try { getSection.Invoke(pierLabel, a); }
+                catch (Exception ex) { AgentLog.Write($"GetSectionProperties({pier}) failed: {ex.Message}"); continue; }
+
+                var storyCount = Convert.ToInt32(a[1] ?? 0);
+                var stories = a[2] as string[] ?? Array.Empty<string>();
+                var widthBot = a[6] as double[] ?? Array.Empty<double>();
+                var thickBot = a[7] as double[] ?? Array.Empty<double>();
+                var matProp = a[10] as string[] ?? Array.Empty<string>();
+
+                for (int i = 0; i < storyCount; i++)
+                {
+                    rows.Add(new PierSectionRow(
+                        pier,
+                        (stories.Length > i ? stories[i] : "").Trim(),
+                        widthBot.Length > i ? widthBot[i] * 100 : 0,
+                        thickBot.Length > i ? thickBot[i] * 100 : 0,
+                        matProp.Length > i ? matProp[i] : ""));
+                }
+            }
+            return new PierSectionsResult(true, true, null, rows.ToArray());
+        }
+        catch (Exception ex)
+        {
+            AgentLog.Write($"GetPierSections failed: {ex}");
+            return new PierSectionsResult(true, false, ex.Message, Array.Empty<PierSectionRow>());
+        }
+    }
+
+    // Lists the table keys ETABS currently exposes for this model. Read-only, and the
+    // only reliable way to discover the exact key strings (they differ between ETABS
+    // versions and depend on what the model actually contains, e.g. pier tables only
+    // appear once piers are defined).
+    public NameListResult GetAvailableTables()
+    {
+        if (!EnsureModelReady(out var error))
+            return new NameListResult(true, false, error, Array.Empty<string>());
+
+        try
+        {
+            var dbProp = _sapModelInterface!.GetProperty("DatabaseTables")!;
+            var db = dbProp.GetValue(_sapModel)!;
+            var method = dbProp.PropertyType.GetMethod("GetAvailableTables");
+            if (method is null) return new NameListResult(true, true, "GetAvailableTables not available.", Array.Empty<string>());
+
+            var args = new object?[] { 0, Array.Empty<string>(), Array.Empty<string>(), Array.Empty<int>() };
+            method.Invoke(db, args);
+            var keys = args[1] as string[] ?? Array.Empty<string>();
+            return new NameListResult(true, true, null, keys);
+        }
+        catch (Exception ex)
+        {
+            AgentLog.Write($"GetAvailableTables failed: {ex.Message}");
+            return new NameListResult(true, false, ex.Message, Array.Empty<string>());
+        }
+    }
+
     public TableResult GetTable(string tableName, string[] combos)
     {
         if (string.IsNullOrWhiteSpace(tableName))
@@ -859,6 +1049,9 @@ internal sealed class LocalBridgeServer : IDisposable
 
     private readonly Func<EtabsSnapshot> _getSnapshot;
     private readonly Func<NameListResult> _getCombinations;
+    private readonly Func<NameListResult> _getAvailableTables;
+    private readonly Func<string[], PierForcesResult> _getPierForces;
+    private readonly Func<PierSectionsResult> _getPierSections;
     private readonly Func<StoriesResult> _getStories;
     private readonly Func<string[], StoryDriftsResult> _getStoryDrifts;
     private readonly Func<string, string[], TableResult> _getTable;
@@ -870,6 +1063,9 @@ internal sealed class LocalBridgeServer : IDisposable
     public LocalBridgeServer(
         Func<EtabsSnapshot> getSnapshot,
         Func<NameListResult> getCombinations,
+        Func<NameListResult> getAvailableTables,
+        Func<string[], PierForcesResult> getPierForces,
+        Func<PierSectionsResult> getPierSections,
         Func<StoriesResult> getStories,
         Func<string[], StoryDriftsResult> getStoryDrifts,
         Func<string, string[], TableResult> getTable,
@@ -878,6 +1074,9 @@ internal sealed class LocalBridgeServer : IDisposable
     {
         _getSnapshot = getSnapshot;
         _getCombinations = getCombinations;
+        _getAvailableTables = getAvailableTables;
+        _getPierForces = getPierForces;
+        _getPierSections = getPierSections;
         _getStories = getStories;
         _getStoryDrifts = getStoryDrifts;
         _getTable = getTable;
@@ -962,6 +1161,28 @@ internal sealed class LocalBridgeServer : IDisposable
                     if (path == "/api/etabs/combinations")
                     {
                         await WriteResponseAsync(stream, 200, "OK", _getCombinations(), origin, cancellationToken);
+                        return;
+                    }
+
+                    if (path == "/api/etabs/tables")
+                    {
+                        await WriteResponseAsync(stream, 200, "OK", _getAvailableTables(), origin, cancellationToken);
+                        return;
+                    }
+
+                    if (path == "/api/etabs/pier-forces")
+                    {
+                        query.TryGetValue("combos", out var pierCombos);
+                        var names = string.IsNullOrWhiteSpace(pierCombos)
+                            ? Array.Empty<string>()
+                            : pierCombos.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                        await WriteResponseAsync(stream, 200, "OK", _getPierForces(names), origin, cancellationToken);
+                        return;
+                    }
+
+                    if (path == "/api/etabs/pier-sections")
+                    {
+                        await WriteResponseAsync(stream, 200, "OK", _getPierSections(), origin, cancellationToken);
                         return;
                     }
 
@@ -1056,6 +1277,15 @@ internal sealed class LocalBridgeServer : IDisposable
                         if (req is null) { await WriteResponseAsync(stream, 400, "Bad Request", new { error = "Invalid request body." }, origin, cancellationToken); return; }
                         var bytes = BeamAxialExcelReport.Build(req.Fck, req.Limit, req.Rows);
                         await WriteBinaryResponseAsync(stream, 200, "OK", bytes, "Kiris_Eksenel_Raporu.xlsx", origin, cancellationToken);
+                        return;
+                    }
+
+                    if (path == "/api/etabs/export/wall-axial")
+                    {
+                        var req = JsonSerializer.Deserialize<WallAxialExportRequest>(json, JsonOptions);
+                        if (req is null) { await WriteResponseAsync(stream, 400, "Bad Request", new { error = "Invalid request body." }, origin, cancellationToken); return; }
+                        var bytes = WallAxialExcelReport.Build(req.Fck, req.Limit, req.Rows);
+                        await WriteBinaryResponseAsync(stream, 200, "OK", bytes, "Perde_Eksenel_Raporu.xlsx", origin, cancellationToken);
                         return;
                     }
 
@@ -1288,6 +1518,15 @@ internal sealed record SelectResult(bool AgentOnline, bool EtabsConnected, strin
 internal sealed record FrameSectionInfo(string Unique, string Label, string Story, string Section, double H, double B);
 
 internal sealed record FrameSectionsResult(bool AgentOnline, bool EtabsConnected, string? Error, FrameSectionInfo[] Sections);
+
+internal sealed record PierForceRow(string Story, string Pier, string LoadCase, double P, double V2, double V3);
+
+internal sealed record PierForcesResult(bool AgentOnline, bool EtabsConnected, string? Error, PierForceRow[] Rows);
+
+// Lw = wall length end-to-end (cm), Bw = thickness (cm).
+internal sealed record PierSectionRow(string Pier, string Story, double Lw, double Bw, string Material);
+
+internal sealed record PierSectionsResult(bool AgentOnline, bool EtabsConnected, string? Error, PierSectionRow[] Rows);
 
 internal sealed record SelectFramesRequest(FrameKey[] Items);
 
@@ -1655,6 +1894,92 @@ internal static class BeamShearExcelReport
             condNotOk.Formula = "\"OK\"";
             condNotOk.Style.Font.Color.Color = DrawingColor.Red;
             condNotOk.Style.Font.Bold = true;
+        }
+
+        ws.Cells.AutoFitColumns();
+        return package.GetAsByteArray();
+    }
+}
+
+internal sealed record WallAxialExportRow(string Story, string Pier, string LoadCase, double B, double D, double P);
+
+internal sealed record WallAxialExportRequest(double Fck, double Limit, WallAxialExportRow[] Rows);
+
+// Perde Eksenel report. Column layout matches the desktop's ExportExcel:
+// Story | Pier | Load Case | fck | b(cm) | d(cm) | P(kN) | Ac(cm2) | Oran | Durum.
+// Geometry and P are hard values; fck, Ac, Oran and Durum are live formulas referencing
+// the fck ($M$2) and limit ($M$3) parameter cells, so editing any input recomputes the check.
+internal static class WallAxialExcelReport
+{
+    public static byte[] Build(double fck, double limit, IReadOnlyList<WallAxialExportRow> rows)
+    {
+        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+        using var package = new ExcelPackage();
+        var ws = package.Workbook.Worksheets.Add("Perde Eksenel");
+
+        ws.Cells[1, 1, 1, 10].Merge = true;
+        ws.Cells[1, 1].Value = "PERDE EKSENEL YÜK KONTROLÜ";
+        ws.Cells[1, 1].Style.Font.Size = 14;
+        ws.Cells[1, 1].Style.Font.Bold = true;
+        ws.Cells[1, 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+        ws.Cells[1, 1].Style.Fill.PatternType = ExcelFillStyle.Solid;
+        ws.Cells[1, 1].Style.Fill.BackgroundColor.SetColor(DrawingColor.FromArgb(218, 232, 252));
+
+        // Parameter block (referenced by every row formula).
+        ws.Cells[2, 12].Value = "fck (MPa)";
+        ws.Cells[2, 13].Value = fck;
+        ws.Cells[3, 12].Value = "Limit";
+        ws.Cells[3, 13].Value = limit;
+        ws.Cells[2, 12].Style.Font.Italic = true;
+        ws.Cells[3, 12].Style.Font.Italic = true;
+
+        string[] headers = { "Story", "Pier", "Load Case/Combo", "fck", "b (cm)", "d (cm)", "P (kN)", "Ac (cm2)", "Oran", "Durum" };
+        for (int i = 0; i < headers.Length; i++)
+        {
+            var cell = ws.Cells[2, i + 1];
+            cell.Value = headers[i];
+            cell.Style.Font.Bold = true;
+            cell.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            cell.Style.Fill.PatternType = ExcelFillStyle.Solid;
+            cell.Style.Fill.BackgroundColor.SetColor(DrawingColor.FromArgb(240, 240, 240));
+        }
+
+        const int startRow = 3;
+        for (int i = 0; i < rows.Count; i++)
+        {
+            var r = startRow + i;
+            var item = rows[i];
+            ws.Cells[r, 1].Value = item.Story;
+            ws.Cells[r, 2].Value = item.Pier;
+            ws.Cells[r, 3].Value = item.LoadCase;
+            ws.Cells[r, 4].Formula = "$M$2";
+            ws.Cells[r, 5].Value = item.B;
+            ws.Cells[r, 6].Value = item.D;
+            ws.Cells[r, 7].Value = item.P;
+            ws.Cells[r, 8].Formula = $"E{r}*F{r}";
+            ws.Cells[r, 9].Formula = $"IF(H{r}*D{r}=0,0,G{r}/(H{r}*D{r}*0.1))";
+            ws.Cells[r, 10].Formula = $"IF(I{r}<=$M$3,\"OK\",\"NOT OK\")";
+            ws.Cells[r, 9].Style.Numberformat.Format = "0.00";
+            ws.Cells[r, 10].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+        }
+
+        int lastRow = startRow + rows.Count - 1;
+        if (rows.Count > 0)
+        {
+            var ratioRange = ws.Cells[$"I{startRow}:I{lastRow}"];
+            var scale = ratioRange.ConditionalFormatting.AddThreeColorScale();
+            scale.LowValue.Color = DrawingColor.LightGreen;
+            scale.MiddleValue.Color = DrawingColor.Yellow;
+            scale.HighValue.Color = DrawingColor.Salmon;
+
+            var statusRange = ws.Cells[$"J{startRow}:J{lastRow}"];
+            var okRule = statusRange.ConditionalFormatting.AddEqual();
+            okRule.Formula = "\"OK\"";
+            okRule.Style.Font.Color.Color = DrawingColor.Green;
+            var badRule = statusRange.ConditionalFormatting.AddNotEqual();
+            badRule.Formula = "\"OK\"";
+            badRule.Style.Font.Color.Color = DrawingColor.Red;
+            badRule.Style.Font.Bold = true;
         }
 
         ws.Cells.AutoFitColumns();

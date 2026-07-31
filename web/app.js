@@ -5,7 +5,7 @@ const moduleDefinitions = [
   { id: 'pdelta', key: 'pdelta', icon: 'ϑ', categoryKey: 'category.analysis', ready: true },
   { id: 'column-axial', key: 'columnAxial', icon: '▥', categoryKey: 'category.memberChecks', ready: true },
   { id: 'wall-shear', key: 'wallShear', icon: '▤', categoryKey: 'category.memberChecks' },
-  { id: 'wall-axial', key: 'wallAxial', icon: '▯', categoryKey: 'category.memberChecks' },
+  { id: 'wall-axial', key: 'wallAxial', icon: '▯', categoryKey: 'category.memberChecks', ready: true },
   { id: 'beam-shear', key: 'beamShear', icon: '═', categoryKey: 'category.memberChecks', ready: true },
   { id: 'beam-axial', key: 'beamAxial', icon: '⇥', categoryKey: 'category.memberChecks', ready: true },
   { id: 'column-schedule', key: 'columnSchedule', icon: '▦', categoryKey: 'category.schedules' },
@@ -72,6 +72,14 @@ const translations = {
     'pdelta.basis.limitFormula': 'Limit = 0.12·D/(Ch·R)',
     'pdelta.basis.driftNote': 'Δi/hi is read directly from the ETABS story-drift table, so hi is already divided out.',
     'columnAxial.basis.worst': 'Governing column', 'beam.basis.worst': 'Governing beam',
+    'wallAxial.params.title': 'Calculation Parameters', 'wallAxial.table.pier': 'Pier', 'wallAxial.table.lw': 'lw (cm)',
+    'wallAxial.combos.hint': 'Pier forces are read for the selected combinations; the governing (max |P|) result per story and pier is checked.',
+    'wallAxial.status.passed': 'All walls are within the axial-load limit.', 'wallAxial.status.failed': '{count} wall(s) exceed the axial-load limit!',
+    'wallAxial.error.noPierForces': 'No pier forces were returned. Confirm piers are assigned and the analysis has been run for the selected combinations.',
+    'wallAxial.basis.worst': 'Governing pier',
+    'wallAxial.basis.clause': 'wall axial load limit (0.35, versus 0.40 for columns)',
+    'wallAxial.basis.lwNote': 'lw is the wall length end to end, read from PierLabel.GetSectionProperties (widthBot); bw is the thickness (thickBot).',
+    'wallAxial.basis.pNote': 'Nd is the governing |P| across the selected combinations, from Results.PierForce.',
     'columnAxial.basis.signNote': 'Nd is taken as the compression (Min) value from the ETABS element-force table and used as a magnitude.',
     'beam.basis.vcOff': 'Vc contribution switched off by the user (Vcr = 0)',
     'beamAxial.basis.clause': 'members whose axial load exceeds the beam limit must be detailed as columns',
@@ -104,7 +112,7 @@ const translations = {
     'architecture.agent': 'Windows Agent', 'nav.dashboard': 'Dashboard',
     'dialog.note': 'A browser cannot access COM objects directly. The local Windows tray agent reads the active ETABS model and returns data to the web interface as JSON. It is bound to the loopback address only and rejects requests from any other origin; the single endpoint that touches the model does nothing but select objects.',
     'module.spectrum.title': 'Design Spectrum', 'module.spectrum.description': 'Create the horizontal elastic design spectrum using TBDY 2018 parameters and transfer it to the ETABS model.',
-    'module.increment.title': 'Scaling Calculation', 'module.increment.description': 'Calculate dynamic scaling factors from modal results and base shear forces.',
+    'module.increment.title': 'Base Shear Amplification', 'module.increment.description': 'Calculate the base shear amplification factor from modal results and analysis base shear.',
     'module.drift.title': 'Interstory Drift', 'module.drift.description': 'Calculate effective interstory drifts and compare them with TBDY 2018 limits.',
     'module.pdelta.title': 'Second-Order Effects', 'module.pdelta.description': 'Evaluate story stability coefficients and second-order amplification requirements.',
     'module.columnAxial.title': 'Column Axial Load', 'module.columnAxial.description': 'Check column axial load demands against section capacities and code limits.',
@@ -254,6 +262,14 @@ const translations = {
     'pdelta.basis.limitFormula': 'Sınır = 0,12·D/(Ch·R)',
     'pdelta.basis.driftNote': 'Δi/hi doğrudan ETABS kat ötelemesi tablosundan okunur; hi zaten bölünmüş durumdadır.',
     'columnAxial.basis.worst': 'Belirleyici kolon', 'beam.basis.worst': 'Belirleyici kiriş',
+    'wallAxial.params.title': 'Hesap Parametreleri', 'wallAxial.table.pier': 'Perde (Pier)', 'wallAxial.table.lw': 'lw (cm)',
+    'wallAxial.combos.hint': 'Perde kuvvetleri seçilen kombinasyonlar için okunur; her kat ve perde için belirleyici (maks |P|) sonuç tahkik edilir.',
+    'wallAxial.status.passed': 'Tüm perdeler eksenel yük sınırında.', 'wallAxial.status.failed': '{count} perde eksenel yük sınırını aşıyor!',
+    'wallAxial.error.noPierForces': 'Perde kuvveti dönmedi. Perde (pier) atamalarının yapıldığını ve seçilen kombinasyonlar için analizin çalıştırıldığını doğrulayın.',
+    'wallAxial.basis.worst': 'Belirleyici perde',
+    'wallAxial.basis.clause': 'perde eksenel yük sınırı (kolonlarda 0,40 iken perdede 0,35)',
+    'wallAxial.basis.lwNote': 'lw, perdenin iki ucu arasındaki uzunluktur; PierLabel.GetSectionProperties (widthBot) ile okunur. bw ise kalınlıktır (thickBot).',
+    'wallAxial.basis.pNote': 'Nd, seçilen kombinasyonlar içindeki belirleyici |P| değeridir (Results.PierForce).',
     'columnAxial.basis.signNote': 'Nd, ETABS eleman kuvvetleri tablosundan basınç (Min) değeri olarak alınır ve mutlak değeriyle kullanılır.',
     'beam.basis.vcOff': 'Vc katkısı kullanıcı tarafından kapatıldı (Vcr = 0)',
     'beamAxial.basis.clause': 'eksenel yükü kiriş sınırını aşan elemanlar kolon gibi donatılmalıdır',
@@ -286,7 +302,7 @@ const translations = {
     'architecture.agent': 'Windows Agent', 'nav.dashboard': 'Ana Sayfa',
     'dialog.note': "Tarayıcı COM nesnelerine doğrudan erişemez. Yerel Windows tray agent aktif ETABS modelini okur ve verileri JSON olarak web arayüzüne döndürür. Yalnızca loopback adresine bağlıdır ve başka origin’den gelen istekleri reddeder; modele dokunan tek uç yalnızca eleman seçimi yapar.",
     'module.spectrum.title': 'Tasarım Spektrumu', 'module.spectrum.description': 'TBDY 2018 parametreleriyle yatay elastik tasarım spektrumunu oluşturun ve ETABS modeline aktarın.',
-    'module.increment.title': 'Artırım Hesabı', 'module.increment.description': 'Modal sonuçlar ve taban kesme kuvvetleri üzerinden dinamik büyütme katsayılarını hesaplayın.',
+    'module.increment.title': 'Taban Kesme Kuvveti Büyütmesi', 'module.increment.description': 'Modal sonuçlar ve analiz taban kesme kuvveti üzerinden büyütme katsayısını hesaplayın.',
     'module.drift.title': 'Göreli Kat Ötelemesi', 'module.drift.description': 'Etkin göreli kat ötelemelerini hesaplayın ve TBDY 2018 sınırlarıyla karşılaştırın.',
     'module.pdelta.title': 'İkinci Mertebe Etkileri', 'module.pdelta.description': 'Kat stabilite katsayılarını ve ikinci mertebe büyütme gereksinimini değerlendirin.',
     'module.columnAxial.title': 'Kolon Eksenel Yük', 'module.columnAxial.description': 'Kolon eksenel yük taleplerini kesit kapasiteleri ve yönetmelik sınırlarıyla tahkik edin.',
@@ -339,7 +355,7 @@ const translations = {
     'increment.direction.x': 'X Yönü', 'increment.direction.y': 'Y Yönü',
     'increment.calculate': '{direction} YÖNÜ HESAPLA',
     'increment.modal.mode': 'Mod',
-    'increment.result.period': 'Kullanılan {direction} periyodu', 'increment.result.beta': 'Artırım Katsayısı β',
+    'increment.result.period': 'Kullanılan {direction} periyodu', 'increment.result.beta': 'Büyütme Katsayısı β',
     'increment.status.pending': 'Henüz hesaplanmadı.',
     'increment.status.massFetched': 'Yapı toplam kütlesi çekildi.',
     'increment.status.periodFetchedX': 'X yönü periyot değeri çekildi.', 'increment.status.periodFetchedY': 'Y yönü periyot değeri çekildi.',
@@ -402,7 +418,8 @@ const moduleRenderers = {
   pdelta: renderPdeltaModule,
   'column-axial': renderColumnAxialModule,
   'beam-shear': renderBeamShearModule,
-  'beam-axial': renderBeamAxialModule
+  'beam-axial': renderBeamAxialModule,
+  'wall-axial': renderWallAxialModule
 };
 
 // Shared across beam checks: unique frame name -> { section, h, b } (h/b in model length units).
@@ -1776,7 +1793,7 @@ function downloadSpectrumTxt() {
 }
 
 // ---------------------------------------------------------------------------
-// Scaling Calculation (Artırım Hesabı) — ported from ArtirimHesabiUI (C#).
+// Base Shear Amplification (Taban Kesme Kuvveti Büyütmesi) — ported from ArtirimHesabiUI (C#).
 // β = 0.9 · max(SaR(T)·mt, 0.04·SDS·g·I·mt) / Vt ; Tmax = Hn^0.75 · Ct · 1.4
 // Depends on the Design Spectrum module's shared spectrumState (SDS, I, SaR curve).
 // ---------------------------------------------------------------------------
@@ -3064,6 +3081,232 @@ async function beamAxialExportExcel() {
       fck: beamAxialState.fck, limit: beamAxialState.limit,
       rows: results.map(r => ({ story: r.story, label: r.label, unique: r.unique, loadCase: r.case, section: r.section, b: r.b, d: r.d, p: r.p }))
     }, 'Kiris_Eksenel_Raporu.xlsx');
+  } catch (error) {
+    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Wall Axial Load (Perde Eksenel) — ported from perde_eksenel.cs.
+// Same check as Column Axial, with two differences: the limit is 0.35 (not 0.40),
+// and "d" is the wall LENGTH end-to-end (lw) rather than a section depth. Pier data
+// does not exist in any ETABS display table — it comes from the dedicated
+// Results.PierForce and PierLabel.GetSectionProperties calls the agent wraps.
+// ---------------------------------------------------------------------------
+
+const wallAxialState = {
+  fck: 30, limit: 0.35, combos: [], selected: [], lastResults: []
+};
+
+// Ac = bw·lw (cm²); capacity = Ac·fck/10 (kN); ratio = |P| / capacity.
+function wallAxialComputeRow(bw, lw, p, fck, limit) {
+  const ac = bw * lw;
+  const capacity = ac * fck * 0.1;
+  const ratio = capacity > 0 ? Math.abs(p) / capacity : 0;
+  return { ac, capacity, ratio, ok: capacity > 0 && ratio <= limit };
+}
+
+function renderWallAxialModule() {
+  renderWallAxialSetupPanel();
+  renderWallAxialResultsPanel();
+}
+
+function renderWallAxialSetupPanel() {
+  const panel = $('#setupPanel');
+  panel.innerHTML = `
+    <div class="panel-heading compact"><div><span class="step-number">1</span><div><h2>${t('wallAxial.params.title')}</h2><p>${t('moduleData.description')}</p></div></div></div>
+    <div class="field-grid">
+      ${numberField('waFck', 'columnAxial.params.fck', { min: 10, max: 90 })}
+      ${numberField('waLimit', 'columnAxial.params.limit', { min: 0.05, max: 1 })}
+    </div>
+    <div class="combo-picker">
+      <div class="combo-picker-heading"><h3>${t('drift.combos.title')}</h3>
+        <button class="button button-secondary" type="button" id="waFetchCombos">${t('drift.combos.fetch')}</button>
+      </div>
+      <select class="combo-select" id="waComboSelect" multiple></select>
+      <p class="combo-hint">${t('wallAxial.combos.hint')}</p>
+    </div>
+    <div class="panel-actions">
+      <button class="button button-primary full-width" type="button" id="waCalculate">${t('drift.calculate')}</button>
+    </div>
+    <div class="panel-actions">
+      <button class="button button-secondary full-width" type="button" id="waExport">${t('columnAxial.export')}</button>
+    </div>`;
+
+  const bind = (id, key) => {
+    const el = $('#' + id, panel);
+    el.value = wallAxialState[key];
+    el.addEventListener('input', () => { wallAxialState[key] = parseFloat(el.value) || 0; });
+  };
+  bind('waFck', 'fck');
+  bind('waLimit', 'limit');
+
+  wallAxialPopulateComboSelect();
+  $('#waFetchCombos', panel).addEventListener('click', wallAxialFetchCombos);
+  $('#waCalculate', panel).addEventListener('click', runWallAxialCheck);
+  $('#waExport', panel).addEventListener('click', wallAxialExportExcel);
+}
+
+function wallAxialPopulateComboSelect() {
+  const select = $('#waComboSelect');
+  if (!select) return;
+  select.innerHTML = wallAxialState.combos
+    .map(name => `<option value="${name}" ${wallAxialState.selected.includes(name) ? 'selected' : ''}>${name}</option>`)
+    .join('');
+  select.addEventListener('change', () => {
+    wallAxialState.selected = [...select.selectedOptions].map(o => o.value);
+  });
+}
+
+function renderWallAxialResultsPanel() {
+  const panel = $('#resultsPanel');
+  panel.innerHTML = `
+    <div class="panel-heading compact"><div><span class="step-number">2</span><div><h2>${t('results.title')}</h2><p>${t('results.description')}</p></div></div></div>
+    <div class="status-banner pending" id="waStatusBanner">${t('columnAxial.status.pending')}</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>${t('drift.table.story')}</th><th>${t('wallAxial.table.pier')}</th><th>${t('drift.table.combo')}</th>
+          <th>${t('columnAxial.params.fck')}</th><th>${t('columnAxial.table.b')}</th><th>${t('wallAxial.table.lw')}</th>
+          <th>${t('columnAxial.table.p')}</th><th>${t('columnAxial.table.ac')}</th>
+          <th>${t('columnAxial.table.ratio')}</th><th>${t('drift.table.status')}</th>
+        </tr></thead>
+        <tbody id="waResultsBody"><tr><td colspan="10" class="table-empty">${t('drift.table.empty')}</td></tr></tbody>
+      </table>
+    </div>`;
+  if (wallAxialState.lastResults.length) renderWallAxialResultsTable();
+}
+
+function renderWallAxialResultsTable() {
+  const body = $('#waResultsBody');
+  if (!body) return;
+  const results = wallAxialState.lastResults;
+  body.innerHTML = results.length
+    ? results.map(item => `
+        <tr class="${item.ok ? '' : 'row-fail'}">
+          <td>${item.story}</td><td>${item.pier}</td><td>${item.loadCase}</td>
+          <td>${wallAxialState.fck}</td><td>${item.bw.toFixed(0)}</td><td>${item.lw.toFixed(0)}</td>
+          <td>${item.p.toFixed(0)}</td><td>${item.ac.toFixed(0)}</td>
+          <td>${item.ratio.toFixed(2)}</td><td>${item.ok ? 'OK' : 'NOT OK'}</td>
+        </tr>`).join('')
+    : `<tr><td colspan="10" class="table-empty">${t('drift.table.empty')}</td></tr>`;
+
+  installTableFilter(body);
+
+  const banner = $('#waStatusBanner');
+  const failCount = results.filter(r => !r.ok).length;
+  if (failCount > 0) { banner.textContent = t('wallAxial.status.failed', { count: failCount }); banner.className = 'status-banner fail'; }
+  else if (results.length) { banner.textContent = t('wallAxial.status.passed'); banner.className = 'status-banner ok'; }
+
+  if (results.length) {
+    const worst = results.reduce((a, b) => (b.ratio > a.ratio ? b : a), results[0]);
+    renderCalcBasis('#waResultsBody', 'waBasis', calcBasis(
+      'TBDY 2018 §7.6 — ' + t('wallAxial.basis.clause'),
+      [
+        'Ac = bw · lw',
+        t('wallAxial.basis.lwNote'),
+        'Nd / (Ac · fck) ≤ 0.35',
+        t('wallAxial.basis.pNote')
+      ],
+      [
+        ['fck', `${wallAxialState.fck} MPa`],
+        [t('columnAxial.params.limit'), `${wallAxialState.limit}`],
+        [t('wallAxial.basis.worst'), `${worst.story} / ${worst.pier} / ${worst.loadCase}`],
+        ['bw × lw', `${worst.bw.toFixed(1)} × ${worst.lw.toFixed(1)} cm`],
+        ['Ac', `${worst.bw.toFixed(1)} · ${worst.lw.toFixed(1)} = ${worst.ac.toFixed(1)} cm²`],
+        ['Ac·fck', `${worst.ac.toFixed(1)} · ${wallAxialState.fck} · 0.1 = ${worst.capacity.toFixed(1)} kN`],
+        ['Nd', `${Math.abs(worst.p).toFixed(2)} kN`],
+        ['Nd/(Ac·fck)', `${Math.abs(worst.p).toFixed(2)} / ${worst.capacity.toFixed(1)} = <strong>${worst.ratio.toFixed(4)}</strong> ` +
+          `(${t('columnAxial.params.limit')} ${wallAxialState.limit} → ${worst.ok ? 'OK' : 'NOT OK'})`]
+      ]));
+  }
+}
+
+async function wallAxialFetchCombos() {
+  const btn = $('#waFetchCombos');
+  btn.disabled = true;
+  try {
+    const res = await fetchAgentJson('/api/etabs/combinations');
+    if (!res.etabsConnected) throw new Error(res.error || t('drift.error.notConnected'));
+    wallAxialState.combos = res.names;
+    wallAxialPopulateComboSelect();
+    log(t('drift.combos.fetched', { count: wallAxialState.combos.length }), 'ok');
+  } catch (error) {
+    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function runWallAxialCheck() {
+  if (wallAxialState.selected.length === 0) { log(t('drift.error.noCombos'), 'error'); return; }
+
+  const { fck, limit } = wallAxialState;
+  if (!validateFields([
+    { id: 'waFck', ok: inRange(fck, 10, 90), message: t('validate.fck', { value: fck }) },
+    { id: 'waLimit', ok: inRange(limit, 0.05, 1), message: t('validate.range', { field: t('columnAxial.params.limit'), min: 0.05, max: 1, value: limit }) }
+  ], $('#setupPanel'))) return;
+
+  const btn = $('#waCalculate');
+  if (btn) btn.disabled = true;
+  try {
+    const comboParam = encodeURIComponent(wallAxialState.selected.join(','));
+    const [forcesRes, sectionsRes] = await Promise.all([
+      fetchAgentJson(`/api/etabs/pier-forces?combos=${comboParam}`, 30000),
+      fetchAgentJson('/api/etabs/pier-sections', 30000)
+    ]);
+    if (!forcesRes.etabsConnected) throw new Error(forcesRes.error || t('drift.error.notConnected'));
+    if (forcesRes.rows.length === 0) throw new Error(t('wallAxial.error.noPierForces'));
+
+    // Geometry lookup keyed by pier+story.
+    const geom = new Map();
+    for (const s of (sectionsRes.rows || [])) geom.set(`${s.pier}__${s.story}`, s);
+
+    // Keep the governing (max |P|) result per story+pier, mirroring the desktop.
+    const byKey = new Map();
+    for (const row of forcesRes.rows) {
+      const key = `${row.story}__${row.pier}`;
+      const existing = byKey.get(key);
+      if (!existing || Math.abs(row.p) > Math.abs(existing.p)) {
+        byKey.set(key, { story: row.story, pier: row.pier, loadCase: row.loadCase, p: row.p });
+      }
+    }
+
+    const results = [];
+    for (const item of byKey.values()) {
+      const g = geom.get(`${item.pier}__${item.story}`);
+      const bw = g ? g.bw : 0;
+      const lw = g ? g.lw : 0;
+      const c = wallAxialComputeRow(bw, lw, item.p, fck, limit);
+      results.push({ ...item, p: Math.abs(item.p), bw, lw, ...c });
+    }
+    results.sort((a, b) => a.pier.localeCompare(b.pier) || a.story.localeCompare(b.story));
+
+    wallAxialState.lastResults = results;
+    renderWallAxialResultsTable();
+    recordLastCheck('wall-axial');
+    const failCount = results.filter(r => !r.ok).length;
+    log(failCount > 0 ? t('wallAxial.status.failed', { count: failCount }) : t('wallAxial.status.passed'), failCount > 0 ? 'error' : 'ok');
+  } catch (error) {
+    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+async function wallAxialExportExcel() {
+  const results = wallAxialState.lastResults;
+  if (results.length === 0) { log(t('columnAxial.error.noFrameData'), 'error'); return; }
+  const btn = $('#waExport');
+  if (btn) btn.disabled = true;
+  try {
+    await downloadAgentExcel('/api/etabs/export/wall-axial', {
+      fck: wallAxialState.fck,
+      limit: wallAxialState.limit,
+      rows: results.map(r => ({ story: r.story, pier: r.pier, loadCase: r.loadCase, b: r.bw, d: r.lw, p: r.p }))
+    }, 'Perde_Eksenel_Raporu.xlsx');
   } catch (error) {
     log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
   } finally {
