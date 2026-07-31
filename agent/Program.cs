@@ -67,6 +67,9 @@ internal sealed class AgentApplicationContext : ApplicationContext
             GetCombinationsOnUiThread,
             GetAvailableTablesOnUiThread,
             GetPierForcesOnUiThread,
+            ListInstancesOnUiThread,
+            ConnectToOnUiThread,
+            DisconnectOnUiThread,
             SelectPiersOnUiThread,
             GetPierSectionsOnUiThread,
             GetStoriesOnUiThread,
@@ -116,6 +119,30 @@ internal sealed class AgentApplicationContext : ApplicationContext
             return (SelectResult)_dispatcher.Invoke(new Func<IReadOnlyList<PierKey>, SelectResult>(_etabs.SelectPiers), new object[] { items });
 
         return _etabs.SelectPiers(items);
+    }
+
+    private EtabsInstancesResult ListInstancesOnUiThread()
+    {
+        if (_dispatcher.InvokeRequired)
+            return (EtabsInstancesResult)_dispatcher.Invoke(new Func<EtabsInstancesResult>(_etabs.ListInstances));
+
+        return _etabs.ListInstances();
+    }
+
+    private EtabsSnapshot ConnectToOnUiThread(string instanceId)
+    {
+        if (_dispatcher.InvokeRequired)
+            return (EtabsSnapshot)_dispatcher.Invoke(new Func<string, EtabsSnapshot>(_etabs.ConnectTo), new object[] { instanceId });
+
+        return _etabs.ConnectTo(instanceId);
+    }
+
+    private EtabsSnapshot DisconnectOnUiThread()
+    {
+        if (_dispatcher.InvokeRequired)
+            return (EtabsSnapshot)_dispatcher.Invoke(new Func<EtabsSnapshot>(_etabs.Disconnect));
+
+        return _etabs.Disconnect();
     }
 
     private PierForcesResult GetPierForcesOnUiThread(string[] combos)
@@ -948,6 +975,122 @@ internal sealed class EtabsConnection : IDisposable
             .FirstOrDefault(File.Exists);
     }
 
+    // Enumerates every ETABS in the running object table so the user can pick when more
+    // than one model is open. The moniker display name is the handle we connect back with.
+    public EtabsInstancesResult ListInstances()
+    {
+        if (!EnsureApiLoaded())
+            return new EtabsInstancesResult(true, "ETABS API (ETABSv1.dll) not found.", Array.Empty<EtabsInstanceInfo>());
+
+        var found = new List<EtabsInstanceInfo>();
+        IRunningObjectTable? rot = null;
+        IEnumMoniker? enumerator = null;
+        IBindCtx? bindContext = null;
+        try
+        {
+            if (NativeMethods.GetRunningObjectTable(0, out rot) != 0) return new EtabsInstancesResult(true, null, Array.Empty<EtabsInstanceInfo>());
+            rot.EnumRunning(out enumerator);
+            enumerator.Reset();
+            if (NativeMethods.CreateBindCtx(0, out bindContext) != 0) return new EtabsInstancesResult(true, null, Array.Empty<EtabsInstanceInfo>());
+
+            var monikers = new IMoniker[1];
+            while (enumerator.Next(1, monikers, IntPtr.Zero) == 0)
+            {
+                object? candidate = null;
+                try
+                {
+                    monikers[0].GetDisplayName(bindContext, null, out var displayName);
+                    if (string.IsNullOrWhiteSpace(displayName) ||
+                        !displayName.Contains("ETABS", StringComparison.OrdinalIgnoreCase)) continue;
+
+                    rot.GetObject(monikers[0], out candidate);
+                    if (candidate is null) continue;
+
+                    var model = _oapiInterface!.GetProperty("SapModel")?.GetValue(candidate);
+                    if (model is null) continue;
+
+                    var name = "ETABS";
+                    try
+                    {
+                        var getFilename = model.GetType().GetMethod("GetModelFilename", new[] { typeof(bool) })
+                                          ?? _sapModelInterface?.GetMethod("GetModelFilename", new[] { typeof(bool) });
+                        var file = getFilename?.Invoke(model, new object[] { true }) as string;
+                        if (!string.IsNullOrWhiteSpace(file)) name = Path.GetFileName(file);
+                        else name = "Untitled ETABS model";
+                    }
+                    catch { }
+
+                    found.Add(new EtabsInstanceInfo(displayName, name));
+                }
+                catch (Exception ex) { AgentLog.Write($"Instance scan candidate rejected: {ex.Message}"); }
+                finally { Release(candidate); Release(monikers[0]); }
+            }
+        }
+        catch (Exception ex)
+        {
+            AgentLog.Write($"ListInstances failed: {ex.Message}");
+            return new EtabsInstancesResult(true, ex.Message, Array.Empty<EtabsInstanceInfo>());
+        }
+        finally { Release(bindContext); Release(enumerator); Release(rot); }
+
+        return new EtabsInstancesResult(true, null, found.ToArray());
+    }
+
+    // Binds to one specific instance by its moniker display name.
+    public EtabsSnapshot ConnectTo(string instanceId)
+    {
+        if (string.IsNullOrWhiteSpace(instanceId)) return ConnectAndRead();
+        if (!EnsureApiLoaded()) return EtabsSnapshot.NotConnected("ETABS API (ETABSv1.dll) not found.");
+
+        ReleaseComObjects();
+        IRunningObjectTable? rot = null;
+        IEnumMoniker? enumerator = null;
+        IBindCtx? bindContext = null;
+        try
+        {
+            if (NativeMethods.GetRunningObjectTable(0, out rot) != 0) return EtabsSnapshot.NotConnected("Running object table unavailable.");
+            rot.EnumRunning(out enumerator);
+            enumerator.Reset();
+            if (NativeMethods.CreateBindCtx(0, out bindContext) != 0) return EtabsSnapshot.NotConnected("Bind context unavailable.");
+
+            var monikers = new IMoniker[1];
+            while (enumerator.Next(1, monikers, IntPtr.Zero) == 0)
+            {
+                try
+                {
+                    monikers[0].GetDisplayName(bindContext, null, out var displayName);
+                    if (!string.Equals(displayName, instanceId, StringComparison.OrdinalIgnoreCase)) continue;
+
+                    rot.GetObject(monikers[0], out var candidate);
+                    if (candidate is null) continue;
+                    var model = _oapiInterface!.GetProperty("SapModel")?.GetValue(candidate);
+                    if (model is null) { Release(candidate); continue; }
+
+                    _etabsObject = candidate;
+                    _sapModel = model;
+                    _frameLabelCache = null;
+                    return TryRead(out var snapshot) ? snapshot : EtabsSnapshot.NotConnected("Model could not be read.");
+                }
+                finally { Release(monikers[0]); }
+            }
+        }
+        catch (Exception ex)
+        {
+            AgentLog.Write($"ConnectTo failed: {ex.Message}");
+            return EtabsSnapshot.NotConnected(ex.Message);
+        }
+        finally { Release(bindContext); Release(enumerator); Release(rot); }
+
+        return EtabsSnapshot.NotConnected("The selected ETABS instance is no longer running.");
+    }
+
+    // Drops the COM references so the next connect starts clean.
+    public EtabsSnapshot Disconnect()
+    {
+        ReleaseComObjects();
+        return EtabsSnapshot.NotConnected("Disconnected.");
+    }
+
     private object? TryGetFromRunningObjectTable()
     {
         IRunningObjectTable? runningObjectTable = null;
@@ -1135,6 +1278,9 @@ internal sealed class LocalBridgeServer : IDisposable
     private readonly Func<NameListResult> _getCombinations;
     private readonly Func<NameListResult> _getAvailableTables;
     private readonly Func<string[], PierForcesResult> _getPierForces;
+    private readonly Func<EtabsInstancesResult> _listInstances;
+    private readonly Func<string, EtabsSnapshot> _connectTo;
+    private readonly Func<EtabsSnapshot> _disconnect;
     private readonly Func<IReadOnlyList<PierKey>, SelectResult> _selectPiers;
     private readonly Func<PierSectionsResult> _getPierSections;
     private readonly Func<StoriesResult> _getStories;
@@ -1150,6 +1296,9 @@ internal sealed class LocalBridgeServer : IDisposable
         Func<NameListResult> getCombinations,
         Func<NameListResult> getAvailableTables,
         Func<string[], PierForcesResult> getPierForces,
+        Func<EtabsInstancesResult> listInstances,
+        Func<string, EtabsSnapshot> connectTo,
+        Func<EtabsSnapshot> disconnect,
         Func<IReadOnlyList<PierKey>, SelectResult> selectPiers,
         Func<PierSectionsResult> getPierSections,
         Func<StoriesResult> getStories,
@@ -1162,6 +1311,9 @@ internal sealed class LocalBridgeServer : IDisposable
         _getCombinations = getCombinations;
         _getAvailableTables = getAvailableTables;
         _getPierForces = getPierForces;
+        _listInstances = listInstances;
+        _connectTo = connectTo;
+        _disconnect = disconnect;
         _selectPiers = selectPiers;
         _getPierSections = getPierSections;
         _getStories = getStories;
@@ -1235,7 +1387,8 @@ internal sealed class LocalBridgeServer : IDisposable
                 // Request log: every accepted call is recorded so the engineer can audit what the
                 // web UI asked ETABS to do. WRITE marks the only endpoint that touches the model.
                 var isWrite = path is "/api/etabs/select-frames" or "/api/etabs/select-piers";
-                AgentLog.Write($"{(isWrite ? "WRITE" : "READ ")} {method} {path} origin={origin}");
+                var isConnectionChange = path is "/api/etabs/connect-to" or "/api/etabs/disconnect";
+                AgentLog.Write($"{(isWrite ? "WRITE" : isConnectionChange ? "CONN " : "READ ")} {method} {path} origin={origin}");
 
                 if (method == "GET")
                 {
@@ -1254,6 +1407,12 @@ internal sealed class LocalBridgeServer : IDisposable
                     if (path == "/api/etabs/tables")
                     {
                         await WriteResponseAsync(stream, 200, "OK", _getAvailableTables(), origin, cancellationToken);
+                        return;
+                    }
+
+                    if (path == "/api/etabs/instances")
+                    {
+                        await WriteResponseAsync(stream, 200, "OK", _listInstances(), origin, cancellationToken);
                         return;
                     }
 
@@ -1319,6 +1478,19 @@ internal sealed class LocalBridgeServer : IDisposable
                         var req = JsonSerializer.Deserialize<SelectFramesRequest>(json, JsonOptions);
                         var items = req?.Items ?? Array.Empty<FrameKey>();
                         await WriteResponseAsync(stream, 200, "OK", _selectFrames(items), origin, cancellationToken);
+                        return;
+                    }
+
+                    if (path == "/api/etabs/connect-to")
+                    {
+                        var req = JsonSerializer.Deserialize<ConnectToRequest>(json, JsonOptions);
+                        await WriteResponseAsync(stream, 200, "OK", _connectTo(req?.InstanceId ?? ""), origin, cancellationToken);
+                        return;
+                    }
+
+                    if (path == "/api/etabs/disconnect")
+                    {
+                        await WriteResponseAsync(stream, 200, "OK", _disconnect(), origin, cancellationToken);
                         return;
                     }
 
@@ -1631,6 +1803,12 @@ internal sealed record PierForcesResult(bool AgentOnline, bool EtabsConnected, s
 internal sealed record PierSectionRow(string Pier, string Story, double Lw, double Bw, string Material);
 
 internal sealed record PierSectionsResult(bool AgentOnline, bool EtabsConnected, string? Error, PierSectionRow[] Rows);
+
+internal sealed record ConnectToRequest(string? InstanceId);
+
+internal sealed record EtabsInstanceInfo(string Id, string ModelName);
+
+internal sealed record EtabsInstancesResult(bool AgentOnline, string? Error, EtabsInstanceInfo[] Instances);
 
 internal sealed record PierKey(string Story, string Pier);
 

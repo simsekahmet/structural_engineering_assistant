@@ -34,6 +34,10 @@ Every migrated module also carries an in-app **Calculation basis** panel citing 
 
 Load combinations, story mass, modal periods and base shear are read from the model automatically when a module opens — there are no Fetch buttons. Combinations are chosen in a two-list picker (available on the left, selected on the right), and each module has a **Reset results** button that clears its computed output.
 
+Every module also offers a **rigid basement** rule: stories at or below a chosen story are read from a separate basement combination list instead of the superstructure one.
+
+If more than one ETABS instance is open, **Connect to ETABS** lists them and lets you pick the model. A **Disconnect** button releases the model and clears everything fetched from it.
+
 ## Repository structure
 
 - `web/`: English/Turkish GitHub Pages interface (`version.js` is the single source of the web version).

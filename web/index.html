@@ -7,7 +7,7 @@
   <meta name="description" content="Web-based structural engineering checks and reporting for ETABS models.">
   <title>Structural Engineering Assistant</title>
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="styles.css?v=1.10.1">
+  <link rel="stylesheet" href="styles.css?v=1.11.0">
 </head>
 <body>
   <div class="app-shell">
@@ -28,6 +28,10 @@
           <span class="button-icon" aria-hidden="true">↗</span>
           <span data-i18n="action.connect">Connect to ETABS</span>
         </button>
+        <button class="button button-secondary" id="disconnectButton" type="button" hidden data-i18n-title="action.disconnect" title="Disconnect">
+          <span class="button-icon" aria-hidden="true">⏻</span>
+          <span data-i18n="action.disconnect">Disconnect</span>
+        </button>
         <button class="switch theme-switch" id="themeToggle" type="button" aria-label="Switch light / dark mode" aria-pressed="false">
           <span class="switch-label sun" aria-hidden="true">☀</span>
           <span class="switch-label moon" aria-hidden="true">☾</span>
@@ -36,7 +40,7 @@
         <button class="switch language-switch" id="languageToggle" type="button" aria-label="Switch English / Turkish" aria-pressed="false">
           <span class="switch-label">EN</span><span class="switch-label">TR</span><span class="switch-thumb" aria-hidden="true"></span>
         </button>
-        <span class="author-signature">Ahmet Şimşek</span>
+        <span class="author-signature"><small data-i18n="brand.developedBy">Developed by</small><strong>Ahmet Şimşek</strong></span>
       </div>
     </header>
 
@@ -59,16 +63,9 @@
         <a class="nav-item" href="#wall-axial" data-view="wall-axial"><span class="nav-icon">▯</span><span data-i18n="module.wallAxial.title">Wall Axial Load</span></a>
         <a class="nav-item" href="#beam-shear" data-view="beam-shear"><span class="nav-icon">═</span><span data-i18n="module.beamShear.title">Beam Shear</span></a>
         <a class="nav-item" href="#beam-axial" data-view="beam-axial"><span class="nav-icon">⇥</span><span data-i18n="module.beamAxial.title">Beam Axial Load</span></a>
-
-        <p class="nav-label" data-i18n="nav.schedules">SCHEDULES & OUTPUTS</p>
-        <a class="nav-item" href="#column-schedule" data-view="column-schedule"><span class="nav-icon">▦</span><span data-i18n="module.columnSchedule.title">Column Schedule</span></a>
-        <a class="nav-item" href="#wall-schedule" data-view="wall-schedule"><span class="nav-icon">▧</span><span data-i18n="module.wallSchedule.title">Wall Schedule</span></a>
-        <a class="nav-item" href="#beam-schedule" data-view="beam-schedule"><span class="nav-icon">▭</span><span data-i18n="module.beamSchedule.title">Beam Schedule</span></a>
-        <a class="nav-item" href="#slab-schedule" data-view="slab-schedule"><span class="nav-icon">▱</span><span data-i18n="module.slabSchedule.title">Slab Schedule</span></a>
-        <a class="nav-item" href="#foundation-schedule" data-view="foundation-schedule"><span class="nav-icon">▰</span><span data-i18n="module.foundationSchedule.title">Foundation Schedule</span></a>
       </nav>
       <div class="sidebar-footer">
-        <span class="version-badge" id="versionBadge">v1.10.1</span>
+        <span class="version-badge" id="versionBadge">v1.11.0</span>
         <nav class="doc-links" data-i18n-aria-label="docs.aria" aria-label="Documentation">
           <a href="https://github.com/simsekahmet/structural_engineering_assistant/blob/main/docs/STATUS.md" target="_blank" rel="noopener" data-i18n="docs.status">Module status</a>
           <a href="https://github.com/simsekahmet/structural_engineering_assistant/blob/main/docs/VALIDATION.md" target="_blank" rel="noopener" data-i18n="docs.validation">Validation cases</a>
@@ -134,7 +131,7 @@
             <article class="about-card">
               <span class="about-icon">01</span>
               <h3 data-i18n="about.purpose.title">Engineering workspace</h3>
-              <p data-i18n="about.purpose.text">Structural Engineering Assistant brings ETABS checks, member schedules, results, and exports into one web interface.</p>
+              <p data-i18n="about.purpose.text">Structural Engineering Assistant brings ETABS analysis checks, member checks, results, and exports into one web interface.</p>
             </article>
             <article class="about-card">
               <span class="about-icon">02</span>
@@ -200,7 +197,15 @@
     </form>
   </dialog>
 
-  <script src="version.js?v=1.10.1"></script>
-  <script src="app.js?v=1.10.1" defer></script>
+  <dialog id="instanceDialog">
+    <form method="dialog">
+      <div class="dialog-heading"><div><div><h2 data-i18n="instances.title">Select ETABS model</h2><p data-i18n="instances.subtitle">More than one ETABS instance is running</p></div></div><button class="dialog-close" data-i18n-aria-label="action.close" aria-label="Close">×</button></div>
+      <div class="instance-list" id="instanceList"></div>
+      <button class="button button-primary full-width" id="instanceConfirm" value="confirm" data-i18n="instances.connect">Connect</button>
+    </form>
+  </dialog>
+
+  <script src="version.js?v=1.11.0"></script>
+  <script src="app.js?v=1.11.0" defer></script>
 </body>
 </html>

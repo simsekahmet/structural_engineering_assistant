@@ -1,6 +1,6 @@
 # Known issues and limitations
 
-Current as of **web v1.10.1 / agent v1.10.0**. Release notes live on the
+Current as of **web v1.11.0 / agent v1.11.0**. Release notes live on the
 [Releases page](https://github.com/simsekahmet/structural_engineering_assistant/releases).
 
 ## Limitations you must be aware of before relying on a result
@@ -25,12 +25,9 @@ Current as of **web v1.10.1 / agent v1.10.0**. Release notes live on the
 - **`select-frames` is O(n) over model frames.** On a ~166-frame model a "select in
   model" call takes a few hundred ms warm, but the first call after connecting has to
   enumerate every frame and can take noticeably longer.
-- **All schedule ("done") modules are UI only, including Column Schedule.** Column
-  Schedule was migrated in v1.3–v1.5 and deliberately withdrawn in v1.7.0: schedules
-  are being deferred until every analysis and member check ahead of them is verified.
-  Its screen still exists with the connect button disabled.
-- **Wall modules are UI only.** Wall Shear and Wall Axial screens exist but perform no
-  calculation; their connect button is disabled.
+- **The schedule ("done") modules were removed in v1.11.0.** Column Schedule had been
+  migrated in v1.3–v1.5 and withdrawn in v1.7.0; the remaining schedule screens were
+  never implemented. The application now covers analysis checks and member checks only.
 - **Analysis-status detection is best-effort.** If ETABS does not expose
   `Analyze.GetCaseStatus` the pre-flight row shows "Unknown" rather than failing.
 

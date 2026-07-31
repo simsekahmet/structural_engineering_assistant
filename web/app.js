@@ -7,25 +7,23 @@ const moduleDefinitions = [
   { id: 'wall-shear', key: 'wallShear', icon: '▤', categoryKey: 'category.memberChecks', ready: true },
   { id: 'wall-axial', key: 'wallAxial', icon: '▯', categoryKey: 'category.memberChecks', ready: true },
   { id: 'beam-shear', key: 'beamShear', icon: '═', categoryKey: 'category.memberChecks', ready: true },
-  { id: 'beam-axial', key: 'beamAxial', icon: '⇥', categoryKey: 'category.memberChecks', ready: true },
-  { id: 'column-schedule', key: 'columnSchedule', icon: '▦', categoryKey: 'category.schedules' },
-  { id: 'wall-schedule', key: 'wallSchedule', icon: '▧', categoryKey: 'category.schedules' },
-  { id: 'beam-schedule', key: 'beamSchedule', icon: '▭', categoryKey: 'category.schedules' },
-  { id: 'slab-schedule', key: 'slabSchedule', icon: '▱', categoryKey: 'category.schedules' },
-  { id: 'foundation-schedule', key: 'foundationSchedule', icon: '▰', categoryKey: 'category.schedules' }
+  { id: 'beam-axial', key: 'beamAxial', icon: '⇥', categoryKey: 'category.memberChecks', ready: true }
 ];
 
 const translations = {
   en: {
-    'brand.name': 'Structural Engineering Assistant',
+    'brand.name': 'Structural Engineering Assistant', 'brand.developedBy': 'Developed by',
     'brand.subtitle': 'ETABS checks and reporting platform',
     'brand.home': 'Structural Engineering Assistant home', 'nav.aria': 'Application menu',
     'model.activeTitle': 'Active ETABS model', 'model.active': 'Active model', 'model.waiting': 'Waiting for connection',
     'action.connect': 'Connect to ETABS', 'action.clear': 'Clear', 'action.showAll': 'Show all →', 'action.showLess': 'Show less ↑',
+    'action.disconnect': 'Disconnect', 'terminal.disconnected': 'Disconnected from the ETABS model.',
+    'instances.title': 'Select ETABS model', 'instances.subtitle': 'More than one ETABS instance is running',
+    'instances.connect': 'Connect',
     'action.viewArchitecture': 'View connection architecture', 'action.dashboard': '← Dashboard', 'action.close': 'Close', 'action.understood': 'Understood',
     'action.searching': 'Searching for bridge…', 'action.downloadAgent': 'Download Windows Agent',
-    'nav.general': 'GENERAL', 'nav.analysis': 'ANALYSIS & CHECKS', 'nav.memberChecks': 'MEMBER CHECKS', 'nav.schedules': 'SCHEDULES & OUTPUTS',
-    'category.analysis': 'Analysis & Checks', 'category.memberChecks': 'Member Checks', 'category.schedules': 'Schedules & Outputs',
+    'nav.general': 'GENERAL', 'nav.analysis': 'ANALYSIS & CHECKS', 'nav.memberChecks': 'MEMBER CHECKS',
+    'category.analysis': 'Analysis & Checks', 'category.memberChecks': 'Member Checks',
     'version': 'v0.2 · bilingual preview',
     'dashboard.eyebrow': 'PROJECT CENTER', 'dashboard.title': 'Structural Engineering Dashboard',
     'dashboard.description': 'Connect your ETABS model, manage engineering checks, and report results from one workspace.',
@@ -44,7 +42,7 @@ const translations = {
     'terminal.etabsNotFound': 'The Windows agent is online, but no open ETABS model was found.',
     'terminal.notFound': 'Local bridge not found. Install and run the Windows agent, then try again.',
     'about.title': 'About the Platform', 'about.subtitle': 'Purpose, architecture, and current implementation status',
-    'about.purpose.title': 'Engineering workspace', 'about.purpose.text': 'Structural Engineering Assistant brings ETABS checks, member schedules, results, and exports into one web interface.',
+    'about.purpose.title': 'Engineering workspace', 'about.purpose.text': 'Structural Engineering Assistant brings ETABS analysis checks, member checks, results, and exports into one web interface.',
     'about.connection.title': 'Local ETABS bridge', 'about.connection.text': 'Because browsers cannot access the ETABS COM API directly, a Windows agent connects this interface to the model open on your computer. It listens only on 127.0.0.1:5218, accepts requests only from this site’s origin, and every call is written to a local log.',
     'about.status.title': 'Current version', 'about.status.text': 'The interface and ETABS connection agent are available, and engineering checks run against the active model through the local bridge.',
     'about.note.label': 'Important:', 'about.note.text': 'Engineering results must be reviewed and approved by the responsible structural engineer.',
@@ -162,11 +160,6 @@ const translations = {
     'module.wallAxial.title': 'Wall Axial Load', 'module.wallAxial.description': 'Evaluate wall axial load ratios for governing combinations.',
     'module.beamShear.title': 'Beam Shear', 'module.beamShear.description': 'Check beam shear safety by member and story.',
     'module.beamAxial.title': 'Beam Axial Load', 'module.beamAxial.description': 'Filter and report axial force effects in beams.',
-    'module.columnSchedule.title': 'Column Schedule', 'module.columnSchedule.description': 'Group column sections and reinforcement layouts for drawing output.',
-    'module.wallSchedule.title': 'Wall Schedule', 'module.wallSchedule.description': 'Convert wall section and reinforcement data into an organized schedule.',
-    'module.beamSchedule.title': 'Beam Schedule', 'module.beamSchedule.description': 'Prepare beam reinforcement and section data for drawing production.',
-    'module.slabSchedule.title': 'Slab Schedule', 'module.slabSchedule.description': 'Compile slab geometry and reinforcement data in one schedule.',
-    'module.foundationSchedule.title': 'Foundation Schedule', 'module.foundationSchedule.description': 'Prepare foundation members and design data for drawing and reporting.',
     'drift.params.title': 'Earthquake Parameters', 'drift.params.sdsDD2': 'SDS (DD-2)', 'drift.params.sdsDD3': 'SDS (DD-3)',
     'drift.params.sd1DD2': 'SD1 (DD-2)', 'drift.params.sd1DD3': 'SD1 (DD-3)', 'drift.params.k': 'k', 'drift.params.tp': 'Tp',
     'drift.params.flexibleJoint': 'Flexible joint present? (Yes: 0.016, No: 0.008)', 'drift.params.basement': 'Basement assumption?',
@@ -249,15 +242,18 @@ const translations = {
     'beamAxial.status.passed': 'All beams are within the axial-load limit.', 'beamAxial.status.failed': '{count} beam(s) must be detailed as columns!',
   },
   tr: {
-    'brand.name': 'Yapısal Tasarım Asistanı',
+    'brand.name': 'Yapısal Tasarım Asistanı', 'brand.developedBy': 'Geliştiren',
     'brand.subtitle': 'ETABS tahkik ve raporlama platformu',
     'brand.home': 'Yapısal Tasarım Asistanı ana sayfa', 'nav.aria': 'Uygulama menüsü',
     'model.activeTitle': 'Aktif ETABS modeli', 'model.active': 'Aktif model', 'model.waiting': 'Bağlantı bekleniyor',
     'action.connect': "ETABS'a Bağlan", 'action.clear': 'Temizle', 'action.showAll': 'Tümünü göster →', 'action.showLess': 'Daha az göster ↑',
+    'action.disconnect': 'Bağlantıyı Kes', 'terminal.disconnected': 'ETABS model bağlantısı kesildi.',
+    'instances.title': 'ETABS Modeli Seçin', 'instances.subtitle': 'Birden fazla ETABS örneği çalışıyor',
+    'instances.connect': 'Bağlan',
     'action.viewArchitecture': 'Bağlantı mimarisini görüntüle', 'action.dashboard': '← Ana Sayfa', 'action.close': 'Kapat', 'action.understood': 'Anladım',
     'action.searching': 'Köprü aranıyor…', 'action.downloadAgent': 'Windows Agent’ı İndir',
-    'nav.general': 'GENEL', 'nav.analysis': 'ANALİZ & KONTROL', 'nav.memberChecks': 'ELEMAN TAHKİKLERİ', 'nav.schedules': 'DONE & ÇIKTILAR',
-    'category.analysis': 'Analiz & Kontrol', 'category.memberChecks': 'Eleman Tahkikleri', 'category.schedules': 'Done & Çıktılar',
+    'nav.general': 'GENEL', 'nav.analysis': 'ANALİZ & KONTROL', 'nav.memberChecks': 'ELEMAN TAHKİKLERİ',
+    'category.analysis': 'Analiz & Kontrol', 'category.memberChecks': 'Eleman Tahkikleri',
     'version': 'v0.2 · çift dilli önizleme',
     'dashboard.eyebrow': 'PROJE MERKEZİ', 'dashboard.title': 'Yapısal Mühendislik Paneli',
     'dashboard.description': 'ETABS modelinizi bağlayın, tahkikleri tek merkezden yönetin ve sonuçları raporlayın.',
@@ -276,7 +272,7 @@ const translations = {
     'terminal.etabsNotFound': 'Windows agent çalışıyor ancak açık bir ETABS modeli bulunamadı.',
     'terminal.notFound': 'Yerel köprü bulunamadı. Windows agent kurulup çalıştırıldıktan sonra yeniden deneyin.',
     'about.title': 'Platform Hakkında', 'about.subtitle': 'Amaç, mimari ve güncel uygulama durumu',
-    'about.purpose.title': 'Mühendislik çalışma alanı', 'about.purpose.text': 'Yapısal Tasarım Asistanı; ETABS tahkiklerini, eleman donelerini, sonuçları ve dışa aktarımları tek bir web arayüzünde birleştirir.',
+    'about.purpose.title': 'Mühendislik çalışma alanı', 'about.purpose.text': 'Yapısal Tasarım Asistanı; ETABS analiz kontrollerini, eleman tahkiklerini, sonuçları ve dışa aktarımları tek bir web arayüzünde birleştirir.',
     'about.connection.title': 'Yerel ETABS köprüsü', 'about.connection.text': 'Tarayıcılar ETABS COM API’ye doğrudan erişemediği için bir Windows agent bu arayüzü bilgisayarınızda açık olan modele bağlar. Yalnızca 127.0.0.1:5218 adresini dinler, sadece bu sitenin origin’inden gelen istekleri kabul eder ve her çağrı yerel bir günlüğe yazılır.',
     'about.status.title': 'Mevcut sürüm', 'about.status.text': 'Arayüz ve ETABS bağlantı agent’ı kullanılabilir; mühendislik tahkikleri yerel köprü üzerinden aktif model üzerinde çalışır.',
     'about.note.label': 'Önemli:', 'about.note.text': 'Mühendislik sonuçları sorumlu inşaat mühendisi tarafından kontrol edilmeli ve onaylanmalıdır.',
@@ -394,11 +390,6 @@ const translations = {
     'module.wallAxial.title': 'Perde Eksenel Yük', 'module.wallAxial.description': 'Perde eksenel yük oranlarını kritik kombinasyonlar için değerlendirin.',
     'module.beamShear.title': 'Kiriş Kesme', 'module.beamShear.description': 'Kiriş kesme güvenliğini eleman ve kat bazında tahkik edin.',
     'module.beamAxial.title': 'Kiriş Eksenel Yük', 'module.beamAxial.description': 'Kirişlerdeki eksenel kuvvet etkilerini filtreleyin ve raporlayın.',
-    'module.columnSchedule.title': 'Kolon Done', 'module.columnSchedule.description': 'Kolon kesitlerini ve donatı düzenlerini gruplayarak pafta verisi üretin.',
-    'module.wallSchedule.title': 'Perde Done', 'module.wallSchedule.description': 'Perde kesit ve donatı verilerini düzenli bir done çıktısına dönüştürün.',
-    'module.beamSchedule.title': 'Kiriş Done', 'module.beamSchedule.description': 'Kiriş donatı ve kesit bilgilerini pafta üretimine hazırlayın.',
-    'module.slabSchedule.title': 'Döşeme Done', 'module.slabSchedule.description': 'Döşeme geometri ve donatı verilerini tek tabloda derleyin.',
-    'module.foundationSchedule.title': 'Temel Done', 'module.foundationSchedule.description': 'Temel elemanlarını ve tasarım verilerini çizim ve rapor formatına hazırlayın.',
     'drift.params.title': 'Deprem Parametreleri', 'drift.params.sdsDD2': 'SDS (DD-2)', 'drift.params.sdsDD3': 'SDS (DD-3)',
     'drift.params.sd1DD2': 'SD1 (DD-2)', 'drift.params.sd1DD3': 'SD1 (DD-3)', 'drift.params.k': 'k', 'drift.params.tp': 'Tp',
     'drift.params.flexibleJoint': 'Esnek derz var mı? (Var: 0.016, Yok: 0.008)', 'drift.params.basement': 'Bodrum kabulü var mı?',
@@ -673,26 +664,107 @@ async function connectToEtabs() {
   log(t('terminal.searching'));
 
   try {
-    const response = await fetch('http://127.0.0.1:5218/api/health', { headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(5000) });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const data = await response.json();
-    if (!data.etabsConnected) {
-      log(t('terminal.etabsNotFound'), 'error');
+    // Ask the agent what is actually running. With more than one ETABS open the user
+    // picks; with exactly one we connect straight away.
+    const list = await fetchAgentJson('/api/etabs/instances', 8000);
+    const instances = list.instances || [];
+
+    if (instances.length > 1) {
+      setConnectButtonsLoading(false);
+      showInstancePicker(instances);
       return;
     }
-    const model = data.modelName || data.model || 'ETABS model';
-    $('#connectionDot').classList.add('connected');
-    $('#modelName').removeAttribute('data-i18n');
-    $('#modelName').textContent = model;
-    $('#activeModelStat').textContent = model;
-    $('#bridgeStatus').removeAttribute('data-i18n');
-    $('#bridgeStatus').textContent = t('status.connected');
-    $('#bridgeStatus').classList.add('connected');
-    log(t('terminal.connected', { model }), 'ok');
-    showPreflight(data);
+
+    const data = instances.length === 1
+      ? await postAgentJson('/api/etabs/connect-to', { instanceId: instances[0].id }, 15000)
+      : await fetchAgentJson('/api/health', 8000);
+
+    applyConnectionState(data);
   } catch (error) {
     $('#architectureDialog').showModal();
     log(t('terminal.notFound'), 'error');
+  } finally {
+    setConnectButtonsLoading(false);
+  }
+}
+
+// Paints the header/dashboard from a snapshot and opens the pre-flight panel.
+function applyConnectionState(data) {
+  if (!data || !data.etabsConnected) {
+    log(t('terminal.etabsNotFound'), 'error');
+    return;
+  }
+  const model = data.modelName || data.model || 'ETABS model';
+  $('#connectionDot').classList.add('connected');
+  $('#modelName').removeAttribute('data-i18n');
+  $('#modelName').textContent = model;
+  $('#activeModelStat').textContent = model;
+  $('#bridgeStatus').removeAttribute('data-i18n');
+  $('#bridgeStatus').textContent = t('status.connected');
+  $('#bridgeStatus').classList.add('connected');
+  setDisconnectVisible(true);
+  log(t('terminal.connected', { model }), 'ok');
+  showPreflight(data);
+}
+
+function setDisconnectVisible(on) {
+  const btn = $('#disconnectButton');
+  if (btn) btn.hidden = !on;
+}
+
+// Drops the agent's COM references and resets every module's fetched data, so the
+// next connection cannot silently mix results from two different models.
+async function disconnectFromEtabs() {
+  const btn = $('#disconnectButton');
+  if (btn) btn.disabled = true;
+  try {
+    await postAgentJson('/api/etabs/disconnect', {}, 10000);
+  } catch { /* the agent may already be gone; the UI still resets */ }
+
+  comboCachePromise = null;
+  wallShearRaw = null;
+  for (const st of [driftState, pdeltaState, incrementState, columnAxialState,
+                    beamShearState, beamAxialState, wallAxialState, wallShearState]) {
+    st.combos = [];
+    st.selected = [];
+    st.basementCombos = [];
+    st.stories = [];
+    if ('lastResults' in st) st.lastResults = [];
+    if ('lastResult' in st) st.lastResult = null;
+  }
+
+  $('#connectionDot').classList.remove('connected');
+  $('#modelName').textContent = t('model.waiting');
+  $('#activeModelStat').textContent = '—';
+  $('#bridgeStatus').textContent = t('status.offline');
+  $('#bridgeStatus').classList.remove('connected');
+  setDisconnectVisible(false);
+  if (btn) btn.disabled = false;
+  log(t('terminal.disconnected'), 'ok');
+  setActiveView('dashboard');
+}
+
+// Model chooser shown when several ETABS instances are running.
+function showInstancePicker(instances) {
+  const dialog = $('#instanceDialog');
+  if (!dialog) return;
+  $('#instanceList').innerHTML = instances.map((inst, i) => `
+    <label class="instance-option">
+      <input type="radio" name="etabsInstance" value="${escapeHtml(inst.id)}" ${i === 0 ? 'checked' : ''}>
+      <span><strong>${escapeHtml(inst.modelName)}</strong></span>
+    </label>`).join('');
+  dialog.showModal();
+}
+
+async function confirmInstanceChoice() {
+  const picked = $('input[name="etabsInstance"]:checked');
+  if (!picked) return;
+  setConnectButtonsLoading(true);
+  try {
+    const data = await postAgentJson('/api/etabs/connect-to', { instanceId: picked.value }, 15000);
+    applyConnectionState(data);
+  } catch (error) {
+    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
   } finally {
     setConnectButtonsLoading(false);
   }
@@ -769,6 +841,7 @@ function showPreflight(data) {
 // ---------------------------------------------------------------------------
 
 const driftState = {
+  ...rigidStateDefaults(),
   params: { sdsDD2: 0, sdsDD3: 0, sd1DD2: 0, sd1DD3: 0, k: 1, tp: 0.5, esnekDerz: false, bodrum: false, bodrumKat: 0 },
   combos: [],
   stories: [],
@@ -816,6 +889,123 @@ async function downloadAgentExcel(path, body, fallbackName, timeoutMs = 15000) {
   a.download = fileName;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+// --- Collapsible setup section ----------------------------------------------
+// Wraps part of a setup panel in a roll-up/roll-down block using the site's standard
+// panel typography. Open state is remembered per id so switching modules and coming
+// back does not silently re-expand everything.
+const sectionOpenState = {};
+
+function setupSection(id, titleKey, contentHtml, defaultOpen = true) {
+  const open = sectionOpenState[id] !== undefined ? sectionOpenState[id] : defaultOpen;
+  return `<details class="setup-section" id="${id}" ${open ? 'open' : ''}>
+      <summary>${t(titleKey)}</summary>
+      <div class="setup-section-body">${contentHtml}</div>
+    </details>`;
+}
+
+function bindSetupSections(root) {
+  $$('.setup-section', root).forEach(el => {
+    el.addEventListener('toggle', () => { sectionOpenState[el.id] = el.open; });
+  });
+}
+
+// --- Shared rigid-basement rule ---------------------------------------------
+// Stories at or below the chosen story are read from the basement combinations
+// instead of the main ones. Every module that selects combinations offers this.
+function rigidStateDefaults() {
+  return { rijit: false, rijitStory: '', basementCombos: [], stories: [] };
+}
+
+function rigidSection(prefix, state) {
+  return setupSection(`${prefix}RigidSection`, 'wallShear.section.rigid', `
+    <label class="field-checkbox" for="${prefix}Rijit">
+      <input type="checkbox" id="${prefix}Rijit" ${state.rijit ? 'checked' : ''}>
+      ${t('wallShear.rigid.active')}
+    </label>
+    <div id="${prefix}RijitBody" ${state.rijit ? '' : 'hidden'}>
+      <div class="field-grid">
+        <div class="field">
+          <label for="${prefix}RijitStory">${t('wallShear.rigid.story')}</label>
+          <select id="${prefix}RijitStory"></select>
+        </div>
+      </div>
+      <p class="combo-hint" id="${prefix}RijitNote"></p>
+      ${comboPicker(`${prefix}Basement`, 'wallShear.rigid.combosHint')}
+    </div>`, false);
+}
+
+async function initRigidSection(prefix, state, allCombos) {
+  const toggle = $('#' + prefix + 'Rijit');
+  const body = $('#' + prefix + 'RijitBody');
+  const select = $('#' + prefix + 'RijitStory');
+  const note = $('#' + prefix + 'RijitNote');
+
+  const paintNote = () => {
+    if (note) note.textContent = state.rijitStory ? t('wallShear.rigid.note', { story: state.rijitStory }) : '';
+  };
+
+  if (toggle) toggle.addEventListener('change', () => {
+    state.rijit = toggle.checked;
+    if (body) body.hidden = !toggle.checked;
+  });
+
+  initComboPicker(`${prefix}Basement`, {
+    get combos() { return allCombos(); },
+    set combos(v) { /* shared cache owns the list */ },
+    get selected() { return state.basementCombos; },
+    set selected(v) { state.basementCombos = v; }
+  });
+
+  try {
+    if (!state.stories || state.stories.length === 0) {
+      const res = await fetchAgentJson('/api/etabs/stories');
+      if (res.etabsConnected) state.stories = (res.stories || []).slice().sort((a, b) => a.elevation - b.elevation);
+    }
+    if (select) {
+      select.innerHTML = state.stories.slice().reverse()
+        .map(s => `<option value="${escapeHtml(s.name)}">${escapeHtml(s.name)}</option>`).join('');
+      if (state.rijitStory) select.value = state.rijitStory;
+      else state.rijitStory = select.value;
+      select.addEventListener('change', () => { state.rijitStory = select.value; paintNote(); });
+    }
+    paintNote();
+  } catch { /* stories are optional until the rule is switched on */ }
+}
+
+// Combination list to request: main plus basement when the rule is on.
+function rigidCombosToFetch(state) {
+  return state.rijit && state.basementCombos.length
+    ? [...new Set([...state.selected, ...state.basementCombos])]
+    : state.selected;
+}
+
+// Stories the rigid rule treats as basement: everything at or below the chosen story.
+// When the rule is off, the caller's existing (count-based) definition is kept.
+function rigidBasementStorySet(state, stories, fallback) {
+  if (!(state.rijit && state.rijitStory && state.basementCombos.length)) return fallback;
+  const list = (state.stories && state.stories.length) ? state.stories : (stories || []);
+  const cut = list.findIndex(x => x.name === state.rijitStory);
+  if (cut < 0) return fallback;
+  return new Set(list.filter((_, i) => i <= cut).map(x => x.name));
+}
+
+function rigidIsActive(state) {
+  return !!(state.rijit && state.rijitStory && state.basementCombos.length);
+}
+
+// Whether a (story, combo) row counts, honouring the rigid-basement split.
+function rigidRowAllowed(state, story, combo) {
+  const name = (combo || '').trim();
+  if (!state.rijit || !state.rijitStory || state.basementCombos.length === 0) {
+    return state.selected.includes(name);
+  }
+  const order = s => (state.stories || []).findIndex(x => x.name === s);
+  const splitIdx = order(state.rijitStory);
+  const idx = order(story);
+  if (idx < 0 || splitIdx < 0) return state.selected.includes(name);
+  return idx > splitIdx ? state.selected.includes(name) : state.basementCombos.includes(name);
 }
 
 // --- Shared load-combination picker -----------------------------------------
@@ -1153,11 +1343,20 @@ function groupCombos(names) {
 }
 
 // Mirrors the desktop app's per-direction, per-basement row filtering.
-function filterDriftRows(rows, groups, basementNames, useBasement) {
+function filterDriftRows(rows, groups, basementNames, useBasement, rigidGroups) {
   const result = [];
   for (const row of rows) {
     const direction = row.direction.toUpperCase();
     const isBasement = basementNames.has(row.story);
+    // With the rigid rule on, a basement story takes ANY of the basement combinations
+    // matching its direction rather than the main list's ALT bucket.
+    if (rigidGroups && isBasement) {
+      const pool = direction === 'X'
+        ? [...rigidGroups.xUST, ...rigidGroups.xALT]
+        : [...rigidGroups.yUST, ...rigidGroups.yALT];
+      if (pool.includes(row.outputCase)) result.push(row);
+      continue;
+    }
     if (direction === 'X') {
       if (groups.xUST.includes(row.outputCase) && (!useBasement || !isBasement)) result.push(row);
       else if (useBasement && groups.xALT.includes(row.outputCase) && isBasement) result.push(row);
@@ -1205,6 +1404,7 @@ function renderDriftSetupPanel() {
       ${numberField('driftBodrumKat', 'drift.params.basementCount', { step: 1, min: 0, max: 10 })}
     </div>
     ${comboPicker('drift', 'drift.combos.hint')}
+    ${rigidSection('drift', driftState)}
     <div class="panel-actions">
       <button class="button button-primary full-width" type="button" id="driftCalculate">${t('drift.calculate')}</button>
       <button class="button button-secondary full-width" type="button" id="driftReset" style="margin-top:8px">${t('action.reset')}</button>
@@ -1212,6 +1412,8 @@ function renderDriftSetupPanel() {
 
   bindDriftParamInputs(panel);
   initComboPicker('drift', driftState);
+  bindSetupSections(panel);
+  initRigidSection('drift', driftState, () => driftState.combos);
   $('#driftCalculate', panel).addEventListener('click', runDriftCheck);
   $('#driftReset', panel).addEventListener('click', () => resetModule(driftState, renderDriftModule));
 }
@@ -1350,15 +1552,18 @@ async function runDriftCheck() {
       driftState.stories = storiesRes.stories;
     }
 
-    const comboParam = encodeURIComponent(driftState.selected.join(','));
+    const comboParam = encodeURIComponent(rigidCombosToFetch(driftState).join(','));
     const driftRes = await fetchAgentJson(`/api/etabs/story-drifts?combos=${comboParam}`);
     if (!driftRes.etabsConnected) throw new Error(driftRes.error || t('drift.error.notConnected'));
 
     const groups = groupCombos(driftState.selected);
-    const basementNames = driftState.params.bodrum
+    const legacyBasement = driftState.params.bodrum
       ? determineBasementStories(driftState.stories, driftState.params.bodrumKat)
       : new Set();
-    const filtered = filterDriftRows(driftRes.rows || [], groups, basementNames, driftState.params.bodrum);
+    const rigid = rigidIsActive(driftState);
+    const basementNames = rigidBasementStorySet(driftState, driftState.stories, legacyBasement);
+    const filtered = filterDriftRows(driftRes.rows || [], groups, basementNames,
+      driftState.params.bodrum || rigid, rigid ? groupCombos(driftState.basementCombos) : null);
     if (filtered.length === 0) throw new Error(t('drift.error.noData'));
 
     const result = calculateDriftItems(filtered, driftState.params);
@@ -1399,6 +1604,7 @@ async function exportDriftExcel() {
 // ---------------------------------------------------------------------------
 
 const pdeltaState = {
+  ...rigidStateDefaults(),
   params: { ch: 0.5, r: 8, d: 2.5, bodrum: false, bodrumKat: 0 },
   combos: [],
   stories: [],
@@ -1450,7 +1656,17 @@ function pdeltaComputeResult(forces, drifts, mass, stories, selected, params) {
     [...nonBase].sort((a, b) => a.elevation - b.elevation).slice(0, params.bodrumKat).forEach(s => basementNames.add(s.name));
   }
 
-  const { xUST, xALT, yUST, yALT } = pdeltaBucketCombos(selected);
+  let { xUST, xALT, yUST, yALT } = pdeltaBucketCombos(selected);
+  // Rigid rule: basement stories are defined by the chosen story and are driven by the
+  // basement combination list, replacing the count-based definition above.
+  if (rigidIsActive(pdeltaState)) {
+    const set = rigidBasementStorySet(pdeltaState, stories, basementNames);
+    basementNames.clear();
+    set.forEach(n => basementNames.add(n));
+    const b = pdeltaBucketCombos(pdeltaState.basementCombos);
+    xALT = [...b.xUST, ...b.xALT];
+    yALT = [...b.yUST, ...b.yALT];
+  }
   const anyMatch = (list, loadCase) => list.some(c => pdeltaContains(loadCase, c));
 
   const xForces = [], yForces = [], xDrifts = [], yDrifts = [];
@@ -1488,7 +1704,7 @@ function parseTableRows(res, mapFn) {
 }
 
 async function pdeltaFetchAndCompute() {
-  const comboParam = encodeURIComponent(pdeltaState.selected.join(','));
+  const comboParam = encodeURIComponent(rigidCombosToFetch(pdeltaState).join(','));
   const [massRes, forcesRes, driftsRes, storiesRes] = await Promise.all([
     fetchAgentJson(`/api/etabs/table?name=${encodeURIComponent('Mass Summary by Story')}`),
     fetchAgentJson(`/api/etabs/table?name=${encodeURIComponent('Story Forces')}&combos=${comboParam}`),
@@ -1556,6 +1772,7 @@ function renderPdeltaSetupPanel() {
       ${numberField('pdBodrumKat', 'drift.params.basementCount', { step: 1, min: 0, max: 10 })}
     </div>
     ${comboPicker('pd', 'pdelta.combos.hint')}
+    ${rigidSection('pd', pdeltaState)}
     <div class="panel-actions">
       <button class="button button-primary full-width" type="button" id="pdCalculate">${t('drift.calculate')}</button>
       <button class="button button-secondary full-width" type="button" id="pdReset" style="margin-top:8px">${t('action.reset')}</button>
@@ -1581,6 +1798,8 @@ function renderPdeltaSetupPanel() {
   });
 
   initComboPicker('pd', pdeltaState);
+  bindSetupSections(panel);
+  initRigidSection('pd', pdeltaState, () => pdeltaState.combos);
   $('#pdCalculate', panel).addEventListener('click', runPdeltaCheck);
   $('#pdReset', panel).addEventListener('click', () => resetModule(pdeltaState, renderPdeltaModule));
 }
@@ -1919,6 +2138,7 @@ function downloadSpectrumTxt() {
 // ---------------------------------------------------------------------------
 
 const incrementState = {
+  ...rigidStateDefaults(),
   mt: 0, hn: 0, ct: 0.07,
   bodrum: false, bodrumKat: 0,
   combos: [], selected: [],
@@ -1930,9 +2150,9 @@ const incrementState = {
 // Pulls mass and both modal periods without the user asking. Failures are logged by
 // the individual fetchers; nothing here should block the module from rendering.
 async function incrementAutoFetchModelData() {
-  try { await incrementFetchMass(); } catch { /* reported by the fetcher */ }
-  try { await incrementFetchPeriod('X'); } catch { /* reported by the fetcher */ }
-  try { await incrementFetchPeriod('Y'); } catch { /* reported by the fetcher */ }
+  try { await incrementFetchMass(true); } catch { /* reported by the fetcher */ }
+  try { await incrementFetchPeriod('X', true); } catch { /* reported by the fetcher */ }
+  try { await incrementFetchPeriod('Y', true); } catch { /* reported by the fetcher */ }
   await incrementAutoFetchVt();
 }
 
@@ -1941,11 +2161,11 @@ async function incrementAutoFetchVt() {
   for (const dir of ['X', 'Y']) {
     const hasCombo = incrementState.selected.some(c => c.toUpperCase().includes(dir));
     if (!hasCombo) continue;
-    try { await incrementFetchVt(dir); } catch { /* reported by the fetcher */ }
+    try { await incrementFetchVt(dir, true); } catch { /* reported by the fetcher */ }
   }
 }
 
-async function incrementFetchMass() {
+async function incrementFetchMass(silent = false) {
   const btn = null;
   try {
     const [massRes, storiesRes] = await Promise.all([
@@ -1970,15 +2190,15 @@ async function incrementFetchMass() {
     }
     incrementState.mt = total;
     $('#incMt').value = total.toFixed(2);
-    log(t('increment.status.massFetched'), 'ok');
+    if (!silent) log(t('increment.status.massFetched'), 'ok');
   } catch (error) {
-    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+    if (!silent) log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
   } finally {
     if (btn) btn.disabled = false;
   }
 }
 
-async function incrementFetchPeriod(direction) {
+async function incrementFetchPeriod(direction, silent = false) {
   const btn = null;
   try {
     const res = await fetchAgentJson(`/api/etabs/table?name=${encodeURIComponent('Modal Participating Mass Ratios')}`);
@@ -2012,9 +2232,9 @@ async function incrementFetchPeriod(direction) {
       $('#incTy').value = best.period.toFixed(3);
     }
     incrementRenderModalInfo(direction);
-    log(t(direction === 'X' ? 'increment.status.periodFetchedX' : 'increment.status.periodFetchedY'), 'ok');
+    if (!silent) log(t(direction === 'X' ? 'increment.status.periodFetchedX' : 'increment.status.periodFetchedY'), 'ok');
   } catch (error) {
-    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+    if (!silent) log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
   } finally {
     if (btn) btn.disabled = false;
   }
@@ -2028,12 +2248,17 @@ function incrementRenderModalInfo(direction) {
   el.textContent = top.map(m => `${t('increment.modal.mode')} ${m.mode}: T=${m.period.toFixed(3)}s, ${col}=${m.ratio.toFixed(4)}`).join(' · ');
 }
 
-async function incrementFetchVt(direction) {
+async function incrementFetchVt(direction, silent = false) {
   const btn = null;
   const dirFilter = direction === 'X' ? 'X' : 'Y';
-  const matchingCombo = incrementState.selected.find(c => c.toUpperCase().includes(dirFilter));
+  // The target story is counted from the bottom, so with the rigid rule on it sits in
+  // the basement and must be read from the basement combination list.
+  const targetIsBasement = rigidIsActive(incrementState);
+  const pool = targetIsBasement ? incrementState.basementCombos : incrementState.selected;
+  const matchingCombo = pool.find(c => c.toUpperCase().includes(dirFilter))
+    || incrementState.selected.find(c => c.toUpperCase().includes(dirFilter));
   if (!matchingCombo) {
-    log(t('increment.error.noComboForDirection', { direction }), 'error');
+    if (!silent) log(t('increment.error.noComboForDirection', { direction }), 'error');
     return;
   }
 
@@ -2064,9 +2289,9 @@ async function incrementFetchVt(direction) {
 
     if (direction === 'X') { incrementState.vtX = vt; $('#incVtX').value = vt.toFixed(2); }
     else { incrementState.vtY = vt; $('#incVtY').value = vt.toFixed(2); }
-    log(t(direction === 'X' ? 'increment.status.vtFetchedX' : 'increment.status.vtFetchedY'), 'ok');
+    if (!silent) log(t(direction === 'X' ? 'increment.status.vtFetchedX' : 'increment.status.vtFetchedY'), 'ok');
   } catch (error) {
-    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+    if (!silent) log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
   } finally {
     if (btn) btn.disabled = false;
   }
@@ -2169,6 +2394,7 @@ function renderIncrementSetupPanel() {
       ${numberField('incCt', 'increment.params.ct', { min: 0 })}
     </div>
     ${comboPicker('inc', 'increment.combos.hint')}
+    ${rigidSection('inc', incrementState)}
     <div class="increment-direction">
       <h3 class="increment-direction-title x">${t('increment.direction.x')}</h3>
       <div class="field-grid two">
@@ -2214,6 +2440,8 @@ function renderIncrementSetupPanel() {
   // Vt additionally needs a direction-matching combination, so it is (re)read
   // whenever the selection changes as well as once on open.
   initComboPicker('inc', incrementState, incrementAutoFetchVt);
+  bindSetupSections(panel);
+  initRigidSection('inc', incrementState, () => incrementState.combos);
   incrementAutoFetchModelData();
 
   $('#incCalcX', panel).addEventListener('click', () => incrementCalculate('X'));
@@ -2250,6 +2478,7 @@ function renderIncrementResultsPanel() {
 // ---------------------------------------------------------------------------
 
 const columnAxialState = {
+  ...rigidStateDefaults(),
   fck: 30, limit: 0.40, bodrum: false, bodrumKat: 0,
   combos: [], selected: [],
   frameAssignments: [], columnForces: [], stories: [],
@@ -2346,6 +2575,7 @@ function renderColumnAxialSetupPanel() {
       ${numberField('caBodrumKat', 'drift.params.basementCount', { step: 1, min: 0, max: 10 })}
     </div>
     ${comboPicker('ca', 'columnAxial.combos.hint')}
+    ${rigidSection('ca', columnAxialState)}
     <div class="panel-actions">
       <button class="button button-primary full-width" type="button" id="caCalculate">${t('columnAxial.calculate')}</button>
       <button class="button button-secondary full-width" type="button" id="caReset" style="margin-top:8px">${t('action.reset')}</button>
@@ -2374,6 +2604,8 @@ function renderColumnAxialSetupPanel() {
   });
 
   initComboPicker('ca', columnAxialState);
+  bindSetupSections(panel);
+  initRigidSection('ca', columnAxialState, () => columnAxialState.combos);
   $('#caCalculate', panel).addEventListener('click', runColumnAxialCheck);
   $('#caReset', panel).addEventListener('click', () => resetModule(columnAxialState, renderColumnAxialModule));
   $('#caSelectFailing', panel).addEventListener('click', columnAxialSelectFailing);
@@ -2528,7 +2760,7 @@ async function columnAxialLoadFrameAssignments() {
 
 // Pure fetch: pulls the column element forces for the selected combos (Station≈0, StepType=Min).
 async function columnAxialLoadElementForces() {
-  const comboParam = encodeURIComponent(columnAxialState.selected.join(','));
+  const comboParam = encodeURIComponent(rigidCombosToFetch(columnAxialState).join(','));
   const res = await fetchAgentJson(`/api/etabs/table?name=${encodeURIComponent('Element Forces - Columns')}&combos=${comboParam}`);
   if (!res.etabsConnected) throw new Error(res.error || t('drift.error.notConnected'));
 
@@ -2541,11 +2773,12 @@ async function columnAxialLoadElementForces() {
   const stationIdx = tableIndex(f, 'Station', 'Location');
   const pIdx = tableIndex(f, 'P');
 
-  const selectedUpper = columnAxialState.selected.map(c => c.toUpperCase());
+  // Rigid basement: rows are accepted per story, so the combination that counts
+  // depends on whether the story sits above or below the rigid cut-off.
   return res.rows
     .filter(row => {
       const loadCase = (row[caseIdx] || '').toUpperCase();
-      if (!selectedUpper.includes(loadCase)) return false;
+      if (!rigidRowAllowed(columnAxialState, row[storyIdx] || '', row[caseIdx] || '')) return false;
       const station = parseFloat(row[stationIdx]);
       if (!Number.isNaN(station) && Math.abs(station) > 0.0001) return false;
       const stepType = row[stepTypeIdx] || '';
@@ -2651,7 +2884,8 @@ async function columnAxialExportExcel() {
 // ---------------------------------------------------------------------------
 
 const beamShearState = {
-  fck: 30, fyk: 420, dprime: 5, useVc: true,
+  ...rigidStateDefaults(),
+  fck: 30, fyk: 420, dprime: 5, useVc: false,
   combos: [], selected: [], lastResults: []
 };
 
@@ -2698,8 +2932,7 @@ async function loadBeamElementForces(selected, valueField) {
   const uniqueIdx = tableIndex(f, 'UniqueName', 'Unique');
   const caseIdx = tableIndex(f, 'OutputCase', 'Case');
   const valIdx = tableIndex(f, valueField);
-  const selectedUpper = selected.map(c => c.toUpperCase());
-  return { rows: res.rows, storyIdx, labelIdx, uniqueIdx, caseIdx, valIdx, selectedUpper };
+  return { rows: res.rows, storyIdx, labelIdx, uniqueIdx, caseIdx, valIdx };
 }
 
 function renderBeamShearModule() {
@@ -2718,6 +2951,7 @@ function renderBeamShearSetupPanel() {
       ${checkboxField('bsUseVc', 'beam.params.useVc')}
     </div>
     ${comboPicker('bs', 'beam.combos.hint')}
+    ${rigidSection('bs', beamShearState)}
     <div class="panel-actions">
       <button class="button button-primary full-width" type="button" id="bsCalculate">${t('columnAxial.calculate')}</button>
       <button class="button button-secondary full-width" type="button" id="bsReset" style="margin-top:8px">${t('action.reset')}</button>
@@ -2740,6 +2974,8 @@ function renderBeamShearSetupPanel() {
   useVc.addEventListener('change', () => { beamShearState.useVc = useVc.checked; });
 
   initComboPicker('bs', beamShearState);
+  bindSetupSections(panel);
+  initRigidSection('bs', beamShearState, () => beamShearState.combos);
   $('#bsCalculate', panel).addEventListener('click', runBeamShearCheck);
   $('#bsReset', panel).addEventListener('click', () => resetModule(beamShearState, renderBeamShearModule));
   $('#bsSelectFailing', panel).addEventListener('click', () => beamSelectFailing(beamShearState.lastResults));
@@ -2773,16 +3009,16 @@ async function runBeamShearCheck() {
   if (btn) btn.disabled = true;
   try {
     const [forces, sectionMap] = await Promise.all([
-      loadBeamElementForces(beamShearState.selected, 'V2'),
+      loadBeamElementForces(rigidCombosToFetch(beamShearState), 'V2'),
       fetchFrameSectionMap()
     ]);
-    const { rows, storyIdx, labelIdx, uniqueIdx, caseIdx, valIdx, selectedUpper } = forces;
+    const { rows, storyIdx, labelIdx, uniqueIdx, caseIdx, valIdx } = forces;
 
     // Group by story+label, keep the governing (max |V2|) row.
     const byKey = new Map();
     for (const row of rows) {
-      if (!selectedUpper.includes((row[caseIdx] || '').toUpperCase())) continue;
       const story = row[storyIdx] || '', label = row[labelIdx] || '';
+      if (!rigidRowAllowed(beamShearState, story, row[caseIdx] || '')) continue;
       const key = `${story}_${label}`;
       const vd = Math.abs(parseFloat(row[valIdx]) || 0);
       const existing = byKey.get(key);
@@ -2924,6 +3160,7 @@ async function beamShearExportExcel() {
 // ---------------------------------------------------------------------------
 
 const beamAxialState = {
+  ...rigidStateDefaults(),
   fck: 30, limit: 0.1,
   combos: [], selected: [], lastResults: []
 };
@@ -2949,6 +3186,7 @@ function renderBeamAxialSetupPanel() {
       ${numberField('baLimit', 'beamAxial.params.limit', { min: 0.01, max: 1 })}
     </div>
     ${comboPicker('ba', 'beam.combos.hint')}
+    ${rigidSection('ba', beamAxialState)}
     <div class="panel-actions">
       <button class="button button-primary full-width" type="button" id="baCalculate">${t('columnAxial.calculate')}</button>
       <button class="button button-secondary full-width" type="button" id="baReset" style="margin-top:8px">${t('action.reset')}</button>
@@ -2964,6 +3202,8 @@ function renderBeamAxialSetupPanel() {
   limit.addEventListener('input', () => { beamAxialState.limit = parseFloat(limit.value) || 0; });
 
   initComboPicker('ba', beamAxialState);
+  bindSetupSections(panel);
+  initRigidSection('ba', beamAxialState, () => beamAxialState.combos);
   $('#baCalculate', panel).addEventListener('click', runBeamAxialCheck);
   $('#baReset', panel).addEventListener('click', () => resetModule(beamAxialState, renderBeamAxialModule));
   $('#baSelectFailing', panel).addEventListener('click', () => beamSelectFailing(beamAxialState.lastResults));
@@ -2983,15 +3223,15 @@ async function runBeamAxialCheck() {
   if (btn) btn.disabled = true;
   try {
     const [forces, sectionMap] = await Promise.all([
-      loadBeamElementForces(beamAxialState.selected, 'P'),
+      loadBeamElementForces(rigidCombosToFetch(beamAxialState), 'P'),
       fetchFrameSectionMap()
     ]);
-    const { rows, storyIdx, labelIdx, uniqueIdx, caseIdx, valIdx, selectedUpper } = forces;
+    const { rows, storyIdx, labelIdx, uniqueIdx, caseIdx, valIdx } = forces;
 
     // Group by unique, keep the governing (max |P|) row.
     const byUnique = new Map();
     for (const row of rows) {
-      if (!selectedUpper.includes((row[caseIdx] || '').toUpperCase())) continue;
+      if (!rigidRowAllowed(beamAxialState, row[storyIdx] || '', row[caseIdx] || '')) continue;
       const unique = row[uniqueIdx] || '';
       const p = Math.abs(parseFloat(row[valIdx]) || 0);
       const existing = byUnique.get(unique);
@@ -3131,6 +3371,7 @@ async function beamAxialExportExcel() {
 // ---------------------------------------------------------------------------
 
 const wallAxialState = {
+  ...rigidStateDefaults(),
   fck: 30, limit: 0.35, combos: [], selected: [], lastResults: []
 };
 
@@ -3156,6 +3397,7 @@ function renderWallAxialSetupPanel() {
       ${numberField('waLimit', 'columnAxial.params.limit', { min: 0.05, max: 1 })}
     </div>
     ${comboPicker('wa', 'wallAxial.combos.hint')}
+    ${rigidSection('wa', wallAxialState)}
     <div class="panel-actions">
       <button class="button button-primary full-width" type="button" id="waCalculate">${t('drift.calculate')}</button>
       <button class="button button-secondary full-width" type="button" id="waReset" style="margin-top:8px">${t('action.reset')}</button>
@@ -3174,6 +3416,8 @@ function renderWallAxialSetupPanel() {
   bind('waLimit', 'limit');
 
   initComboPicker('wa', wallAxialState);
+  bindSetupSections(panel);
+  initRigidSection('wa', wallAxialState, () => wallAxialState.combos);
   $('#waCalculate', panel).addEventListener('click', runWallAxialCheck);
   $('#waReset', panel).addEventListener('click', () => resetModule(wallAxialState, renderWallAxialModule));
   $('#waExport', panel).addEventListener('click', wallAxialExportExcel);
@@ -3256,7 +3500,7 @@ async function runWallAxialCheck() {
   const btn = $('#waCalculate');
   if (btn) btn.disabled = true;
   try {
-    const comboParam = encodeURIComponent(wallAxialState.selected.join(','));
+    const comboParam = encodeURIComponent(rigidCombosToFetch(wallAxialState).join(','));
     const [forcesRes, sectionsRes] = await Promise.all([
       fetchAgentJson(`/api/etabs/pier-forces?combos=${comboParam}`, 30000),
       fetchAgentJson('/api/etabs/pier-sections', 30000)
@@ -3596,14 +3840,6 @@ function wsChips(id, choices, selected, unit = '') {
        aria-pressed="${selected.includes(v)}">${unit}${v}</button>`).join('') + '</div>';
 }
 
-function wsToggle(id, labelKey, on) {
-  return `<label class="ws-toggle" for="${id}">
-      <span>${t(labelKey)}</span>
-      <input type="checkbox" id="${id}" ${on ? 'checked' : ''}>
-      <span class="ws-toggle-track" aria-hidden="true"></span>
-    </label>`;
-}
-
 function renderWallShearModule() {
   renderWallShearSetupPanel();
   renderWallShearResultsPanel();
@@ -3615,67 +3851,58 @@ function renderWallShearSetupPanel() {
   panel.innerHTML = `
     <div class="panel-heading compact"><div><span class="step-number">1</span><div><h2>${t('wallShear.params.title')}</h2><p>${t('moduleData.description')}</p></div></div></div>
 
-    <p class="ws-section">${t('wallShear.section.combos')}</p>
-    ${comboPicker('ws', 'wallShear.combos.hint')}
-
-    <p class="ws-section">${t('wallShear.section.material')}</p>
-    <div class="field-grid">
-      ${numberField('wsFck', 'wallShear.params.fck', { min: 10, max: 90 })}
-      ${numberField('wsFyd', 'wallShear.params.fyd', { min: 100, max: 700 })}
-    </div>
-    <div class="ws-block">
-      ${wsToggle('wsSecondaryFck', 'wallShear.params.secondaryFck', st.secondaryFck)}
+    ${setupSection('wsMaterialSection', 'wallShear.section.material', `
+      <div class="field-grid">
+        ${numberField('wsFck', 'wallShear.params.fck', { min: 10, max: 90 })}
+        ${numberField('wsFyd', 'wallShear.params.fyd', { min: 100, max: 700 })}
+      </div>
+      <label class="field-checkbox" for="wsSecondaryFck">
+        <input type="checkbox" id="wsSecondaryFck" ${st.secondaryFck ? 'checked' : ''}>
+        ${t('wallShear.params.secondaryFck')}
+      </label>
       <div class="field-grid" id="wsSecondaryFckBody" ${st.secondaryFck ? '' : 'hidden'}>
         ${numberField('wsFckUpper', 'wallShear.params.fckUpper', { min: 10, max: 90 })}
         <div class="field"><label for="wsSplitStory">${t('wallShear.params.splitStory')}</label>
           <select id="wsSplitStory"></select></div>
-      </div>
-    </div>
+      </div>`)}
 
-    <p class="ws-section">${t('wallShear.section.rebar')}</p>
-    <div class="ws-block">
+    ${setupSection('wsCombosSection', 'wallShear.section.combos', comboPicker('ws', 'wallShear.combos.hint'))}
+
+    ${setupSection('wsRebarSection', 'wallShear.section.rebar', `
       <p class="ws-chip-label">${t('wallShear.params.phi')}</p>
       ${wsChips('wsPhiChips', WS_PHI_CHOICES, st.phiOpts, 'ø')}
       <p class="ws-chip-label">${t('wallShear.params.spacing')}</p>
       ${wsChips('wsSChips', WS_S_CHOICES, st.sOpts)}
       <p class="ws-chip-label">${t('wallShear.params.legs')}</p>
       ${wsChips('wsNChips', WS_N_CHOICES, st.nOpts)}
-      <p class="combo-hint">${t('wallShear.rebar.hint')}</p>
-    </div>
+      <p class="combo-hint">${t('wallShear.rebar.hint')}</p>`)}
 
-    <p class="ws-section">${t('wallShear.section.short')}</p>
-    <div class="ws-block">
-      <p class="ws-sub">${t('wallShear.short.eq')}</p>
+    ${setupSection('wsShortSection', 'wallShear.section.short', `
+      <p class="ws-chip-label">${t('wallShear.short.eq')}</p>
       ${comboPicker('wsShortEq', 'wallShear.short.eqHint')}
-      <p class="ws-sub">${t('wallShear.short.soil')}</p>
+      <p class="ws-chip-label">${t('wallShear.short.soil')}</p>
       ${comboPicker('wsShortSoil', 'wallShear.short.soilHint')}
-      <button class="button button-secondary full-width" type="button" id="wsShortDetail">${t('wallShear.short.detail')}</button>
-    </div>
+      <div class="panel-actions">
+        <button class="button button-secondary full-width" type="button" id="wsShortDetail">${t('wallShear.short.detail')}</button>
+      </div>`, false)}
 
-    <p class="ws-section">${t('wallShear.section.v05')}</p>
-    <div class="ws-block">
-      ${wsToggle('wsRule05', 'wallShear.v05.active', st.rule05)}
+    ${setupSection('wsV05Section', 'wallShear.section.v05', `
+      <label class="field-checkbox" for="wsRule05">
+        <input type="checkbox" id="wsRule05" ${st.rule05 ? 'checked' : ''}>
+        ${t('wallShear.v05.active')}
+      </label>
       <div id="wsRule05Body" ${st.rule05 ? '' : 'hidden'}>
-        <p class="ws-sub">${t('wallShear.v05.eq')}</p>
+        <p class="ws-chip-label">${t('wallShear.v05.eq')}</p>
         ${comboPicker('wsV05Eq', 'wallShear.v05.eqHint')}
-        <p class="ws-sub">${t('wallShear.v05.soil')}</p>
+        <p class="ws-chip-label">${t('wallShear.v05.soil')}</p>
         ${comboPicker('wsV05Soil', 'wallShear.v05.soilHint')}
         <label class="field-checkbox" for="wsShow05"><input type="checkbox" id="wsShow05" ${st.show05 ? 'checked' : ''}> ${t('wallShear.v05.show')}</label>
-        <button class="button button-secondary full-width" type="button" id="wsV05Detail">${t('wallShear.v05.detail')}</button>
-      </div>
-    </div>
+        <div class="panel-actions">
+          <button class="button button-secondary full-width" type="button" id="wsV05Detail">${t('wallShear.v05.detail')}</button>
+        </div>
+      </div>`, false)}
 
-    <p class="ws-section">${t('wallShear.section.rigid')}</p>
-    <div class="ws-block">
-      ${wsToggle('wsRijit', 'wallShear.rigid.active', st.rijit)}
-      <div id="wsRijitBody" ${st.rijit ? '' : 'hidden'}>
-        <div class="field"><label for="wsRijitStory">${t('wallShear.rigid.story')}</label>
-          <select id="wsRijitStory"></select></div>
-        <p class="combo-hint" id="wsRijitNote"></p>
-        <p class="ws-sub">${t('wallShear.rigid.combos')}</p>
-        ${comboPicker('wsBasement', 'wallShear.rigid.combosHint')}
-      </div>
-    </div>
+    ${rigidSection('ws', st)}
 
     <div class="panel-actions">
       <button class="button button-primary full-width" type="button" id="wsCalculate">${t('columnAxial.calculate')}</button>
@@ -3684,6 +3911,8 @@ function renderWallShearSetupPanel() {
     <div class="panel-actions">
       <button class="button button-secondary full-width" type="button" id="wsExport">${t('columnAxial.export')}</button>
     </div>`;
+
+  bindSetupSections(panel);
 
   const bind = (id, key) => {
     const el = $('#' + id, panel);
@@ -3695,7 +3924,6 @@ function renderWallShearSetupPanel() {
   bind('wsFyd', 'fyd');
   bind('wsFckUpper', 'fckUpper');
 
-  // Chip groups
   const chipGroup = (id, key) => {
     const wrap = $('#' + id, panel);
     if (!wrap) return;
@@ -3715,19 +3943,19 @@ function renderWallShearSetupPanel() {
   chipGroup('wsSChips', 'sOpts');
   chipGroup('wsNChips', 'nOpts');
 
-  const toggle = (id, key, bodyId, after) => {
-    const el = $('#' + id, panel);
-    if (!el) return;
-    el.addEventListener('change', () => {
-      st[key] = el.checked;
-      const body = bodyId ? $('#' + bodyId, panel) : null;
-      if (body) body.hidden = !el.checked;
-      if (after) after();
-    });
-  };
-  toggle('wsSecondaryFck', 'secondaryFck', 'wsSecondaryFckBody');
-  toggle('wsRule05', 'rule05', 'wsRule05Body');
-  toggle('wsRijit', 'rijit', 'wsRijitBody', wsUpdateRijitNote);
+  const secFck = $('#wsSecondaryFck', panel);
+  if (secFck) secFck.addEventListener('change', () => {
+    st.secondaryFck = secFck.checked;
+    const body = $('#wsSecondaryFckBody', panel);
+    if (body) body.hidden = !secFck.checked;
+  });
+
+  const rule05 = $('#wsRule05', panel);
+  if (rule05) rule05.addEventListener('change', () => {
+    st.rule05 = rule05.checked;
+    const body = $('#wsRule05Body', panel);
+    if (body) body.hidden = !rule05.checked;
+  });
 
   const show05 = $('#wsShow05', panel);
   if (show05) show05.addEventListener('change', () => {
@@ -3742,52 +3970,36 @@ function renderWallShearSetupPanel() {
   $('#wsShortDetail', panel).addEventListener('click', () => wallShearShowDetail('short'));
   $('#wsV05Detail', panel).addEventListener('click', () => wallShearShowDetail('v05'));
 
-  // Every combination list on this screen is fed from the same cached model data.
+  const shared = sel => ({
+    get combos() { return st.combos; }, set combos(v) { st.combos = v; },
+    get selected() { return st[sel]; }, set selected(v) { st[sel] = v; }
+  });
   initComboPicker('ws', st);
-  initComboPicker('wsShortEq', { get combos() { return st.combos; }, set combos(v) { st.combos = v; },
-    get selected() { return st.shortEqCombos; }, set selected(v) { st.shortEqCombos = v; } });
-  initComboPicker('wsShortSoil', { get combos() { return st.combos; }, set combos(v) { st.combos = v; },
-    get selected() { return st.shortSoilCombos; }, set selected(v) { st.shortSoilCombos = v; } });
-  initComboPicker('wsV05Eq', { get combos() { return st.combos; }, set combos(v) { st.combos = v; },
-    get selected() { return st.v05EqCombos; }, set selected(v) { st.v05EqCombos = v; } });
-  initComboPicker('wsV05Soil', { get combos() { return st.combos; }, set combos(v) { st.combos = v; },
-    get selected() { return st.v05SoilCombos; }, set selected(v) { st.v05SoilCombos = v; } });
-  initComboPicker('wsBasement', { get combos() { return st.combos; }, set combos(v) { st.combos = v; },
-    get selected() { return st.basementCombos; }, set selected(v) { st.basementCombos = v; } });
+  initComboPicker('wsShortEq', shared('shortEqCombos'));
+  initComboPicker('wsShortSoil', shared('shortSoilCombos'));
+  initComboPicker('wsV05Eq', shared('v05EqCombos'));
+  initComboPicker('wsV05Soil', shared('v05SoilCombos'));
+  initRigidSection('ws', st, () => st.combos);
 
-  wallShearLoadStories();
+  wallShearLoadSplitStory();
 }
 
-function wsUpdateRijitNote() {
-  const note = $('#wsRijitNote');
-  if (note) note.textContent = wallShearState.rijitStory
-    ? t('wallShear.rigid.note', { story: wallShearState.rijitStory })
-    : '';
-}
-
-// Stories drive both the "different fck above" split and the rigid-basement cutoff.
-async function wallShearLoadStories() {
+// The "different fck above" split needs the same story list the rigid rule loads.
+async function wallShearLoadSplitStory() {
   try {
     if (wallShearState.stories.length === 0) {
       const res = await fetchAgentJson('/api/etabs/stories');
-      if (!res.etabsConnected) throw new Error(res.error || t('drift.error.notConnected'));
-      // Lowest first, so index order matches the desktop's Story.Order.
+      if (!res.etabsConnected) return;
       wallShearState.stories = (res.stories || []).slice().sort((a, b) => a.elevation - b.elevation);
     }
-    const opts = wallShearState.stories.slice().reverse()
+    const sel = $('#wsSplitStory');
+    if (!sel) return;
+    sel.innerHTML = wallShearState.stories.slice().reverse()
       .map(s => `<option value="${escapeHtml(s.name)}">${escapeHtml(s.name)}</option>`).join('');
-    for (const [id, key] of [['wsSplitStory', 'splitStory'], ['wsRijitStory', 'rijitStory']]) {
-      const sel = $('#' + id);
-      if (!sel) continue;
-      sel.innerHTML = opts;
-      if (wallShearState[key]) sel.value = wallShearState[key];
-      else wallShearState[key] = sel.value;
-      sel.addEventListener('change', () => { wallShearState[key] = sel.value; wsUpdateRijitNote(); });
-    }
-    wsUpdateRijitNote();
-  } catch (error) {
-    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
-  }
+    if (wallShearState.splitStory) sel.value = wallShearState.splitStory;
+    else wallShearState.splitStory = sel.value;
+    sel.addEventListener('change', () => { wallShearState.splitStory = sel.value; });
+  } catch { /* optional until the rule is switched on */ }
 }
 
 function renderWallShearResultsPanel() {
@@ -3972,8 +4184,7 @@ async function runWallShearCheck() {
   try {
     // Rigid basement splits the model: upper stories use the main combinations,
     // stories at or below the chosen story use the basement ones.
-    const useRijit = st.rijit && st.rijitStory && st.basementCombos.length > 0;
-    const mainCombos = [...new Set(useRijit ? [...st.selected, ...st.basementCombos] : st.selected)];
+    const mainCombos = rigidCombosToFetch(st);
     const ruleCombos = [...new Set([...st.shortEqCombos, ...st.shortSoilCombos, ...st.v05EqCombos, ...st.v05SoilCombos])];
 
     const [mainRes, ruleRes, sectionsRes] = await Promise.all([
@@ -3991,7 +4202,7 @@ async function runWallShearCheck() {
       st.stories = (storiesRes.stories || []).slice().sort((a, b) => a.elevation - b.elevation);
     }
 
-    wallShearRaw = { mainRows: mainRes.rows, ruleRows: ruleRes.rows || [], sections: sectionsRes.rows || [], useRijit };
+    wallShearRaw = { mainRows: mainRes.rows, ruleRows: ruleRes.rows || [], sections: sectionsRes.rows || [] };
     wallShearRecalculate();
     recordLastCheck('wall-shear');
     const failCount = st.lastResults.filter(r => !r.ok).length;
@@ -4007,22 +4218,14 @@ async function runWallShearCheck() {
 function wallShearRecalculate() {
   if (!wallShearRaw) return;
   const st = wallShearState;
-  const { mainRows, ruleRows, sections, useRijit } = wallShearRaw;
+  const { mainRows, ruleRows, sections } = wallShearRaw;
 
   const geometry = wsBuildGeometry(sections);
 
   // Vd = max |V2| per story+pier, honouring the rigid-basement combination split.
-  const splitOrder = useRijit ? wsStoryOrder(st.rijitStory) : -1;
-  const upperSet = new Set(st.selected);
-  const basementSet = new Set(st.basementCombos);
   const pierData = {};
   for (const r of mainRows) {
-    if (useRijit && splitOrder >= 0) {
-      const idx = wsStoryOrder(r.story);
-      if (idx < 0) continue;
-      const allowed = idx > splitOrder ? upperSet : basementSet;
-      if (!allowed.has((r.loadCase || '').trim())) continue;
-    } else if (!upperSet.has((r.loadCase || '').trim())) continue;
+    if (!rigidRowAllowed(st, r.story, r.loadCase)) continue;
     const key = `${r.story}::${r.pier}`;
     const v = Math.abs(r.v2);
     if (!pierData[key] || v > pierData[key].vd) pierData[key] = { vd: v };
@@ -4095,6 +4298,8 @@ $('#themeToggle').addEventListener('click', () => {
   localStorage.setItem('sea-theme', next);
 });
 
+$('#disconnectButton').addEventListener('click', disconnectFromEtabs);
+$('#instanceConfirm').addEventListener('click', confirmInstanceChoice);
 $('#languageToggle').addEventListener('click', () => applyLanguage(currentLanguage === 'en' ? 'tr' : 'en'));
 window.addEventListener('hashchange', () => setActiveView(location.hash.slice(1)));
 applyLanguage(currentLanguage);

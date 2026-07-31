@@ -1,10 +1,10 @@
 # Module implementation status
 
-Last updated for **web v1.10.1 / agent v1.10.0**.
+Last updated for **web v1.11.0 / agent v1.11.0**.
 
 "Migrated" means the calculation itself runs against the live ETABS model and has
-been checked against an independent hand calculation. "UI only" means the screen
-exists but no calculation is wired up — those modules disable their connect button.
+been checked against an independent hand calculation. Every module listed below performs a real calculation; the schedule ("done") screens
+were removed in v1.11.0.
 
 | Module | Status | Source (desktop) | Notes |
 | --- | --- | --- | --- |
@@ -17,11 +17,6 @@ exists but no calculation is wired up — those modules disable their connect bu
 | Beam Axial Load (Kiriş Eksenel) | ✅ Migrated | `kiris_eksenel_yuk.cs` | |
 | Wall Shear (Perde Kesme) | ✅ Migrated | `perde_kesme.cs` | Chooses the rebar layout per story; short-wall, 0.5V and rigid-basement rules with their own detail tables; editable bw/lw and coupled flag. |
 | Wall Axial Load (Perde Eksenel) | ✅ Migrated | `perde_eksenel.cs` | Limit 0.35 (not 0.40); d is the wall length end-to-end. Pier data comes from `Results.PierForce` + `PierLabel.GetSectionProperties`, not a display table. Includes "select failing walls in model" via the AreaObj-based select-piers endpoint. |
-| Column Schedule (Kolon Donesi) | ⬜ UI only | `kolon_donesi.cs`, `kolon_dwg_export.cs` | Was migrated in v1.3–v1.5 and **withdrawn in v1.7.0**: schedules are deferred until every analysis and member check ahead of them is verified. |
-| Wall Schedule (Perde Donesi) | ⬜ UI only | — | Empty placeholder in the desktop app too — nothing to migrate. |
-| Beam Schedule (Kiriş Donesi) | ⬜ UI only | — | Empty placeholder in the desktop app too. |
-| Slab Schedule (Döşeme Donesi) | ⬜ UI only | — | Empty placeholder in the desktop app too. |
-| Foundation Schedule (Temel Donesi) | ⬜ UI only | — | Empty placeholder in the desktop app too. |
 
 ## Supported environment
 
@@ -43,13 +38,9 @@ Every migrated calculation now has a documented validation case (VC-01 to VC-09 
 1. **Wall Shear's short-wall, 0.5V and rigid-basement rules** — the core Vr/Vmax path
    is validated as VC-05, but those three optional rules still need a model that
    exercises them.
-2. **Schedules (done modules)** — Column Schedule was built and then withdrawn in
-   v1.7.0 so it can be reintroduced on a verified foundation. Wall/Beam/Slab/
-   Foundation schedules are empty in the desktop app too and need their scope
-   defined before anything can be migrated.
-3. PDF reporting alongside the existing Excel exports.
+2. PDF reporting alongside the existing Excel exports.
 
-Explicitly **not** planned: story grouping for Wall Shear, and Column Shear — both
-were considered and dropped.
+Explicitly **not** planned: the schedule ("done") modules — removed from the
+application in v1.11.0; story grouping for Wall Shear; and Column Shear.
 
 There is no committed delivery date for any of these.
