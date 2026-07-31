@@ -1,6 +1,6 @@
 # Module implementation status
 
-Last updated for **web v1.10.0 / agent v1.10.0**.
+Last updated for **web v1.10.1 / agent v1.10.0**.
 
 "Migrated" means the calculation itself runs against the live ETABS model and has
 been checked against an independent hand calculation. "UI only" means the screen
@@ -37,14 +37,19 @@ exists but no calculation is wired up — those modules disable their connect bu
 Work is deliberately ordered: **everything that comes before the schedules must be
 complete and verified first.** Schedule ("done") modules are only revisited after that.
 
-1. **Validation cases for the four undocumented checks** — Interstory Drift,
-   Second-Order Effects, Beam Shear, Beam Axial (see `VALIDATION.md`).
-2. **Story grouping** for Wall Shear — applying one rebar layout to a group of
-   stories rather than choosing per story. Deferred from the initial migration.
-3. **Schedules (done modules)** — Column Schedule was built and then withdrawn in
+Every migrated calculation now has a documented validation case (VC-01 to VC-09 in
+`VALIDATION.md`). What remains:
+
+1. **Wall Shear's short-wall, 0.5V and rigid-basement rules** — the core Vr/Vmax path
+   is validated as VC-05, but those three optional rules still need a model that
+   exercises them.
+2. **Schedules (done modules)** — Column Schedule was built and then withdrawn in
    v1.7.0 so it can be reintroduced on a verified foundation. Wall/Beam/Slab/
    Foundation schedules are empty in the desktop app too and need their scope
    defined before anything can be migrated.
-4. PDF reporting alongside the existing Excel exports.
+3. PDF reporting alongside the existing Excel exports.
+
+Explicitly **not** planned: story grouping for Wall Shear, and Column Shear — both
+were considered and dropped.
 
 There is no committed delivery date for any of these.

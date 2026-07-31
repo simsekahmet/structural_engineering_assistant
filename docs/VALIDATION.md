@@ -137,14 +137,156 @@ use the governing one, which is why e.g. CATI/P1 shows 881 kN raw but 0.12 = 181
 
 ---
 
+## VC-06 — Interstory Drift
+
+**Module:** Interstory Drift · **Code:** TBDY 2018 §4.9.1 (Denk. 4.32–4.33), Tablo 4.9
+
+| Input | Value |
+| --- | --- |
+| SDS (DD-2) / SDS (DD-3) | 1.20 g / 0.48 g |
+| SD1 (DD-2) / SD1 (DD-3) | 0.60 g / 0.18 g |
+| κ | 1.0 |
+| Tp | 0.70 s |
+| Infill | Rigid (0.008·κ limit) |
+
+**Hand calculation**
+
+```
+TA = SD1,DD-2 / SDS,DD-2 = 0.60 / 1.20 = 0.5000 s
+Tp = 0.70 s ≥ TA        → λ = SD1,DD-3 / SD1,DD-2 = 0.18 / 0.60 = 0.300
+Limit = 0.008 · κ       = 0.008 · 1.0            = 0.00800
+
+Story2:  δ/h = 0.00350 → λ·δ/h = 0.300 · 0.00350 = 0.001050   (13.1 % of limit)
+Story1:  δ/h = 0.00900 → λ·δ/h = 0.300 · 0.00900 = 0.002700   (33.8 % of limit)
+```
+
+**Tool output:** λ = 0.300, limit = 0.00800, λ·δ/h = 0.001050 and 0.002700, both OK.
+
+**Result: PASS.**
+
+---
+
+## VC-07 — Second-Order Effects
+
+**Module:** Second-Order Effects · **Code:** TBDY 2018 §4.9.2 (Denk. 4.34)
+
+| Input | Value |
+| --- | --- |
+| Ch / R / D | 1.0 / 8 / 3 |
+| Story2 | W = 4200 kN, Vi = 520 kN, Δ/h = 0.00420 |
+| Story1 | W = 5400 kN, Vi = 980 kN, Δ/h = 0.00610 |
+
+**Hand calculation**
+
+```
+Limit = 0.12 · D / (Ch · R) = 0.12 · 3 / (1.0 · 8) = 0.045
+
+ΣWj accumulates from the top down:
+Story2:  ΣWj = 4200 kN
+         θ = (Δ/h)·ΣWj / Vi = 0.00420 · 4200 / 520 = 0.033923   (75.4 %)  → OK
+Story1:  ΣWj = 4200 + 5400 = 9600 kN
+         θ = 0.00610 · 9600 / 980            = 0.059755   (132.8 %) → NOT OK
+```
+
+**Tool output:** limit = 0.045; θ = 0.033923 (OK) and 0.059755 (NOT OK), with ΣWj = 4200 and
+9600 kN respectively — confirming the cumulative weight is summed downward.
+
+**Result: PASS.** The failing story is reported as failing, so the check is exercised in
+both directions.
+
+---
+
+## VC-08 — Beam Shear
+
+**Module:** Beam Shear · **Code:** TS 500 §8.1.3–8.1.5, TBDY 2018 §7.4.5
+
+Two cases: one in the normal range, one that forces the Vmax cap to bind.
+
+### VC-08a — normal range
+
+| Input | Value |
+| --- | --- |
+| fck / fyk | 25 / 420 MPa |
+| b × h, d' | 25 × 50 cm, 5 cm |
+| Stirrups | 2 legs, Ø8, s = 10 cm |
+| Vc contribution | On |
+| Vd | 180 kN |
+
+```
+fyd   = fyk / 1.15          = 420 / 1.15            = 365.217 MPa
+fctd  = 0.35·√fck / 1.5     = 0.35·5 / 1.5          = 1.16667 MPa
+d     = h − d'              = 50 − 5                = 45 cm
+Vc    = 0.65·fctd·b·d        = 0.65·1.16667·0.25·0.45·1000 =  85.31 kN
+Vcr   = 0.80·Vc                                      =  68.25 kN
+Asw/s = n·π(Ø/10)²/4 / s     = 2·π·0.64/4 / 10      = 0.100531 cm²/cm
+Vw    = (Asw/s)·d·fyd·0.1    = 0.100531·45·365.217·0.1 = 165.22 kN
+Vr    = Vw + Vcr                                     = 233.47 kN
+Vmax  = 0.85·b·h·√fck        = 0.85·0.25·0.50·5·1000  = 531.25 kN  (not binding)
+Vd = 180 ≤ 233.47 → OK
+```
+*(Unit note: cm² · MPa · 0.1 = kN, since 1 cm²·MPa = 100 mm² · N/mm² = 100 N = 0.1 kN.)*
+
+**Tool output:** Vr = 233.47 kN, OK.
+
+### VC-08b — Vmax cap binding
+
+Same section, but 4 legs of Ø16 at s = 10 cm and Vd = 600 kN.
+
+```
+Asw/s = 4·π·(1.6)²/4 / 10 = 0.80425 cm²/cm
+Vw    = 0.80425·45·365.217·0.1 = 1321.8 kN
+Vw + Vcr = 1321.8 + 68.25      = 1390.0 kN
+Vmax                            =  531.25 kN
+Vr = min(1390.0 , 531.25)       =  531.25 kN   ← cap governs
+Vd = 600 > 531.25 → NOT OK
+```
+
+**Tool output:** Vr = 531.25 kN (capped), NOT OK.
+
+**Result: PASS** for both cases — the reinforcement path and the Vmax cap are both confirmed.
+
+---
+
+## VC-09 — Beam Axial Load
+
+**Module:** Beam Axial Load · **Code:** TBDY 2018 §7.3
+
+| Input | Value |
+| --- | --- |
+| fck | 25 MPa |
+| b × d | 25 × 50 cm |
+| Nd | 210 kN |
+| Limit ratio | 0.10 |
+
+```
+Ac      = b · d          = 25 · 50        = 1250 cm²
+Ac·fck  = Ac · fck / 10   = 1250 · 25 / 10 = 3125 kN
+Oran    = Nd / (Ac·fck)  = 210 / 3125     = 0.0672
+0.0672 ≤ 0.10 → OK (no column-style detailing required)
+```
+
+**Tool output:** Ac = 1250 cm², capacity = 3125 kN, ratio = 0.0672, OK.
+
+**Result: PASS.**
+
+---
+
+## Observed behaviour worth knowing
+
+At **exactly** the limit the two drift-type checks disagree: Interstory Drift uses a strict
+comparison (`λ·δ/h < limit`) and reports NOT OK, while Second-Order Effects uses an inclusive
+one (`θ ≤ limit`) and reports OK. Verified with λ·δ/h = limit = 0.008 and θ = limit = 0.045.
+This mirrors the desktop application and has been left as-is; it only matters for values
+landing exactly on the limit.
+
+---
+
 ## Not yet validated
 
-- Interstory Drift (λ and the 0.008κ / 0.016κ limits)
-- Second-Order Effects (θ and the 0.12·D/(Ch·R) limit)
-- Beam Shear (Vr, and the Vmax cap)
-- Beam Axial Load
 - Wall Shear's short-wall, 0.5V and rigid-basement rules (the core Vr/Vmax path is VC-05)
+- The **data-extraction** side of every module — which ETABS table or API call a demand
+  value is read from, and how combinations are matched. The cases above validate the
+  check arithmetic given stated inputs; VC-02 to VC-05 additionally reproduce values
+  taken from real models or reference reports.
 
-These were ported from the desktop implementation and spot-checked while migrating,
-but no documented hand calculation exists for them yet. Treat their output as you
-would any unvalidated tool: check it before use.
+Treat anything in this list as you would any unvalidated tool: check it before use.
