@@ -4,7 +4,7 @@ const moduleDefinitions = [
   { id: 'drift', key: 'drift', icon: '↔', categoryKey: 'category.analysis', ready: true },
   { id: 'pdelta', key: 'pdelta', icon: 'ϑ', categoryKey: 'category.analysis', ready: true },
   { id: 'column-axial', key: 'columnAxial', icon: '▥', categoryKey: 'category.memberChecks', ready: true },
-  { id: 'wall-shear', key: 'wallShear', icon: '▤', categoryKey: 'category.memberChecks' },
+  { id: 'wall-shear', key: 'wallShear', icon: '▤', categoryKey: 'category.memberChecks', ready: true },
   { id: 'wall-axial', key: 'wallAxial', icon: '▯', categoryKey: 'category.memberChecks', ready: true },
   { id: 'beam-shear', key: 'beamShear', icon: '═', categoryKey: 'category.memberChecks', ready: true },
   { id: 'beam-axial', key: 'beamAxial', icon: '⇥', categoryKey: 'category.memberChecks', ready: true },
@@ -78,6 +78,40 @@ const translations = {
     'pdelta.basis.limitFormula': 'Limit = 0.12·D/(Ch·R)',
     'pdelta.basis.driftNote': 'Δi/hi is read directly from the ETABS story-drift table, so hi is already divided out.',
     'columnAxial.basis.worst': 'Governing column', 'beam.basis.worst': 'Governing beam',
+    'wallShear.params.title': 'Calculation Parameters',
+    'wallShear.section.combos': 'COMBINATIONS', 'wallShear.section.material': 'MATERIAL & PARAMETERS',
+    'wallShear.section.rebar': 'REINFORCEMENT RULES', 'wallShear.section.short': 'SHORT WALL RULE',
+    'wallShear.section.v05': '0.5V RULE', 'wallShear.section.rigid': 'RIGID BASEMENT',
+    'wallShear.params.fck': 'fck (MPa)', 'wallShear.params.fyd': 'fyd (MPa)',
+    'wallShear.params.secondaryFck': 'Different fck for upper stories',
+    'wallShear.params.fckUpper': 'Upper fck (MPa)', 'wallShear.params.splitStory': 'From story',
+    'wallShear.params.phi': 'Diameter', 'wallShear.params.spacing': 'Spacing (s)', 'wallShear.params.legs': 'Legs (n)',
+    'wallShear.rebar.hint': 'Every selected diameter, spacing and leg count is tried; the lightest layout satisfying the demand and the 0.25% minimum is chosen. Reinforcement never gets lighter going down the building.',
+    'wallShear.combos.hint': 'Superstructure combinations. Vd is the largest |V2| per story and wall.',
+    'wallShear.short.eq': 'SHORT WALL EARTHQUAKE (EQ)', 'wallShear.short.soil': 'SHORT WALL SOIL',
+    'wallShear.short.eqHint': 'Earthquake combinations amplified by the Hw/lw coefficient for short walls.',
+    'wallShear.short.soilHint': 'Soil combinations added on top of the amplified earthquake shear.',
+    'wallShear.short.detail': 'Detail table (short wall)',
+    'wallShear.v05.active': '0.5V rule active', 'wallShear.v05.eq': '0.5V EARTHQUAKE (EQ)', 'wallShear.v05.soil': '0.5V SOIL',
+    'wallShear.v05.eqHint': 'The largest earthquake shear anywhere on the wall is halved and used as a floor for Vd.',
+    'wallShear.v05.soilHint': 'Soil combinations added to the halved earthquake shear.',
+    'wallShear.v05.show': 'Show 0.5V values in the table', 'wallShear.v05.detail': 'Detail table (0.5V)',
+    'wallShear.rigid.active': 'Rigid basement active', 'wallShear.rigid.story': 'Rigid story',
+    'wallShear.rigid.note': '{story} and the stories below it are treated as rigid basement.',
+    'wallShear.rigid.combos': 'BASEMENT COMBINATIONS',
+    'wallShear.rigid.combosHint': 'Used instead of the superstructure combinations for the rigid basement stories.',
+    'wallShear.table.pierGroup': '{pier} wall', 'wallShear.table.rebarCap': 'Rebar cap.', 'wallShear.table.sectionCap': 'Section cap.',
+    'wallShear.table.coupled': 'Coupled', 'wallShear.table.coupledHint': 'Coupled wall - the Vmax coefficient drops from 0.085 to 0.065.',
+    'wallShear.status.passed': 'All walls are safe in shear.', 'wallShear.status.failed': '{count} wall section(s) fail the shear check!',
+    'wallShear.error.noRebarOptions': 'Select at least one diameter, one spacing and one leg count.',
+    'wallShear.detail.empty': 'No detail rows - select the rule combinations and calculate first.',
+    'wallShear.detail.eqCombo': 'EQ combo', 'wallShear.detail.globalEq': 'Wall max 0.5xEQ',
+    'wallShear.detail.coeff': 'Coefficient', 'wallShear.detail.ampEq': 'Amplified EQ',
+    'wallShear.detail.soil1': 'Soil 1', 'wallShear.detail.soil2': 'Soil 2',
+    'wallShear.basis.worst': 'Governing wall', 'wallShear.basis.rebar': 'Chosen layout',
+    'wallShear.basis.vdSource': 'Vd source',
+    'wallShear.basis.minRebar': 'Minimum: n.PI(phi/10)^2/4 . 100/s >= 0.25.bw   (0.25%)',
+    'wallShear.basis.order': 'phi and n may not decrease from one story to the story below.',
     'wallAxial.params.title': 'Calculation Parameters', 'wallAxial.table.pier': 'Pier', 'wallAxial.table.lw': 'lw (cm)',
     'wallAxial.combos.hint': 'Pier forces are read for the selected combinations; the governing (max |P|) result per story and pier is checked.',
     'wallAxial.status.passed': 'All walls are within the axial-load limit.', 'wallAxial.status.failed': '{count} wall(s) exceed the axial-load limit!',
@@ -276,6 +310,40 @@ const translations = {
     'pdelta.basis.limitFormula': 'Sınır = 0,12·D/(Ch·R)',
     'pdelta.basis.driftNote': 'Δi/hi doğrudan ETABS kat ötelemesi tablosundan okunur; hi zaten bölünmüş durumdadır.',
     'columnAxial.basis.worst': 'Belirleyici kolon', 'beam.basis.worst': 'Belirleyici kiriş',
+    'wallShear.params.title': 'Hesap Parametreleri',
+    'wallShear.section.combos': 'KOMBİNASYONLAR', 'wallShear.section.material': 'MALZEME & PARAMETRELER',
+    'wallShear.section.rebar': 'DONATI KURALLARI', 'wallShear.section.short': 'BODUR PERDE KURALI',
+    'wallShear.section.v05': '0.5V KURALI', 'wallShear.section.rigid': 'RİJİT BODRUM',
+    'wallShear.params.fck': 'FCK (MPa)', 'wallShear.params.fyd': 'FYD (MPa)',
+    'wallShear.params.secondaryFck': 'Üst katlar için farklı fck',
+    'wallShear.params.fckUpper': 'Üst kat FCK (MPa)', 'wallShear.params.splitStory': 'Başlangıç katı',
+    'wallShear.params.phi': 'Çap', 'wallShear.params.spacing': 'Aralık (s)', 'wallShear.params.legs': 'Kol (n)',
+    'wallShear.rebar.hint': 'Seçilen her çap, aralık ve kol adedi denenir; talebi ve %0,25 minimum şartını sağlayan en hafif düzen seçilir. Aşağı inildikçe donatı hafifleyemez.',
+    'wallShear.combos.hint': 'Üst yapı kombinasyonları. Vd, her kat ve perde için en büyük |V2| değeridir.',
+    'wallShear.short.eq': 'BODUR PERDE DEPREM (EQ)', 'wallShear.short.soil': 'BODUR PERDE TOPRAK (SOİL)',
+    'wallShear.short.eqHint': 'Bodur perdelerde Hw/lw katsayısıyla büyütülen deprem kombinasyonları.',
+    'wallShear.short.soilHint': 'Büyütülmüş deprem kesmesine eklenen toprak kombinasyonları.',
+    'wallShear.short.detail': 'Detay tablosu (bodur)',
+    'wallShear.v05.active': '0.5V kuralı aktif', 'wallShear.v05.eq': '0.5V DEPREM (EQ)', 'wallShear.v05.soil': '0.5V TOPRAK (SOİL)',
+    'wallShear.v05.eqHint': 'Perdenin herhangi bir katındaki en büyük deprem kesmesi yarıya indirilip Vd için alt sınır olarak kullanılır.',
+    'wallShear.v05.soilHint': 'Yarılanmış deprem kesmesine eklenen toprak kombinasyonları.',
+    'wallShear.v05.show': '0.5V değerlerini tabloda göster.', 'wallShear.v05.detail': 'Detay tablosu (0.5V)',
+    'wallShear.rigid.active': 'Rijit bodrum aktif', 'wallShear.rigid.story': 'Rijit kat seçimi',
+    'wallShear.rigid.note': '{story} ve aşağısındaki katlar Rijit Bodrum kabulüne dahildir.',
+    'wallShear.rigid.combos': 'BODRUM KOMBİNASYONLARI',
+    'wallShear.rigid.combosHint': 'Rijit bodrum katlarında üst yapı kombinasyonları yerine bunlar kullanılır.',
+    'wallShear.table.pierGroup': '{pier} Perdesi', 'wallShear.table.rebarCap': 'Donatı Kap.', 'wallShear.table.sectionCap': 'Kesit Kap.',
+    'wallShear.table.coupled': 'Bağl. kirişli', 'wallShear.table.coupledHint': 'Bağlantı kirişli perde - Vmax katsayısı 0,085 yerine 0,065 olur.',
+    'wallShear.status.passed': 'Tüm perdeler kesme güvenliğini sağlıyor.', 'wallShear.status.failed': '{count} perde kesiti kesme tahkikini sağlamıyor!',
+    'wallShear.error.noRebarOptions': 'En az bir çap, bir aralık ve bir kol adedi seçin.',
+    'wallShear.detail.empty': 'Detay satırı yok - önce kuralın kombinasyonlarını seçip hesaplayın.',
+    'wallShear.detail.eqCombo': 'EQ kombinasyonu', 'wallShear.detail.globalEq': 'Perde maks 0,5xEQ',
+    'wallShear.detail.coeff': 'Katsayı', 'wallShear.detail.ampEq': 'Büyütülmüş EQ',
+    'wallShear.detail.soil1': 'Toprak 1', 'wallShear.detail.soil2': 'Toprak 2',
+    'wallShear.basis.worst': 'Belirleyici perde', 'wallShear.basis.rebar': 'Seçilen düzen',
+    'wallShear.basis.vdSource': 'Vd kaynağı',
+    'wallShear.basis.minRebar': 'Minimum: n·π(φ/10)²/4 · 100/s ≥ 0,25·bw   (%0,25)',
+    'wallShear.basis.order': 'φ ve n, bir üst kattan alt kata azalamaz.',
     'wallAxial.params.title': 'Hesap Parametreleri', 'wallAxial.table.pier': 'Perde (Pier)', 'wallAxial.table.lw': 'lw (cm)',
     'wallAxial.combos.hint': 'Perde kuvvetleri seçilen kombinasyonlar için okunur; her kat ve perde için belirleyici (maks |P|) sonuç tahkik edilir.',
     'wallAxial.status.passed': 'Tüm perdeler eksenel yük sınırında.', 'wallAxial.status.failed': '{count} perde eksenel yük sınırını aşıyor!',
@@ -435,7 +503,8 @@ const moduleRenderers = {
   'column-axial': renderColumnAxialModule,
   'beam-shear': renderBeamShearModule,
   'beam-axial': renderBeamAxialModule,
-  'wall-axial': renderWallAxialModule
+  'wall-axial': renderWallAxialModule,
+  'wall-shear': renderWallShearModule
 };
 
 // Shared across beam checks: unique frame name -> { section, h, b } (h/b in model length units).
@@ -3261,6 +3330,738 @@ async function wallAxialExportExcel() {
       limit: wallAxialState.limit,
       rows: results.map(r => ({ story: r.story, pier: r.pier, loadCase: r.loadCase, b: r.bw, d: r.lw, p: r.p }))
     }, 'Perde_Eksenel_Raporu.xlsx');
+  } catch (error) {
+    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Wall Shear (Perde Kesme) — ported from perde_kesme.cs (WallShearLogic).
+// Vd is max|V2| per story+pier. Three optional rules modify it:
+//   • Bodur perde (short wall): Hw/lw_bottom ≤ 2 → EQ amplified by 3/(1+Hw/lw)
+//     clamped to [1,2], plus the soil sum.
+//   • 0.5V: the pier's GLOBAL max EQ shear × 0.5 (not per story) plus the soil sum.
+//   • Rijit bodrum: stories at/below the chosen story use the basement combinations.
+// The governing Vd is max(Vd_after_short_rule, 0.5V). Rebar is then chosen from the
+// n/φ/s candidates, and — as in the desktop — φ and n may never decrease going down
+// the building, which is why a wall usually carries one layout for many stories.
+// ---------------------------------------------------------------------------
+
+const wallShearState = {
+  fck: 30, fyd: 365,
+  fckUpper: 30, secondaryFck: false, splitStory: '',
+  phiOpts: [12], sOpts: [15], nOpts: [2],
+  combos: [], selected: [],
+  shortEqCombos: [], shortSoilCombos: [],
+  rule05: true, v05EqCombos: [], v05SoilCombos: [], show05: true,
+  rijit: false, rijitStory: '', basementCombos: [],
+  stories: [], overrides: {},
+  lastResults: [], detail05: [], detailShort: [], activeDetail: null
+};
+
+const WS_PHI_CHOICES = [8, 10, 12, 14, 16, 18, 20, 22, 24, 25, 26, 28, 30];
+const WS_S_CHOICES = [10, 15, 20, 25];
+const WS_N_CHOICES = [2, 3, 4, 5, 6];
+
+// Transverse steel ratio of one n/φ/s candidate, in cm²/cm.
+function wsComboArea(n, phi, s) {
+  return s > 0 ? n * (Math.PI * Math.pow(phi * 0.1, 2) / 4) / s : 0;
+}
+
+// TS 500 minimum horizontal web reinforcement: 0.25 % of the wall thickness.
+function wsMeetsMinRebar(n, phi, s, bw) {
+  return s > 0 && n * (Math.PI * Math.pow(phi / 10, 2) / 4) * (100 / s) >= 0.25 * bw;
+}
+
+function wsShortCoeff(hwLw) {
+  return hwLw > 0 ? Math.max(1, Math.min(3 / (1 + hwLw), 2)) : 1;
+}
+
+// Story order: index 0 = lowest. Mirrors the desktop's Story.Order.
+function wsStoryOrder(name) {
+  const idx = wallShearState.stories.findIndex(s => s.name === name);
+  return idx < 0 ? -1 : idx;
+}
+
+function wsStoryInfo(name) {
+  return wallShearState.stories.find(s => s.name === name) || null;
+}
+
+// Per-pier geometry: bw/lw for each story it spans, its total height Hw, and the
+// lw at its lowest story (which is what the short-wall ratio is measured against).
+function wsBuildGeometry(sectionRows) {
+  const piers = {};
+  for (const row of sectionRows) {
+    if (!piers[row.pier]) piers[row.pier] = { stories: {}, hw: 0, bottomLw: 0 };
+    piers[row.pier].stories[row.story] = { bw: row.bw, lw: row.lw };
+  }
+  for (const info of Object.values(piers)) {
+    let minBottom = Infinity, maxTop = -Infinity, lowest = Infinity;
+    for (const [story, geo] of Object.entries(info.stories)) {
+      const s = wsStoryInfo(story);
+      if (!s) continue;
+      const topZ = s.elevation;
+      const bottomZ = s.elevation - (s.height || 0);
+      if (bottomZ < minBottom) minBottom = bottomZ;
+      if (topZ > maxTop) maxTop = topZ;
+      if (bottomZ < lowest) { lowest = bottomZ; info.bottomLw = geo.lw; }
+    }
+    info.hw = (maxTop > minBottom && minBottom < Infinity) ? (maxTop - minBottom) : 0;
+  }
+  return piers;
+}
+
+// Groups raw pier-force rows into the per-(story,pier) EQ maximum and soil sum that
+// both the 0.5V and short-wall rules are built from.
+function wsGroupEqSoil(rows, eqCombos, soilCombos) {
+  const eqSet = new Set(eqCombos);
+  const soilSet = new Set(soilCombos);
+  const map = new Map();
+  for (const r of rows) {
+    const load = (r.loadCase || '').trim();
+    if (!eqSet.has(load) && !soilSet.has(load)) continue;
+    const key = `${r.story}::${r.pier}`;
+    if (!map.has(key)) map.set(key, { story: r.story, pier: r.pier, eq: 0, eqCombo: '-', soil: {} });
+    const entry = map.get(key);
+    const val = Math.abs(r.v2);
+    if (eqSet.has(load)) {
+      if (val > entry.eq) { entry.eq = val; entry.eqCombo = load; }
+    } else if (val > (entry.soil[load] || 0)) {
+      entry.soil[load] = val;
+    }
+  }
+  return map;
+}
+
+function wsSoilParts(soil) {
+  const keys = Object.keys(soil).sort();
+  return {
+    sum: keys.reduce((a, k) => a + soil[k], 0),
+    s1Name: keys[0] || '-', s1Val: keys[0] ? soil[keys[0]] : 0,
+    s2Name: keys[1] || '-', s2Val: keys[1] ? soil[keys[1]] : 0
+  };
+}
+
+// 0.5V rule. The earthquake part is the pier's GLOBAL maximum across all its stories
+// (halved), not the local story value — this is deliberate in the desktop and is what
+// makes an upper story inherit a demand driven by a lower one.
+function wsCompute05V(rows) {
+  const map = wsGroupEqSoil(rows, wallShearState.v05EqCombos, wallShearState.v05SoilCombos);
+  const pierMax = {};
+  for (const e of map.values()) {
+    const local = e.eq * 0.5;
+    if (local > (pierMax[e.pier] || 0)) pierMax[e.pier] = local;
+  }
+  const detail = [];
+  const values = {};
+  for (const e of map.values()) {
+    const globalEq = pierMax[e.pier] || 0;
+    const parts = wsSoilParts(e.soil);
+    const total = globalEq + parts.sum;
+    values[`${e.story}::${e.pier}`] = total;
+    detail.push({
+      story: e.story, pier: e.pier, eqCombo: e.eqCombo, rawEq: e.eq, local05: e.eq * 0.5,
+      globalEq, s1Name: parts.s1Name, s1Val: parts.s1Val, s2Name: parts.s2Name, s2Val: parts.s2Val, total
+    });
+  }
+  return { values, detail };
+}
+
+// Short-wall (bodur perde) rule: amplify the EQ shear by the Hw/lw coefficient, then
+// add the soil sum. Only piers that actually qualify as short are processed.
+function wsComputeShort(rows, geometry, shortPiers) {
+  const map = wsGroupEqSoil(rows, wallShearState.shortEqCombos, wallShearState.shortSoilCombos);
+  const values = {};
+  const detail = [];
+  for (const e of map.values()) {
+    if (shortPiers.size > 0 && !shortPiers.has(e.pier)) continue;
+    const g = geometry[e.pier];
+    if (!g) continue;
+    const geo = g.stories[e.story];
+    const hwLw = geo && geo.lw > 0 ? (g.hw * 100) / geo.lw : 0;
+    if (!shortPiers.has(e.pier) && hwLw > 2) continue;
+    const coeff = wsShortCoeff(hwLw);
+    const parts = wsSoilParts(e.soil);
+    const ampEq = e.eq * coeff;
+    const total = ampEq + parts.sum;
+    values[`${e.story}::${e.pier}`] = total;
+    detail.push({
+      story: e.story, pier: e.pier, hwLw, coeff, eqCombo: e.eqCombo, eqVal: e.eq, ampEq,
+      s1Name: parts.s1Name, s1Val: parts.s1Val, s2Name: parts.s2Name, s2Val: parts.s2Val, total
+    });
+  }
+  return { values, detail };
+}
+
+// Main design pass. Walks each pier from the top story down, choosing the lightest
+// n/φ/s candidate that covers the required steel and the minimum-reinforcement rule.
+// φ and n carry over as floors to the story below, so reinforcement never gets lighter
+// as you descend — matching the desktop's minF/minN behaviour.
+function wallShearCalculate(pierData, geometry, v05Values, shortValues, shortPiers) {
+  const { fck, fyd, fckUpper, secondaryFck, splitStory, rule05 } = wallShearState;
+  const splitOrder = secondaryFck && splitStory ? wsStoryOrder(splitStory) : -1;
+
+  const candidates = [];
+  for (const n of wallShearState.nOpts)
+    for (const phi of wallShearState.phiOpts)
+      for (const s of wallShearState.sOpts)
+        candidates.push({ n, phi, s, c: wsComboArea(n, phi, s) });
+  candidates.sort((a, b) => a.n - b.n || a.c - b.c);
+
+  const results = [];
+  const piers = [...new Set(Object.keys(pierData).map(k => k.split('::')[1]))].sort();
+
+  for (const pier of piers) {
+    const g = geometry[pier] || { stories: {}, hw: 0, bottomLw: 0 };
+    const isShort = shortPiers.has(pier);
+    let minPhi = 0, minN = 0;
+
+    // Top story first.
+    const storyNames = Object.keys(g.stories)
+      .filter(st => pierData[`${st}::${pier}`])
+      .sort((a, b) => wsStoryOrder(b) - wsStoryOrder(a));
+
+    for (const story of storyNames) {
+      const key = `${story}::${pier}`;
+      const data = pierData[key];
+      const ovr = wallShearState.overrides[key] || {};
+      const geo = g.stories[story] || { bw: 0, lw: 0 };
+      const bw = ovr.bw != null ? ovr.bw : geo.bw;
+      const lw = ovr.lw != null ? ovr.lw : geo.lw;
+      const isCoupled = !!ovr.coupled;
+      const currFck = (secondaryFck && splitOrder >= 0 && wsStoryOrder(story) >= splitOrder) ? fckUpper : fck;
+      const fctd = 0.35 * Math.sqrt(currFck) / 1.5;
+      const hwLw = lw > 0 ? (g.hw * 100) / lw : 0;
+
+      const snap = {
+        story, pier, bw, lw, fckUsed: currFck, isCoupled, isShort, hwLw,
+        vdRaw: data.vd, coeff: 1, source: 'Vd'
+      };
+      if (bw <= 0 || lw <= 0) {
+        results.push({ ...snap, vmax: 0, vc: 0, vr: 0, vd: 0, v05: 0, n: 0, phi: 0, s: 0,
+          statusText: 'GEO ERR', ok: false, kapVal: 0, purVal: 0 });
+        continue;
+      }
+
+      // Short-wall rule replaces Vd outright when a fetched value exists.
+      let vdFinal = data.vd;
+      if (isShort && hwLw > 0) {
+        snap.coeff = wsShortCoeff(hwLw);
+        if (shortValues[key] != null) { vdFinal = shortValues[key]; snap.source = 'Bodur'; }
+        else { vdFinal *= snap.coeff; snap.source = 'Bodur (katsayılı)'; }
+      }
+      const v05 = (rule05 && !isShort && v05Values[key] != null) ? v05Values[key] : 0;
+      const vdDesign = Math.max(vdFinal, v05);
+      if (v05 > vdFinal) snap.source += ' | 0.5V';
+
+      const vmax = (isCoupled ? 0.065 : 0.085) * bw * lw * Math.sqrt(currFck);
+      const vc = 0.065 * bw * lw * fctd;
+      const cReq = (vdDesign - vc) > 0 ? (vdDesign - vc) / (lw * fyd * 0.1) : 0;
+
+      // Pick the lightest candidate that satisfies both the demand and the minimum.
+      const usable = candidates.filter(c => c.phi >= minPhi && c.n >= minN);
+      let chosen = usable.find(c => c.c >= cReq && wsMeetsMinRebar(c.n, c.phi, c.s, bw));
+      if (!chosen) chosen = usable.slice().sort((a, b) => b.c - a.c)[0]
+                        || candidates.slice().sort((a, b) => b.c - a.c)[0];
+      if (!chosen) continue;
+      minPhi = chosen.phi; minN = chosen.n;
+
+      const vw = chosen.c * lw * fyd * 0.1;
+      const vr = vc + vw;
+      let statusText = 'O.K.';
+      if (vdDesign > vmax) statusText = 'NOT O.K. (Vd > Vmax)';
+      else if (vdDesign > vr) statusText = 'NOT O.K. (Vd > Vr)';
+      else if (vr > vmax) statusText = 'NOT O.K. (Vr > Vmax)';
+      else if (!wsMeetsMinRebar(chosen.n, chosen.phi, chosen.s, bw)) statusText = 'NOT OK Min. Donatı';
+
+      results.push({
+        ...snap, vmax, vc, vr, vd: vdDesign, v05, vdFinal,
+        n: chosen.n, phi: chosen.phi, s: chosen.s, vw,
+        statusText, ok: statusText === 'O.K.',
+        purVal: vr > 0 ? vdDesign / vr : 0,
+        kapVal: vmax > 0 ? vdDesign / vmax : 0
+      });
+    }
+  }
+
+  return results.sort((a, b) => a.pier.localeCompare(b.pier) || wsStoryOrder(b.story) - wsStoryOrder(a.story));
+}
+
+// Chip row for a multi-select numeric option set (φ / s / n).
+function wsChips(id, choices, selected, unit = '') {
+  return `<div class="ws-chips" id="${id}" role="group">` + choices.map(v =>
+    `<button type="button" class="ws-chip${selected.includes(v) ? ' on' : ''}" data-val="${v}"
+       aria-pressed="${selected.includes(v)}">${unit}${v}</button>`).join('') + '</div>';
+}
+
+function wsToggle(id, labelKey, on) {
+  return `<label class="ws-toggle" for="${id}">
+      <span>${t(labelKey)}</span>
+      <input type="checkbox" id="${id}" ${on ? 'checked' : ''}>
+      <span class="ws-toggle-track" aria-hidden="true"></span>
+    </label>`;
+}
+
+function renderWallShearModule() {
+  renderWallShearSetupPanel();
+  renderWallShearResultsPanel();
+}
+
+function renderWallShearSetupPanel() {
+  const panel = $('#setupPanel');
+  const st = wallShearState;
+  panel.innerHTML = `
+    <div class="panel-heading compact"><div><span class="step-number">1</span><div><h2>${t('wallShear.params.title')}</h2><p>${t('moduleData.description')}</p></div></div></div>
+
+    <p class="ws-section">${t('wallShear.section.combos')}</p>
+    ${comboPicker('ws', 'wallShear.combos.hint')}
+
+    <p class="ws-section">${t('wallShear.section.material')}</p>
+    <div class="field-grid">
+      ${numberField('wsFck', 'wallShear.params.fck', { min: 10, max: 90 })}
+      ${numberField('wsFyd', 'wallShear.params.fyd', { min: 100, max: 700 })}
+    </div>
+    <div class="ws-block">
+      ${wsToggle('wsSecondaryFck', 'wallShear.params.secondaryFck', st.secondaryFck)}
+      <div class="field-grid" id="wsSecondaryFckBody" ${st.secondaryFck ? '' : 'hidden'}>
+        ${numberField('wsFckUpper', 'wallShear.params.fckUpper', { min: 10, max: 90 })}
+        <div class="field"><label for="wsSplitStory">${t('wallShear.params.splitStory')}</label>
+          <select id="wsSplitStory"></select></div>
+      </div>
+    </div>
+
+    <p class="ws-section">${t('wallShear.section.rebar')}</p>
+    <div class="ws-block">
+      <p class="ws-chip-label">${t('wallShear.params.phi')}</p>
+      ${wsChips('wsPhiChips', WS_PHI_CHOICES, st.phiOpts, 'ø')}
+      <p class="ws-chip-label">${t('wallShear.params.spacing')}</p>
+      ${wsChips('wsSChips', WS_S_CHOICES, st.sOpts)}
+      <p class="ws-chip-label">${t('wallShear.params.legs')}</p>
+      ${wsChips('wsNChips', WS_N_CHOICES, st.nOpts)}
+      <p class="combo-hint">${t('wallShear.rebar.hint')}</p>
+    </div>
+
+    <p class="ws-section">${t('wallShear.section.short')}</p>
+    <div class="ws-block">
+      <p class="ws-sub">${t('wallShear.short.eq')}</p>
+      ${comboPicker('wsShortEq', 'wallShear.short.eqHint')}
+      <p class="ws-sub">${t('wallShear.short.soil')}</p>
+      ${comboPicker('wsShortSoil', 'wallShear.short.soilHint')}
+      <button class="button button-secondary full-width" type="button" id="wsShortDetail">${t('wallShear.short.detail')}</button>
+    </div>
+
+    <p class="ws-section">${t('wallShear.section.v05')}</p>
+    <div class="ws-block">
+      ${wsToggle('wsRule05', 'wallShear.v05.active', st.rule05)}
+      <div id="wsRule05Body" ${st.rule05 ? '' : 'hidden'}>
+        <p class="ws-sub">${t('wallShear.v05.eq')}</p>
+        ${comboPicker('wsV05Eq', 'wallShear.v05.eqHint')}
+        <p class="ws-sub">${t('wallShear.v05.soil')}</p>
+        ${comboPicker('wsV05Soil', 'wallShear.v05.soilHint')}
+        <label class="field-checkbox" for="wsShow05"><input type="checkbox" id="wsShow05" ${st.show05 ? 'checked' : ''}> ${t('wallShear.v05.show')}</label>
+        <button class="button button-secondary full-width" type="button" id="wsV05Detail">${t('wallShear.v05.detail')}</button>
+      </div>
+    </div>
+
+    <p class="ws-section">${t('wallShear.section.rigid')}</p>
+    <div class="ws-block">
+      ${wsToggle('wsRijit', 'wallShear.rigid.active', st.rijit)}
+      <div id="wsRijitBody" ${st.rijit ? '' : 'hidden'}>
+        <div class="field"><label for="wsRijitStory">${t('wallShear.rigid.story')}</label>
+          <select id="wsRijitStory"></select></div>
+        <p class="combo-hint" id="wsRijitNote"></p>
+        <p class="ws-sub">${t('wallShear.rigid.combos')}</p>
+        ${comboPicker('wsBasement', 'wallShear.rigid.combosHint')}
+      </div>
+    </div>
+
+    <div class="panel-actions">
+      <button class="button button-primary full-width" type="button" id="wsCalculate">${t('columnAxial.calculate')}</button>
+      <button class="button button-secondary full-width" type="button" id="wsReset" style="margin-top:8px">${t('action.reset')}</button>
+    </div>
+    <div class="panel-actions">
+      <button class="button button-secondary full-width" type="button" id="wsExport">${t('columnAxial.export')}</button>
+    </div>`;
+
+  const bind = (id, key) => {
+    const el = $('#' + id, panel);
+    if (!el) return;
+    el.value = st[key];
+    el.addEventListener('input', () => { st[key] = parseFloat(el.value) || 0; });
+  };
+  bind('wsFck', 'fck');
+  bind('wsFyd', 'fyd');
+  bind('wsFckUpper', 'fckUpper');
+
+  // Chip groups
+  const chipGroup = (id, key) => {
+    const wrap = $('#' + id, panel);
+    if (!wrap) return;
+    wrap.addEventListener('click', e => {
+      const chip = e.target.closest('.ws-chip');
+      if (!chip) return;
+      const val = Number(chip.dataset.val);
+      const idx = st[key].indexOf(val);
+      if (idx >= 0) { if (st[key].length === 1) return; st[key].splice(idx, 1); }
+      else st[key].push(val);
+      st[key].sort((a, b) => a - b);
+      chip.classList.toggle('on');
+      chip.setAttribute('aria-pressed', String(chip.classList.contains('on')));
+    });
+  };
+  chipGroup('wsPhiChips', 'phiOpts');
+  chipGroup('wsSChips', 'sOpts');
+  chipGroup('wsNChips', 'nOpts');
+
+  const toggle = (id, key, bodyId, after) => {
+    const el = $('#' + id, panel);
+    if (!el) return;
+    el.addEventListener('change', () => {
+      st[key] = el.checked;
+      const body = bodyId ? $('#' + bodyId, panel) : null;
+      if (body) body.hidden = !el.checked;
+      if (after) after();
+    });
+  };
+  toggle('wsSecondaryFck', 'secondaryFck', 'wsSecondaryFckBody');
+  toggle('wsRule05', 'rule05', 'wsRule05Body');
+  toggle('wsRijit', 'rijit', 'wsRijitBody', wsUpdateRijitNote);
+
+  const show05 = $('#wsShow05', panel);
+  if (show05) show05.addEventListener('change', () => {
+    st.show05 = show05.checked;
+    if (st.lastResults.length) renderWallShearResultsTable();
+  });
+
+  $('#wsCalculate', panel).addEventListener('click', runWallShearCheck);
+  $('#wsReset', panel).addEventListener('click', () => resetModule(wallShearState, renderWallShearModule,
+    { detail05: [], detailShort: [], activeDetail: null, overrides: {} }));
+  $('#wsExport', panel).addEventListener('click', wallShearExportExcel);
+  $('#wsShortDetail', panel).addEventListener('click', () => wallShearShowDetail('short'));
+  $('#wsV05Detail', panel).addEventListener('click', () => wallShearShowDetail('v05'));
+
+  // Every combination list on this screen is fed from the same cached model data.
+  initComboPicker('ws', st);
+  initComboPicker('wsShortEq', { get combos() { return st.combos; }, set combos(v) { st.combos = v; },
+    get selected() { return st.shortEqCombos; }, set selected(v) { st.shortEqCombos = v; } });
+  initComboPicker('wsShortSoil', { get combos() { return st.combos; }, set combos(v) { st.combos = v; },
+    get selected() { return st.shortSoilCombos; }, set selected(v) { st.shortSoilCombos = v; } });
+  initComboPicker('wsV05Eq', { get combos() { return st.combos; }, set combos(v) { st.combos = v; },
+    get selected() { return st.v05EqCombos; }, set selected(v) { st.v05EqCombos = v; } });
+  initComboPicker('wsV05Soil', { get combos() { return st.combos; }, set combos(v) { st.combos = v; },
+    get selected() { return st.v05SoilCombos; }, set selected(v) { st.v05SoilCombos = v; } });
+  initComboPicker('wsBasement', { get combos() { return st.combos; }, set combos(v) { st.combos = v; },
+    get selected() { return st.basementCombos; }, set selected(v) { st.basementCombos = v; } });
+
+  wallShearLoadStories();
+}
+
+function wsUpdateRijitNote() {
+  const note = $('#wsRijitNote');
+  if (note) note.textContent = wallShearState.rijitStory
+    ? t('wallShear.rigid.note', { story: wallShearState.rijitStory })
+    : '';
+}
+
+// Stories drive both the "different fck above" split and the rigid-basement cutoff.
+async function wallShearLoadStories() {
+  try {
+    if (wallShearState.stories.length === 0) {
+      const res = await fetchAgentJson('/api/etabs/stories');
+      if (!res.etabsConnected) throw new Error(res.error || t('drift.error.notConnected'));
+      // Lowest first, so index order matches the desktop's Story.Order.
+      wallShearState.stories = (res.stories || []).slice().sort((a, b) => a.elevation - b.elevation);
+    }
+    const opts = wallShearState.stories.slice().reverse()
+      .map(s => `<option value="${escapeHtml(s.name)}">${escapeHtml(s.name)}</option>`).join('');
+    for (const [id, key] of [['wsSplitStory', 'splitStory'], ['wsRijitStory', 'rijitStory']]) {
+      const sel = $('#' + id);
+      if (!sel) continue;
+      sel.innerHTML = opts;
+      if (wallShearState[key]) sel.value = wallShearState[key];
+      else wallShearState[key] = sel.value;
+      sel.addEventListener('change', () => { wallShearState[key] = sel.value; wsUpdateRijitNote(); });
+    }
+    wsUpdateRijitNote();
+  } catch (error) {
+    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+  }
+}
+
+function renderWallShearResultsPanel() {
+  const panel = $('#resultsPanel');
+  panel.innerHTML = `
+    <div class="panel-heading compact"><div><span class="step-number">2</span><div><h2>${t('results.title')}</h2><p>${t('results.description')}</p></div></div></div>
+    <div class="status-banner pending" id="wsStatusBanner">${t('columnAxial.status.pending')}</div>
+    <div id="wsResultsWrap"></div>`;
+  if (wallShearState.lastResults.length) renderWallShearResultsTable();
+}
+
+function renderWallShearResultsTable() {
+  const wrap = $('#wsResultsWrap');
+  if (!wrap) return;
+  const st = wallShearState;
+  const results = st.lastResults;
+  const show05 = st.show05;
+
+  if (results.length === 0) {
+    wrap.innerHTML = `<div class="table-wrap"><table><tbody><tr><td class="table-empty">${t('drift.table.empty')}</td></tr></tbody></table></div>`;
+    return;
+  }
+
+  const headers = [
+    t('drift.table.story'), t('wallAxial.table.pier'), 'bw (cm)', 'lw (cm)', t('columnAxial.params.fck'),
+    'n', 'φ', 's (cm)', 'Vmax (kN)', 'Vr (kN)', ...(show05 ? ['0.5V (kN)'] : []), 'Vd (kN)',
+    t('drift.table.status'), t('wallShear.table.rebarCap'), t('wallShear.table.sectionCap'),
+    t('wallShear.table.coupled')
+  ];
+
+  // Rows are grouped under a header per pier, matching the reference report.
+  const byPier = new Map();
+  for (const r of results) {
+    if (!byPier.has(r.pier)) byPier.set(r.pier, []);
+    byPier.get(r.pier).push(r);
+  }
+
+  let body = '';
+  for (const [pier, rows] of byPier) {
+    body += `<tr class="ws-group"><td colspan="${headers.length}">${t('wallShear.table.pierGroup', { pier })}</td></tr>`;
+    body += rows.map((r, i) => {
+      const idx = results.indexOf(r);
+      const capClass = v => v > 1 ? 'ws-cap-bad' : v > 0.75 ? 'ws-cap-warn' : 'ws-cap-ok';
+      return `<tr data-index="${idx}" class="${r.ok ? '' : 'row-fail'}">
+        <td>${r.story}</td><td>${r.pier}</td>
+        <td><input type="number" step="any" class="ws-edit ws-edit-bw" data-index="${idx}" value="${r.bw.toFixed(1)}"></td>
+        <td><input type="number" step="any" class="ws-edit ws-edit-lw" data-index="${idx}" value="${r.lw.toFixed(1)}"></td>
+        <td>${r.fckUsed}</td><td>${r.n}</td><td>${r.phi}</td><td>${r.s}</td>
+        <td>${r.vmax.toFixed(0)}</td><td>${r.vr.toFixed(0)}</td>
+        ${show05 ? `<td>${r.v05.toFixed(0)}</td>` : ''}
+        <td>${r.vd.toFixed(0)}</td>
+        <td class="${r.ok ? '' : 'ws-status-bad'}">${r.statusText}</td>
+        <td class="${capClass(r.purVal)}">${r.purVal.toFixed(2)}</td>
+        <td class="${capClass(r.kapVal)}">${r.kapVal.toFixed(2)}</td>
+        <td><input type="checkbox" class="ws-edit-coupled" data-index="${idx}" ${r.isCoupled ? 'checked' : ''}
+             title="${t('wallShear.table.coupledHint')}"></td>
+      </tr>`;
+    }).join('');
+  }
+
+  wrap.innerHTML = `<div class="table-wrap"><table>
+      <thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead>
+      <tbody id="wsResultsBody">${body}</tbody>
+    </table></div>`;
+
+  // Editing geometry or the coupled flag re-runs the design from the stored inputs.
+  $$('.ws-edit, .ws-edit-coupled', wrap).forEach(el => {
+    el.addEventListener('change', () => {
+      const r = results[Number(el.dataset.index)];
+      if (!r) return;
+      const key = `${r.story}::${r.pier}`;
+      const ovr = st.overrides[key] || (st.overrides[key] = {});
+      if (el.classList.contains('ws-edit-bw')) ovr.bw = parseFloat(el.value) || 0;
+      else if (el.classList.contains('ws-edit-lw')) ovr.lw = parseFloat(el.value) || 0;
+      else ovr.coupled = el.checked;
+      wallShearRecalculate();
+    });
+  });
+
+  const banner = $('#wsStatusBanner');
+  const failCount = results.filter(r => !r.ok).length;
+  if (failCount > 0) { banner.textContent = t('wallShear.status.failed', { count: failCount }); banner.className = 'status-banner fail'; }
+  else { banner.textContent = t('wallShear.status.passed'); banner.className = 'status-banner ok'; }
+
+  const worst = results.reduce((a, b) => (b.purVal > a.purVal ? b : a), results[0]);
+  renderCalcBasis('#wsResultsBody', 'wsBasis', calcBasis(
+    'TBDY 2018 §7.6, TS 500 §8.3',
+    [
+      'fctd = 0.35·√fck / 1.5',
+      'Vmax = (0.085 | 0.065 bağlantı kirişli) · bw · lw · √fck',
+      'Vc   = 0.065 · bw · lw · fctd',
+      '(Asw/s) = n · π·(φ/10)² / 4 / s',
+      'Vw   = (Asw/s) · lw · fyd · 0.1',
+      'Vr   = Vc + Vw',
+      t('wallShear.basis.minRebar'),
+      t('wallShear.basis.order')
+    ],
+    [
+      ['fck / fyd', `${st.fck} / ${st.fyd} MPa`],
+      [t('wallShear.basis.worst'), `${worst.pier} / ${worst.story}`],
+      ['bw × lw', `${worst.bw.toFixed(1)} × ${worst.lw.toFixed(1)} cm`],
+      [t('wallShear.basis.rebar'), `${worst.n} × φ${worst.phi} / ${worst.s} cm`],
+      ['Vc', `0.065 · ${worst.bw.toFixed(1)} · ${worst.lw.toFixed(1)} · ${(0.35 * Math.sqrt(worst.fckUsed) / 1.5).toFixed(4)} = ${worst.vc.toFixed(0)} kN`],
+      ['Vw', `${worst.vw ? worst.vw.toFixed(0) : 0} kN`],
+      ['Vr = Vc + Vw', `<strong>${worst.vr.toFixed(0)} kN</strong>`],
+      ['Vmax', `${worst.vmax.toFixed(0)} kN`],
+      [t('wallShear.basis.vdSource'), `${worst.source} → Vd = <strong>${worst.vd.toFixed(0)} kN</strong>`],
+      ['Vd/Vr · Vd/Vmax', `${worst.purVal.toFixed(3)} · ${worst.kapVal.toFixed(3)} → ${worst.statusText}`]
+    ]));
+
+  if (st.activeDetail) renderWallShearDetail(st.activeDetail);
+}
+
+// Detail tables expose the intermediate EQ/soil terms behind the 0.5V and short-wall rules.
+function wallShearShowDetail(kind) {
+  wallShearState.activeDetail = wallShearState.activeDetail === kind ? null : kind;
+  renderWallShearDetail(wallShearState.activeDetail);
+}
+
+function renderWallShearDetail(kind) {
+  const existing = $('#wsDetailBlock');
+  if (existing) existing.remove();
+  if (!kind) return;
+
+  const st = wallShearState;
+  const rows = kind === 'v05' ? st.detail05 : st.detailShort;
+  const title = kind === 'v05' ? t('wallShear.v05.detail') : t('wallShear.short.detail');
+  if (!rows || rows.length === 0) {
+    log(t('wallShear.detail.empty'), 'error');
+    st.activeDetail = null;
+    return;
+  }
+
+  const head = kind === 'v05'
+    ? [t('drift.table.story'), t('wallAxial.table.pier'), t('wallShear.detail.eqCombo'), 'EQ (kN)',
+       '0.5·EQ (kN)', t('wallShear.detail.globalEq'), t('wallShear.detail.soil1'), t('wallShear.detail.soil2'), 'Toplam (kN)']
+    : [t('drift.table.story'), t('wallAxial.table.pier'), 'Hw/lw', t('wallShear.detail.coeff'),
+       t('wallShear.detail.eqCombo'), 'EQ (kN)', t('wallShear.detail.ampEq'), t('wallShear.detail.soil1'), t('wallShear.detail.soil2'), 'Toplam (kN)'];
+
+  const body = rows.map(r => kind === 'v05'
+    ? `<tr><td>${r.story}</td><td>${r.pier}</td><td>${r.eqCombo}</td><td>${r.rawEq.toFixed(0)}</td>
+        <td>${r.local05.toFixed(0)}</td><td>${r.globalEq.toFixed(0)}</td>
+        <td>${r.s1Name}: ${r.s1Val.toFixed(0)}</td><td>${r.s2Name}: ${r.s2Val.toFixed(0)}</td>
+        <td><strong>${r.total.toFixed(0)}</strong></td></tr>`
+    : `<tr><td>${r.story}</td><td>${r.pier}</td><td>${r.hwLw.toFixed(2)}</td><td>${r.coeff.toFixed(3)}</td>
+        <td>${r.eqCombo}</td><td>${r.eqVal.toFixed(0)}</td><td>${r.ampEq.toFixed(0)}</td>
+        <td>${r.s1Name}: ${r.s1Val.toFixed(0)}</td><td>${r.s2Name}: ${r.s2Val.toFixed(0)}</td>
+        <td><strong>${r.total.toFixed(0)}</strong></td></tr>`).join('');
+
+  $('#wsResultsWrap').insertAdjacentHTML('afterend', `
+    <div id="wsDetailBlock" class="ws-detail">
+      <div class="ws-detail-head"><h3>${title}</h3>
+        <button class="text-button" type="button" id="wsDetailClose">${t('action.close')}</button></div>
+      <div class="table-wrap"><table>
+        <thead><tr>${head.map(h => `<th>${h}</th>`).join('')}</tr></thead>
+        <tbody>${body}</tbody>
+      </table></div>
+    </div>`);
+  $('#wsDetailClose').addEventListener('click', () => wallShearShowDetail(kind));
+}
+
+// Raw fetched data is kept so table edits can re-run the design without re-querying ETABS.
+let wallShearRaw = null;
+
+async function runWallShearCheck() {
+  const st = wallShearState;
+  if (st.selected.length === 0) { log(t('drift.error.noCombos'), 'error'); return; }
+
+  if (!validateFields([
+    { id: 'wsFck', ok: inRange(st.fck, 10, 90), message: t('validate.fck', { value: st.fck }) },
+    { id: 'wsFyd', ok: inRange(st.fyd, 100, 700), message: t('validate.fyk', { value: st.fyd }) },
+    { id: 'wsFckUpper', ok: !st.secondaryFck || inRange(st.fckUpper, 10, 90), message: t('validate.fck', { value: st.fckUpper }) }
+  ], $('#setupPanel'))) return;
+
+  if (st.phiOpts.length === 0 || st.sOpts.length === 0 || st.nOpts.length === 0) {
+    log(t('wallShear.error.noRebarOptions'), 'error');
+    return;
+  }
+
+  const btn = $('#wsCalculate');
+  if (btn) btn.disabled = true;
+  try {
+    // Rigid basement splits the model: upper stories use the main combinations,
+    // stories at or below the chosen story use the basement ones.
+    const useRijit = st.rijit && st.rijitStory && st.basementCombos.length > 0;
+    const mainCombos = [...new Set(useRijit ? [...st.selected, ...st.basementCombos] : st.selected)];
+    const ruleCombos = [...new Set([...st.shortEqCombos, ...st.shortSoilCombos, ...st.v05EqCombos, ...st.v05SoilCombos])];
+
+    const [mainRes, ruleRes, sectionsRes] = await Promise.all([
+      fetchAgentJson(`/api/etabs/pier-forces?combos=${encodeURIComponent(mainCombos.join(','))}`, 60000),
+      ruleCombos.length
+        ? fetchAgentJson(`/api/etabs/pier-forces?combos=${encodeURIComponent(ruleCombos.join(','))}`, 60000)
+        : Promise.resolve({ etabsConnected: true, rows: [] }),
+      fetchAgentJson('/api/etabs/pier-sections', 30000)
+    ]);
+    if (!mainRes.etabsConnected) throw new Error(mainRes.error || t('drift.error.notConnected'));
+    if (!mainRes.rows.length) throw new Error(t('wallAxial.error.noPierForces'));
+
+    if (st.stories.length === 0) {
+      const storiesRes = await fetchAgentJson('/api/etabs/stories');
+      st.stories = (storiesRes.stories || []).slice().sort((a, b) => a.elevation - b.elevation);
+    }
+
+    wallShearRaw = { mainRows: mainRes.rows, ruleRows: ruleRes.rows || [], sections: sectionsRes.rows || [], useRijit };
+    wallShearRecalculate();
+    recordLastCheck('wall-shear');
+    const failCount = st.lastResults.filter(r => !r.ok).length;
+    log(failCount > 0 ? t('wallShear.status.failed', { count: failCount }) : t('wallShear.status.passed'),
+        failCount > 0 ? 'error' : 'ok');
+  } catch (error) {
+    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+function wallShearRecalculate() {
+  if (!wallShearRaw) return;
+  const st = wallShearState;
+  const { mainRows, ruleRows, sections, useRijit } = wallShearRaw;
+
+  const geometry = wsBuildGeometry(sections);
+
+  // Vd = max |V2| per story+pier, honouring the rigid-basement combination split.
+  const splitOrder = useRijit ? wsStoryOrder(st.rijitStory) : -1;
+  const upperSet = new Set(st.selected);
+  const basementSet = new Set(st.basementCombos);
+  const pierData = {};
+  for (const r of mainRows) {
+    if (useRijit && splitOrder >= 0) {
+      const idx = wsStoryOrder(r.story);
+      if (idx < 0) continue;
+      const allowed = idx > splitOrder ? upperSet : basementSet;
+      if (!allowed.has((r.loadCase || '').trim())) continue;
+    } else if (!upperSet.has((r.loadCase || '').trim())) continue;
+    const key = `${r.story}::${r.pier}`;
+    const v = Math.abs(r.v2);
+    if (!pierData[key] || v > pierData[key].vd) pierData[key] = { vd: v };
+  }
+
+  // A pier is short if its overall Hw/lw at the base is ≤ 2, or the user marked it.
+  const shortPiers = new Set();
+  for (const [pier, g] of Object.entries(geometry)) {
+    const manual = Object.entries(st.overrides).some(([k, v]) => k.endsWith(`::${pier}`) && v.short);
+    let baseLw = g.bottomLw;
+    for (const [k, v] of Object.entries(st.overrides)) {
+      if (k.endsWith(`::${pier}`) && v.lw > 0 && wsStoryOrder(k.split('::')[0]) === 0) baseLw = v.lw;
+    }
+    if (manual || (baseLw > 0 && (g.hw * 100) / baseLw <= 2)) shortPiers.add(pier);
+  }
+
+  const v05 = st.rule05 && st.v05EqCombos.length ? wsCompute05V(ruleRows) : { values: {}, detail: [] };
+  const shortData = st.shortEqCombos.length ? wsComputeShort(ruleRows, geometry, shortPiers) : { values: {}, detail: [] };
+
+  st.detail05 = v05.detail.sort((a, b) => a.pier.localeCompare(b.pier) || wsStoryOrder(b.story) - wsStoryOrder(a.story));
+  st.detailShort = shortData.detail.sort((a, b) => a.pier.localeCompare(b.pier) || wsStoryOrder(b.story) - wsStoryOrder(a.story));
+  st.lastResults = wallShearCalculate(pierData, geometry, v05.values, shortData.values, shortPiers);
+  renderWallShearResultsTable();
+}
+
+async function wallShearExportExcel() {
+  const results = wallShearState.lastResults;
+  if (results.length === 0) { log(t('columnAxial.error.noFrameData'), 'error'); return; }
+  const btn = $('#wsExport');
+  if (btn) btn.disabled = true;
+  try {
+    await downloadAgentExcel('/api/etabs/export/wall-shear', {
+      fck: wallShearState.fck,
+      fyd: wallShearState.fyd,
+      rows: results.map(r => ({
+        story: r.story, pier: r.pier, fck: r.fckUsed, bw: r.bw, lw: r.lw,
+        n: r.n, phi: r.phi, s: r.s, vd: r.vd, isCoupled: r.isCoupled
+      }))
+    }, 'Perde_Kesme_Raporu.xlsx');
   } catch (error) {
     log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
   } finally {

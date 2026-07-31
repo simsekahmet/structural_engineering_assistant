@@ -335,8 +335,12 @@ internal sealed class EtabsConnection : IDisposable
 
             var names = (string[]?)args[1] ?? Array.Empty<string>();
             var elevations = (double[]?)args[2] ?? Array.Empty<double>();
+            var heights = (double[]?)args[3] ?? Array.Empty<double>();
             var stories = names
-                .Select((name, i) => new StoryInfo(name, i < elevations.Length ? elevations[i] : 0))
+                .Select((name, i) => new StoryInfo(
+                    name,
+                    i < elevations.Length ? elevations[i] : 0,
+                    i < heights.Length ? heights[i] : 0))
                 .ToArray();
 
             return new StoriesResult(true, true, null, stories);
@@ -459,6 +463,7 @@ internal sealed class EtabsConnection : IDisposable
             var stories = args[1] as string[] ?? Array.Empty<string>();
             var piers = args[2] as string[] ?? Array.Empty<string>();
             var cases = args[3] as string[] ?? Array.Empty<string>();
+            var locations = args[4] as string[] ?? Array.Empty<string>();
             var p = args[5] as double[] ?? Array.Empty<double>();
             var v2 = args[6] as double[] ?? Array.Empty<double>();
             var v3 = args[7] as double[] ?? Array.Empty<double>();
@@ -470,6 +475,7 @@ internal sealed class EtabsConnection : IDisposable
                     (stories.Length > i ? stories[i] : "").Trim(),
                     (piers.Length > i ? piers[i] : "").Trim(),
                     cases.Length > i ? cases[i] : "",
+                    (locations.Length > i ? locations[i] : "").Trim(),
                     p.Length > i ? p[i] : 0,
                     v2.Length > i ? v2[i] : 0,
                     v3.Length > i ? v3[i] : 0));
@@ -1369,6 +1375,15 @@ internal sealed class LocalBridgeServer : IDisposable
                         return;
                     }
 
+                    if (path == "/api/etabs/export/wall-shear")
+                    {
+                        var req = JsonSerializer.Deserialize<WallShearExportRequest>(json, JsonOptions);
+                        if (req is null) { await WriteResponseAsync(stream, 400, "Bad Request", new { error = "Invalid request body." }, origin, cancellationToken); return; }
+                        var bytes = WallShearExcelReport.Build(req.Fck, req.Fyd, req.Rows);
+                        await WriteBinaryResponseAsync(stream, 200, "OK", bytes, "Perde_Kesme_Raporu.xlsx", origin, cancellationToken);
+                        return;
+                    }
+
                     if (path == "/api/etabs/export/wall-axial")
                     {
                         var req = JsonSerializer.Deserialize<WallAxialExportRequest>(json, JsonOptions);
@@ -1590,7 +1605,7 @@ internal static class EtabsUnits
 
 internal sealed record NameListResult(bool AgentOnline, bool EtabsConnected, string? Error, string[] Names);
 
-internal sealed record StoryInfo(string Name, double Elevation);
+internal sealed record StoryInfo(string Name, double Elevation, double Height = 0);
 
 internal sealed record StoriesResult(bool AgentOnline, bool EtabsConnected, string? Error, StoryInfo[] Stories);
 
@@ -1608,7 +1623,7 @@ internal sealed record FrameSectionInfo(string Unique, string Label, string Stor
 
 internal sealed record FrameSectionsResult(bool AgentOnline, bool EtabsConnected, string? Error, FrameSectionInfo[] Sections);
 
-internal sealed record PierForceRow(string Story, string Pier, string LoadCase, double P, double V2, double V3);
+internal sealed record PierForceRow(string Story, string Pier, string LoadCase, string Location, double P, double V2, double V3);
 
 internal sealed record PierForcesResult(bool AgentOnline, bool EtabsConnected, string? Error, PierForceRow[] Rows);
 
@@ -1987,6 +2002,112 @@ internal static class BeamShearExcelReport
             condNotOk.Formula = "\"OK\"";
             condNotOk.Style.Font.Color.Color = DrawingColor.Red;
             condNotOk.Style.Font.Bold = true;
+        }
+
+        ws.Cells.AutoFitColumns();
+        return package.GetAsByteArray();
+    }
+}
+
+internal sealed record WallShearExportRow(
+    string Story, string Pier, double Fck, double Bw, double Lw,
+    int N, int Phi, double S, double Vd, bool IsCoupled);
+
+internal sealed record WallShearExportRequest(double Fck, double Fyd, WallShearExportRow[] Rows);
+
+// Perde Kesme report. Column layout matches the reference workbook:
+// Kat No | Perde No | fck | bw | lw | n | φ | s | Vmax | Vr | Vd | Durum | Donatı Kap. | Kesit Kap.
+// Geometry, rebar and Vd are hard values; Vmax, Vr, Durum and both capacity ratios are
+// live formulas referencing the fck ($B$2) and fyd ($D$2) parameter cells, so the sheet
+// still recalculates after the engineer edits an input.
+internal static class WallShearExcelReport
+{
+    public static byte[] Build(double fck, double fyd, IReadOnlyList<WallShearExportRow> rows)
+    {
+        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+        using var package = new ExcelPackage();
+        var ws = package.Workbook.Worksheets.Add("Perde Kesme Raporu");
+        var ci = System.Globalization.CultureInfo.InvariantCulture;
+
+        ws.Cells[1, 1, 1, 14].Merge = true;
+        ws.Cells[1, 1].Value = "PERDE KESME RAPORU";
+        ws.Cells[1, 1].Style.Font.Size = 14;
+        ws.Cells[1, 1].Style.Font.Bold = true;
+        ws.Cells[1, 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+        ws.Cells[1, 1].Style.Fill.PatternType = ExcelFillStyle.Solid;
+        ws.Cells[1, 1].Style.Fill.BackgroundColor.SetColor(DrawingColor.FromArgb(218, 232, 252));
+
+        ws.Cells[2, 1].Value = "fck (MPa)";
+        ws.Cells[2, 2].Value = fck;
+        ws.Cells[2, 3].Value = "fyd (MPa)";
+        ws.Cells[2, 4].Value = fyd;
+        ws.Cells[2, 1].Style.Font.Bold = true;
+        ws.Cells[2, 3].Style.Font.Bold = true;
+
+        string[] headers = { "Kat No", "Perde No", "fck (MPa)", "bw (cm)", "lw (cm)", "n", "φ", "s (cm)",
+                             "Vmax (kN)", "Vr (kN)", "Vd (kN)", "Durum", "Donatı Kapasite", "Kesit Kapasite" };
+        for (int i = 0; i < headers.Length; i++)
+        {
+            var cell = ws.Cells[3, i + 1];
+            cell.Value = headers[i];
+            cell.Style.Font.Bold = true;
+            cell.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            cell.Style.Fill.PatternType = ExcelFillStyle.Solid;
+            cell.Style.Fill.BackgroundColor.SetColor(DrawingColor.FromArgb(240, 240, 240));
+        }
+
+        const int startRow = 4;
+        for (int i = 0; i < rows.Count; i++)
+        {
+            var r = startRow + i;
+            var item = rows[i];
+            // Coupled walls use 0.065 instead of 0.085 in Vmax; bake the coefficient per row
+            // since it is a per-wall property, not a sheet-wide parameter.
+            var vmaxCoeff = (item.IsCoupled ? 0.065 : 0.085).ToString(ci);
+
+            ws.Cells[r, 1].Value = item.Story;
+            ws.Cells[r, 2].Value = item.Pier;
+            ws.Cells[r, 3].Value = item.Fck;
+            ws.Cells[r, 4].Value = item.Bw;
+            ws.Cells[r, 5].Value = item.Lw;
+            ws.Cells[r, 6].Value = item.N;
+            ws.Cells[r, 7].Value = item.Phi;
+            ws.Cells[r, 8].Value = item.S;
+            ws.Cells[r, 9].Formula = $"{vmaxCoeff}*D{r}*E{r}*SQRT(C{r})";
+            ws.Cells[r, 10].Formula = $"(0.065*D{r}*E{r}*((0.35*SQRT(C{r}))/1.5)) + ((((F{r}*(PI()*(G{r}*0.1)^2/4))/H{r})*E{r}*$D$2*0.1))";
+            ws.Cells[r, 11].Value = item.Vd;
+            ws.Cells[r, 12].Formula =
+                $"IF(K{r}>I{r},\"NOT O.K. (Vd > Vmax)\"," +
+                $"IF(K{r}>J{r},\"NOT O.K. (Vd > Vr)\"," +
+                $"IF(J{r}>I{r},\"NOT O.K. (Vr > Vmax)\"," +
+                $"IF((F{r}*(PI()*(G{r}/10)^2/4)*(100/H{r}))<(0.0025*100*D{r}),\"NOT OK Min. Donatı\",\"O.K.\"))))";
+            ws.Cells[r, 13].Formula = $"IF(J{r}>0,K{r}/J{r},0)";
+            ws.Cells[r, 14].Formula = $"IF(I{r}>0,K{r}/I{r},0)";
+            ws.Cells[r, 13].Style.Numberformat.Format = "0.00";
+            ws.Cells[r, 14].Style.Numberformat.Format = "0.00";
+            for (int c = 1; c <= 14; c++) ws.Cells[r, c].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+        }
+
+        int lastRow = startRow + rows.Count - 1;
+        if (rows.Count > 0)
+        {
+            foreach (var col in new[] { "M", "N" })
+            {
+                var range = ws.Cells[$"{col}{startRow}:{col}{lastRow}"];
+                var scale = range.ConditionalFormatting.AddThreeColorScale();
+                scale.LowValue.Color = DrawingColor.LightGreen;
+                scale.MiddleValue.Color = DrawingColor.Yellow;
+                scale.HighValue.Color = DrawingColor.Salmon;
+            }
+
+            var statusRange = ws.Cells[$"L{startRow}:L{lastRow}"];
+            var okRule = statusRange.ConditionalFormatting.AddEqual();
+            okRule.Formula = "\"O.K.\"";
+            okRule.Style.Font.Color.Color = DrawingColor.Green;
+            var badRule = statusRange.ConditionalFormatting.AddNotEqual();
+            badRule.Formula = "\"O.K.\"";
+            badRule.Style.Font.Color.Color = DrawingColor.Red;
+            badRule.Style.Font.Bold = true;
         }
 
         ws.Cells.AutoFitColumns();

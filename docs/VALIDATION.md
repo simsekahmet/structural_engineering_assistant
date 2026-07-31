@@ -106,12 +106,44 @@ same displayed 0.01, so the difference is presentation, not method.
 
 ---
 
+## VC-05 — Wall Shear
+
+**Module:** Wall Shear · **Code:** TBDY 2018 §7.6, TS 500 §8.3
+
+Reproduces five rows of the reference desktop report (fck = 35 MPa, fyd = 365 MPa):
+
+```
+fctd = 0.35·√fck / 1.5
+Vmax = 0.085·bw·lw·√fck            (0.065 for coupled walls)
+Vc   = 0.065·bw·lw·fctd
+Vw   = (n·π(φ/10)²/4 / s)·lw·fyd·0.1
+Vr   = Vc + Vw
+```
+
+| Row | bw × lw | Rebar | Vd | Vmax | Vr | Vd/Vr | Vd/Vmax |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| CATI / P1 | 114.7 × 675 | 2×φ18/15 | 1815 | 38 922 | 15 304 | 0.12 | 0.05 |
+| 5K / P1 | 105.9 × 765 | 2×φ18/15 | 2075 | 40 732 | 16 742 | 0.12 | 0.05 |
+| 3B / P1 | 105.9 × 765 | 2×φ18/15 | 8924 | 40 732 | 16 742 | 0.53 | 0.22 |
+| 2B / P9 | 40 × 195 | 2×φ12/15 | 953 | 3 922 | 1 773 | 0.54 | 0.24 |
+| 3B / P9 | 40 × 195 | 2×φ12/15 | 1365 | 3 922 | 1 773 | 0.77 | 0.35 |
+
+Every Vmax, Vr and both capacity ratios match the reference report to the printed
+precision. Note that Vd here is the **governing** value, `max(Vd, 0.5V)` — the
+reference report's own "Vd" column shows the raw value while its capacity columns
+use the governing one, which is why e.g. CATI/P1 shows 881 kN raw but 0.12 = 1815/15304.
+
+**Result: PASS.**
+
+---
+
 ## Not yet validated
 
 - Interstory Drift (λ and the 0.008κ / 0.016κ limits)
 - Second-Order Effects (θ and the 0.12·D/(Ch·R) limit)
 - Beam Shear (Vr, and the Vmax cap)
 - Beam Axial Load
+- Wall Shear's short-wall, 0.5V and rigid-basement rules (the core Vr/Vmax path is VC-05)
 
 These were ported from the desktop implementation and spot-checked while migrating,
 but no documented hand calculation exists for them yet. Treat their output as you

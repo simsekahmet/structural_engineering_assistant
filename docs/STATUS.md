@@ -1,6 +1,6 @@
 # Module implementation status
 
-Last updated for **web v1.9.0 / agent v1.9.0**.
+Last updated for **web v1.10.0 / agent v1.10.0**.
 
 "Migrated" means the calculation itself runs against the live ETABS model and has
 been checked against an independent hand calculation. "UI only" means the screen
@@ -15,7 +15,7 @@ exists but no calculation is wired up — those modules disable their connect bu
 | Column Axial Load (Kolon Eksenel) | ✅ Migrated | `kolon_eksenel_yuk_kontrolu.cs` | Editable b/d, select-failing-in-model, formula-backed Excel. |
 | Beam Shear (Kiriş Kesme) | ✅ Migrated | `kiris_kesme.cs` | Editable n/φ/s. |
 | Beam Axial Load (Kiriş Eksenel) | ✅ Migrated | `kiris_eksenel_yuk.cs` | |
-| Wall Shear (Perde Kesme) | ⬜ UI only | `perde_kesme.cs` | Area/Pier-object based; needs an Area equivalent of `select-frames`. |
+| Wall Shear (Perde Kesme) | ✅ Migrated | `perde_kesme.cs` | Chooses the rebar layout per story; short-wall, 0.5V and rigid-basement rules with their own detail tables; editable bw/lw and coupled flag. |
 | Wall Axial Load (Perde Eksenel) | ✅ Migrated | `perde_eksenel.cs` | Limit 0.35 (not 0.40); d is the wall length end-to-end. Pier data comes from `Results.PierForce` + `PierLabel.GetSectionProperties`, not a display table. Includes "select failing walls in model" via the AreaObj-based select-piers endpoint. |
 | Column Schedule (Kolon Donesi) | ⬜ UI only | `kolon_donesi.cs`, `kolon_dwg_export.cs` | Was migrated in v1.3–v1.5 and **withdrawn in v1.7.0**: schedules are deferred until every analysis and member check ahead of them is verified. |
 | Wall Schedule (Perde Donesi) | ⬜ UI only | — | Empty placeholder in the desktop app too — nothing to migrate. |
@@ -39,10 +39,8 @@ complete and verified first.** Schedule ("done") modules are only revisited afte
 
 1. **Validation cases for the four undocumented checks** — Interstory Drift,
    Second-Order Effects, Beam Shear, Beam Axial (see `VALIDATION.md`).
-2. **Wall Shear** — the last real calculation still only on the desktop. Also
-   **Column Shear**, to be added from the reference workbook. "Select failing in
-   model" for walls needs the agent's write endpoint extended from `FrameObj` to
-   `AreaObj`/Pier objects.
+2. **Story grouping** for Wall Shear — applying one rebar layout to a group of
+   stories rather than choosing per story. Deferred from the initial migration.
 3. **Schedules (done modules)** — Column Schedule was built and then withdrawn in
    v1.7.0 so it can be reintroduced on a verified foundation. Wall/Beam/Slab/
    Foundation schedules are empty in the desktop app too and need their scope

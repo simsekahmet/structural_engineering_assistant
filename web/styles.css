@@ -198,6 +198,37 @@ th { color: var(--muted); background: var(--surface-muted); font-size: 9px; text
 .combo-move:hover { background: var(--primary-soft); }
 .combo-status { margin: 8px 0 0; color: var(--muted); font-size: 9.5px; }
 
+.ws-section { margin: 16px 17px 6px; padding-left: 11px; position: relative; color: var(--primary-dark); font: 700 10px/1.2 Arial, sans-serif; letter-spacing: .07em; }
+.ws-section::before { content: ''; position: absolute; left: 0; top: 2px; width: 6px; height: 6px; border-radius: 50%; background: var(--primary); }
+.ws-block { margin: 0 17px 4px; padding: 11px 12px; border: 1px solid var(--border-soft); border-radius: 11px; background: var(--surface-muted); }
+.ws-block .combo-dual { padding: 4px 0; }
+.ws-block .field-grid { padding: 8px 0 0; }
+.ws-sub { margin: 10px 0 2px; color: var(--muted); font: 700 9px/1.2 Arial, sans-serif; letter-spacing: .05em; }
+.ws-chip-label { margin: 9px 0 5px; color: var(--muted); font-size: 10px; }
+.ws-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.ws-chip { padding: 4px 9px; border: 1px solid var(--border); border-radius: 7px; cursor: pointer; color: var(--muted); background: var(--surface); font: 700 10px/1.2 Arial, sans-serif; }
+.ws-chip:hover { border-color: var(--primary); }
+.ws-chip.on { color: #fff; border-color: var(--primary); background: var(--primary); }
+
+.ws-toggle { display: flex; align-items: center; justify-content: space-between; gap: 10px; cursor: pointer; color: var(--text); font-size: 11px; }
+.ws-toggle input { position: absolute; opacity: 0; pointer-events: none; }
+.ws-toggle-track { position: relative; width: 38px; height: 20px; flex: 0 0 auto; border-radius: 999px; background: var(--border); transition: background .18s ease; }
+.ws-toggle-track::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--surface); box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: transform .18s ease; }
+.ws-toggle input:checked ~ .ws-toggle-track { background: var(--primary); }
+.ws-toggle input:checked ~ .ws-toggle-track::after { transform: translateX(18px); }
+.ws-toggle input:focus-visible ~ .ws-toggle-track { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+tr.ws-group td { padding: 7px 10px; color: var(--primary-dark); background: var(--surface-strong); font-weight: 700; font-size: 10.5px; }
+.ws-edit { width: 62px; height: 26px; padding: 0 6px; border: 1px solid var(--border); border-radius: 6px; background: color-mix(in srgb, var(--amber) 10%, var(--surface-muted)); color: var(--text); text-align: center; }
+.ws-status-bad { color: var(--red); font-weight: 700; }
+.ws-cap-ok { color: var(--green); font-weight: 700; }
+.ws-cap-warn { color: var(--amber); font-weight: 700; }
+.ws-cap-bad { color: var(--red); font-weight: 700; }
+.ws-detail { margin: 4px 17px 14px; border: 1px solid var(--border-soft); border-radius: 11px; background: var(--surface-muted); }
+.ws-detail-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 13px 0; }
+.ws-detail-head h3 { margin: 0; color: var(--primary-dark); font-size: 11px; }
+.ws-detail .table-wrap { min-height: 0; padding: 8px 13px 12px; }
+
 .doc-links { display: flex; flex-direction: column; gap: 3px; margin: 9px 0 11px; }
 .doc-links a { color: var(--muted); font-size: 9.5px; text-decoration: none; }
 .doc-links a:hover { color: var(--primary-dark); text-decoration: underline; }
