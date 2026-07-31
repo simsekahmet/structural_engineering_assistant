@@ -7,7 +7,7 @@
   <meta name="description" content="Web-based structural engineering checks and reporting for ETABS models.">
   <title>Structural Engineering Assistant</title>
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="styles.css?v=1.6.0">
+  <link rel="stylesheet" href="styles.css?v=1.7.0">
 </head>
 <body>
   <div class="app-shell">
@@ -44,7 +44,7 @@
       <nav>
         <p class="nav-label" data-i18n="nav.general">GENERAL</p>
         <a class="nav-item active" href="#dashboard" data-view="dashboard">
-          <span class="nav-icon">⌂</span><span>Dashboard</span>
+          <span class="nav-icon">⌂</span><span data-i18n="nav.dashboard">Dashboard</span>
         </a>
 
         <p class="nav-label" data-i18n="nav.analysis">ANALYSIS & CHECKS</p>
@@ -68,7 +68,7 @@
         <a class="nav-item" href="#foundation-schedule" data-view="foundation-schedule"><span class="nav-icon">▰</span><span data-i18n="module.foundationSchedule.title">Foundation Schedule</span></a>
       </nav>
       <div class="sidebar-footer">
-        <span class="version-badge" id="versionBadge">v1.6.0</span>
+        <span class="version-badge" id="versionBadge">v1.7.0</span>
         <nav class="doc-links" data-i18n-aria-label="docs.aria" aria-label="Documentation">
           <a href="https://github.com/simsekahmet/structural_engineering_assistant/blob/main/docs/STATUS.md" target="_blank" rel="noopener" data-i18n="docs.status">Module status</a>
           <a href="https://github.com/simsekahmet/structural_engineering_assistant/blob/main/docs/VALIDATION.md" target="_blank" rel="noopener" data-i18n="docs.validation">Validation cases</a>
@@ -183,7 +183,7 @@
     <form method="dialog">
       <div class="dialog-heading"><div><div><h2 data-i18n="dialog.title">ETABS Web Connection</h2><p data-i18n="dialog.subtitle">Recommended secure local bridge architecture</p></div></div><button class="dialog-close" data-i18n-aria-label="action.close" aria-label="Close">×</button></div>
       <div class="architecture-flow">
-        <div><strong data-i18n="architecture.web">Web Interface</strong><small>GitHub Pages</small></div><span>HTTPS / JSON</span><div><strong>Windows Agent</strong><small>localhost</small></div><span>COM API</span><div><strong>ETABS 22</strong><small data-i18n="model.active">Active model</small></div>
+        <div><strong data-i18n="architecture.web">Web Interface</strong><small>GitHub Pages</small></div><span>HTTPS / JSON</span><div><strong data-i18n="architecture.agent">Windows Agent</strong><small>127.0.0.1:5218</small></div><span>COM API</span><div><strong>ETABS</strong><small data-i18n="model.active">Active model</small></div>
       </div>
       <p class="dialog-note" data-i18n="dialog.note">A browser cannot access COM objects directly. A small signed Windows service forwards only approved commands to the ETABS API and returns results to the web interface as JSON.</p>
       <a class="button button-secondary full-width dialog-download" href="https://github.com/simsekahmet/structural_engineering_assistant/releases/latest/download/StructuralEngineeringAssistant.Agent.exe" data-i18n="action.downloadAgent">Download Windows Agent</a>
@@ -200,7 +200,7 @@
     </form>
   </dialog>
 
-  <script src="version.js?v=1.6.0"></script>
-  <script src="app.js?v=1.6.0" defer></script>
+  <script src="version.js?v=1.7.0"></script>
+  <script src="app.js?v=1.7.0" defer></script>
 </body>
 </html>

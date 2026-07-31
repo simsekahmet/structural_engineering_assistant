@@ -69,8 +69,7 @@ internal sealed class AgentApplicationContext : ApplicationContext
             GetStoryDriftsOnUiThread,
             GetTableOnUiThread,
             SelectFramesOnUiThread,
-            GetFrameSectionsOnUiThread,
-            GetColumnScheduleOnUiThread);
+            GetFrameSectionsOnUiThread);
         try
         {
             _server.Start();
@@ -145,14 +144,6 @@ internal sealed class AgentApplicationContext : ApplicationContext
             return (FrameSectionsResult)_dispatcher.Invoke(new Func<FrameSectionsResult>(_etabs.GetFrameSections));
 
         return _etabs.GetFrameSections();
-    }
-
-    private ColumnScheduleResult GetColumnScheduleOnUiThread()
-    {
-        if (_dispatcher.InvokeRequired)
-            return (ColumnScheduleResult)_dispatcher.Invoke(new Func<ColumnScheduleResult>(_etabs.GetColumnSchedule));
-
-        return _etabs.GetColumnSchedule();
     }
 
     private void ShowConnectionResult()
@@ -600,169 +591,6 @@ internal sealed class EtabsConnection : IDisposable
         }
     }
 
-    // Column geometry + reinforcement for every column frame object — the raw data behind the
-    // Kolon Donesi (column schedule) module. Mirrors the desktop's FetchDataFromEtabs (columns
-    // only; beams/walls there were just plan-view background, not part of the calculation).
-    public ColumnScheduleResult GetColumnSchedule()
-    {
-        if (!EnsureModelReady(out var error))
-            return new ColumnScheduleResult(true, false, error, Array.Empty<ColumnScheduleRow>());
-
-        try
-        {
-            var sap = _sapModel!;
-            var frameProp = _sapModelInterface!.GetProperty("FrameObj")!;
-            var frame = frameProp.GetValue(sap)!;
-            var frameType = frameProp.PropertyType;
-
-            var pointProp = _sapModelInterface.GetProperty("PointObj")!;
-            var point = pointProp.GetValue(sap)!;
-            var pointType = pointProp.PropertyType;
-
-            var propFrameProp = _sapModelInterface.GetProperty("PropFrame")!;
-            var propFrame = propFrameProp.GetValue(sap)!;
-            var propFrameType = propFrameProp.PropertyType;
-
-            var getNameList = frameType.GetMethods().First(m => m.Name == "GetNameList");
-            var nameArgs = new object?[] { 0, null };
-            getNameList.Invoke(frame, nameArgs);
-            var names = (string[]?)nameArgs[1] ?? Array.Empty<string>();
-
-            var getDesignOrientation = frameType.GetMethods().First(m => m.Name == "GetDesignOrientation");
-            var orientationEnumType = getDesignOrientation.GetParameters()[1].ParameterType.GetElementType()!;
-            var columnOrientation = Enum.Parse(orientationEnumType, "Column");
-            var orientationPlaceholder = Activator.CreateInstance(orientationEnumType)!;
-
-            var getLabel = frameType.GetMethods().First(m => m.Name == "GetLabelFromName");
-            var getPoints = frameType.GetMethods().First(m => m.Name == "GetPoints");
-            var getSection = frameType.GetMethods().First(m => m.Name == "GetSection" && m.GetParameters().Length == 3);
-            var getLocalAxes = frameType.GetMethods().First(m => m.Name == "GetLocalAxes");
-            var getCoord = pointType.GetMethods().First(m => m.Name == "GetCoordCartesian" && m.GetParameters().Length >= 4);
-            var coordDefaults = getCoord.GetParameters().Skip(4).Select(p => p.DefaultValue).ToArray();
-
-            var getTypeOAPI = propFrameType.GetMethods().First(m => m.Name == "GetTypeOAPI");
-            var sectTypeEnumType = getTypeOAPI.GetParameters()[1].ParameterType.GetElementType()!;
-            var sectTypePlaceholder = Activator.CreateInstance(sectTypeEnumType)!;
-            var getRectangle = propFrameType.GetMethods().First(m => m.Name == "GetRectangle" && m.GetParameters().Length == 8);
-            var getCircle = propFrameType.GetMethods().First(m => m.Name == "GetCircle");
-            var getSectProps = propFrameType.GetMethods().First(m => m.Name == "GetSectProps");
-            var getRebarColumn = propFrameType.GetMethods().First(m => m.Name == "GetRebarColumn");
-
-            var rows = new List<ColumnScheduleRow>();
-
-            foreach (var name in names)
-            {
-                var orientArgs = new object?[] { name, orientationPlaceholder };
-                getDesignOrientation.Invoke(frame, orientArgs);
-                if (!columnOrientation.Equals(orientArgs[1])) continue;
-
-                var labelArgs = new object?[] { name, "", "" };
-                getLabel.Invoke(frame, labelArgs);
-                var story = ((string?)labelArgs[2] ?? "").Trim();
-                if (string.IsNullOrEmpty(story)) story = "Bilinmiyor";
-                var label = ((string?)labelArgs[1] ?? "").Trim();
-
-                var ptArgs = new object?[] { name, "", "" };
-                getPoints.Invoke(frame, ptArgs);
-                var pt1 = (string?)ptArgs[1] ?? "";
-
-                var coordArgs = new object?[] { pt1, 0.0, 0.0, 0.0 }.Concat(coordDefaults).ToArray();
-                getCoord.Invoke(point, coordArgs);
-                var x = (double)(coordArgs[1] ?? 0.0);
-                var y = (double)(coordArgs[2] ?? 0.0);
-
-                var secArgs = new object?[] { name, "", "" };
-                getSection.Invoke(frame, secArgs);
-                var propName = (string?)secArgs[1] ?? "";
-
-                var axesArgs = new object?[] { name, 0.0, false };
-                getLocalAxes.Invoke(frame, axesArgs);
-                var angle = (double)(axesArgs[1] ?? 0.0);
-
-                double t3 = 0.4, t2 = 0.4;
-                int shape = 1;
-                if (!string.IsNullOrEmpty(propName))
-                {
-                    var typeArgs = new object?[] { propName, sectTypePlaceholder };
-                    getTypeOAPI.Invoke(propFrame, typeArgs);
-                    var sTypeName = typeArgs[1]?.ToString() ?? "";
-
-                    if (sTypeName == "Rectangular")
-                    {
-                        var rectArgs = new object?[] { propName, "", "", 0.4, 0.4, 0, "", "" };
-                        getRectangle.Invoke(propFrame, rectArgs);
-                        t3 = (double)(rectArgs[3] ?? 0.4);
-                        t2 = (double)(rectArgs[4] ?? 0.4);
-                        shape = 1;
-                    }
-                    else if (sTypeName == "Circle")
-                    {
-                        var circArgs = new object?[] { propName, "", "", 0.4, 0, "", "" };
-                        getCircle.Invoke(propFrame, circArgs);
-                        t3 = (double)(circArgs[3] ?? 0.4);
-                        t2 = t3;
-                        shape = 2;
-                    }
-                    else
-                    {
-                        // Section Designer / other: derive an equivalent rectangle from area + inertia.
-                        var spArgs = new object?[] { propName, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
-                        var spRet = getSectProps.Invoke(propFrame, spArgs);
-                        if (spRet is 0)
-                        {
-                            var area = (double)(spArgs[1] ?? 0.0);
-                            var i22 = (double)(spArgs[5] ?? 0.0);
-                            var i33 = (double)(spArgs[6] ?? 0.0);
-                            if (area > 0)
-                            {
-                                t2 = Math.Sqrt(12 * i33 / area);
-                                t3 = Math.Sqrt(12 * i22 / area);
-                            }
-                        }
-                        shape = 1;
-                    }
-                }
-
-                string rebarLabel = "";
-                if (!string.IsNullOrEmpty(propName))
-                {
-                    var rebarArgs = new object?[] { propName, "", "", 0, 0, 0.0, 0, 0, 0, "", "", 0.0, 0, 0, false };
-                    var rebarRet = getRebarColumn.Invoke(propFrame, rebarArgs);
-                    if (rebarRet is 0)
-                    {
-                        var pattern = (int)(rebarArgs[3] ?? 0);
-                        var rebarSize = (string?)rebarArgs[9] ?? "";
-                        var sizeDigits = new string(rebarSize.Where(char.IsDigit).ToArray());
-                        var sizeNum = sizeDigits.Length > 0 ? sizeDigits : rebarSize;
-
-                        if (pattern == 1) // Rectangular
-                        {
-                            var numberR3Bars = (int)(rebarArgs[7] ?? 0);
-                            var numberR2Bars = (int)(rebarArgs[8] ?? 0);
-                            var totalBars = numberR3Bars * 2 + numberR2Bars * 2 - 4;
-                            if (totalBars < 4) totalBars = 4;
-                            rebarLabel = $"{totalBars}φ{sizeNum}";
-                        }
-                        else if (pattern == 2) // Circular
-                        {
-                            var numberCBars = (int)(rebarArgs[6] ?? 0);
-                            rebarLabel = $"{numberCBars}φ{sizeNum}";
-                        }
-                    }
-                }
-
-                rows.Add(new ColumnScheduleRow(name, label, story, x, y, propName, t2, t3, shape, angle, rebarLabel));
-            }
-
-            return new ColumnScheduleResult(true, true, null, rows.ToArray());
-        }
-        catch (Exception ex)
-        {
-            AgentLog.Write($"GetColumnSchedule failed: {ex}");
-            return new ColumnScheduleResult(true, false, ex.Message, Array.Empty<ColumnScheduleRow>());
-        }
-    }
-
     // Reuses ConnectAndRead so every data endpoint shares the same connect/reconnect logic
     // and always operates against a live, readable model.
     private bool EnsureModelReady(out string? error)
@@ -1036,7 +864,6 @@ internal sealed class LocalBridgeServer : IDisposable
     private readonly Func<string, string[], TableResult> _getTable;
     private readonly Func<IReadOnlyList<FrameKey>, SelectResult> _selectFrames;
     private readonly Func<FrameSectionsResult> _getFrameSections;
-    private readonly Func<ColumnScheduleResult> _getColumnSchedule;
     private readonly CancellationTokenSource _cancellation = new();
     private TcpListener? _listener;
 
@@ -1047,8 +874,7 @@ internal sealed class LocalBridgeServer : IDisposable
         Func<string[], StoryDriftsResult> getStoryDrifts,
         Func<string, string[], TableResult> getTable,
         Func<IReadOnlyList<FrameKey>, SelectResult> selectFrames,
-        Func<FrameSectionsResult> getFrameSections,
-        Func<ColumnScheduleResult> getColumnSchedule)
+        Func<FrameSectionsResult> getFrameSections)
     {
         _getSnapshot = getSnapshot;
         _getCombinations = getCombinations;
@@ -1057,7 +883,6 @@ internal sealed class LocalBridgeServer : IDisposable
         _getTable = getTable;
         _selectFrames = selectFrames;
         _getFrameSections = getFrameSections;
-        _getColumnSchedule = getColumnSchedule;
     }
 
     public void Start()
@@ -1173,12 +998,6 @@ internal sealed class LocalBridgeServer : IDisposable
                         return;
                     }
 
-                    if (path == "/api/etabs/column-schedule")
-                    {
-                        await WriteResponseAsync(stream, 200, "OK", _getColumnSchedule(), origin, cancellationToken);
-                        return;
-                    }
-
                     await WriteResponseAsync(stream, 404, "Not Found", new { error = "Endpoint not found." }, origin, cancellationToken);
                     return;
                 }
@@ -1237,15 +1056,6 @@ internal sealed class LocalBridgeServer : IDisposable
                         if (req is null) { await WriteResponseAsync(stream, 400, "Bad Request", new { error = "Invalid request body." }, origin, cancellationToken); return; }
                         var bytes = BeamAxialExcelReport.Build(req.Fck, req.Limit, req.Rows);
                         await WriteBinaryResponseAsync(stream, 200, "OK", bytes, "Kiris_Eksenel_Raporu.xlsx", origin, cancellationToken);
-                        return;
-                    }
-
-                    if (path == "/api/etabs/export/column-schedule")
-                    {
-                        var req = JsonSerializer.Deserialize<ColumnScheduleExportRequest>(json, JsonOptions);
-                        if (req is null) { await WriteResponseAsync(stream, 400, "Bad Request", new { error = "Invalid request body." }, origin, cancellationToken); return; }
-                        var bytes = ColumnScheduleExcelReport.Build(req.Rows);
-                        await WriteBinaryResponseAsync(stream, 200, "OK", bytes, "Kolon_Donesi.xlsx", origin, cancellationToken);
                         return;
                     }
 
@@ -1478,13 +1288,6 @@ internal sealed record SelectResult(bool AgentOnline, bool EtabsConnected, strin
 internal sealed record FrameSectionInfo(string Unique, string Label, string Story, string Section, double H, double B);
 
 internal sealed record FrameSectionsResult(bool AgentOnline, bool EtabsConnected, string? Error, FrameSectionInfo[] Sections);
-
-// Width/Depth (T2/T3) in meters (model units); Shape 1=Rectangular, 2=Circular; Angle in degrees.
-internal sealed record ColumnScheduleRow(
-    string Name, string Label, string Story, double X, double Y,
-    string Section, double Width, double Depth, int Shape, double Angle, string RebarLabel);
-
-internal sealed record ColumnScheduleResult(bool AgentOnline, bool EtabsConnected, string? Error, ColumnScheduleRow[] Rows);
 
 internal sealed record SelectFramesRequest(FrameKey[] Items);
 
@@ -1934,101 +1737,6 @@ internal static class BeamAxialExcelReport
             condNotOk.Formula = "\"OK\"";
             condNotOk.Style.Font.Color.Color = DrawingColor.Red;
             condNotOk.Style.Font.Bold = true;
-        }
-
-        ws.Cells.AutoFitColumns();
-        return package.GetAsByteArray();
-    }
-}
-
-internal sealed record ColumnScheduleExportRow(
-    string Type, string Story, string Section, double B, double H, int Shape,
-    string RebarLabel, int RebarCount, double RebarDiaMm);
-
-internal sealed record ColumnScheduleExportRequest(ColumnScheduleExportRow[] Rows);
-
-// Kolon Donesi report: b/h (cm), shape, and the parsed rebar count/diameter are hard values;
-// Ac, As (rebar area), and Oran (%) are Excel formulas so the sheet recomputes if the engineer
-// edits the rebar count/diameter after downloading it.
-internal static class ColumnScheduleExcelReport
-{
-    public static byte[] Build(IReadOnlyList<ColumnScheduleExportRow> rows)
-    {
-        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-        using var package = new ExcelPackage();
-        var ws = package.Workbook.Worksheets.Add("Kolon Donesi");
-
-        ws.Cells[1, 1, 1, 10].Merge = true;
-        ws.Cells[1, 1].Value = "KOLON DONESİ";
-        ws.Cells[1, 1].Style.Font.Size = 14;
-        ws.Cells[1, 1].Style.Font.Bold = true;
-        ws.Cells[1, 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-        ws.Cells[1, 1].Style.Fill.PatternType = ExcelFillStyle.Solid;
-        ws.Cells[1, 1].Style.Fill.BackgroundColor.SetColor(DrawingColor.FromArgb(218, 232, 252));
-
-        string[] headers = { "Tip", "Kat", "Kesit", "b (cm)", "h/Çap (cm)", "Şekil", "Donatı", "Ac (cm²)", "Oran (%)", "TBDY" };
-        for (int i = 0; i < headers.Length; i++)
-        {
-            var cell = ws.Cells[2, i + 1];
-            cell.Value = headers[i];
-            cell.Style.Font.Bold = true;
-            cell.Style.Fill.PatternType = ExcelFillStyle.Solid;
-            cell.Style.Fill.BackgroundColor.SetColor(DrawingColor.FromArgb(240, 240, 240));
-            cell.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-        }
-
-        const int startRow = 3;
-        for (int i = 0; i < rows.Count; i++)
-        {
-            var r = startRow + i;
-            var item = rows[i];
-            ws.Cells[r, 1].Value = item.Type;
-            ws.Cells[r, 2].Value = item.Story;
-            ws.Cells[r, 3].Value = item.Section;
-            ws.Cells[r, 4].Value = item.B;
-            ws.Cells[r, 5].Value = item.H;
-            ws.Cells[r, 6].Value = item.Shape == 2 ? "Dairesel" : "Dikdörtgen";
-            ws.Cells[r, 7].Value = $"{item.RebarCount}φ{(int)item.RebarDiaMm}";
-
-            // Ac: rectangle b*h, or circle PI()*d^2/4 (using h as diameter for shape=2).
-            ws.Cells[r, 8].Formula = item.Shape == 2 ? $"PI()*POWER(E{r},2)/4" : $"D{r}*E{r}";
-
-            // Oran = rebar area / Ac * 100, with rebar count/diameter as separate hidden cells (K,L)
-            // so the ratio stays a live formula even if the engineer edits them.
-            ws.Cells[r, 11].Value = item.RebarCount;
-            ws.Cells[r, 12].Value = item.RebarDiaMm;
-            ws.Cells[r, 11].Style.Font.Color.SetColor(DrawingColor.Gray);
-            ws.Cells[r, 12].Style.Font.Color.SetColor(DrawingColor.Gray);
-            ws.Cells[r, 9].Formula = $"IF(H{r}=0,0,(K{r}*PI()*POWER(L{r}/10,2)/4)/H{r}*100)";
-
-            // TBDY 2018 §7.3.2 longitudinal ratio check (1% ≤ ρ ≤ 4%), live off the Oran formula.
-            ws.Cells[r, 10].Formula = $"IF(I{r}<1,\"ρ<%1\",IF(I{r}>4,\"ρ>%4\",\"OK\"))";
-            ws.Cells[r, 10].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-        }
-
-        ws.Cells[2, 11].Value = "Adet";
-        ws.Cells[2, 12].Value = "Çap (mm)";
-        ws.Cells[2, 11].Style.Font.Italic = true;
-        ws.Cells[2, 12].Style.Font.Italic = true;
-
-        int lastRow = startRow + rows.Count - 1;
-        if (rows.Count > 0)
-        {
-            var range = ws.Cells[$"I{startRow}:I{lastRow}"];
-            var colorScale = range.ConditionalFormatting.AddThreeColorScale();
-            colorScale.LowValue.Color = DrawingColor.LightGreen;
-            colorScale.MiddleValue.Color = DrawingColor.Yellow;
-            colorScale.HighValue.Color = DrawingColor.Salmon;
-
-            // Flag TBDY column: green when OK, bold red otherwise.
-            var tbdyRange = ws.Cells[$"J{startRow}:J{lastRow}"];
-            var okRule = tbdyRange.ConditionalFormatting.AddEqual();
-            okRule.Formula = "\"OK\"";
-            okRule.Style.Font.Color.Color = DrawingColor.Green;
-            var notOkRule = tbdyRange.ConditionalFormatting.AddNotEqual();
-            notOkRule.Formula = "\"OK\"";
-            notOkRule.Style.Font.Color.Color = DrawingColor.Red;
-            notOkRule.Style.Font.Bold = true;
         }
 
         ws.Cells.AutoFitColumns();

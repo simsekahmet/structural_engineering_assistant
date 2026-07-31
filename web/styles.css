@@ -217,9 +217,6 @@ th { color: var(--muted); background: var(--surface-muted); font-size: 9px; text
 .calc-values th { width: 40%; color: var(--muted); background: transparent; font-size: 10.5px; text-transform: none; letter-spacing: 0; font-weight: 400; }
 .calc-note { margin: 9px 0 0; color: var(--muted); font-size: 9.5px; line-height: 1.5; }
 
-.cs-ratio { font-weight: 700; cursor: help; }
-.cs-ratio-under { color: #b7791f; }
-.cs-ratio-over { color: #c0392b; }
 
 dialog { width: min(720px, calc(100vw - 30px)); padding: 0; border: 1px solid var(--border); border-radius: 18px; color: var(--text); background: var(--surface); box-shadow: 0 30px 80px rgba(14, 27, 49, .3); }
 dialog::backdrop { background: rgba(14, 24, 40, .56); backdrop-filter: blur(4px); }
@@ -278,14 +275,7 @@ dialog form { padding: 20px; }.dialog-heading, .dialog-heading > div { display: 
 .panel-actions { padding: 0 17px 17px; }
 .panel-actions.two-up { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .panel-actions.two-up .button { width: 100%; }
-.ca-edit, .bs-edit, .ba-edit, .cs-edit-rebar { width: 58px; height: 26px; padding: 0 6px; border: 1px solid var(--border); border-radius: 6px; background: color-mix(in srgb, var(--amber) 10%, var(--surface-muted)); color: var(--text); text-align: center; }
-.cs-edit-rebar { width: 84px; }
-.column-schedule-type-select { display: flex; align-items: center; gap: 8px; }
-.column-schedule-type-select select { height: 32px; padding: 0 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-muted); color: var(--text); }
-.column-schedule-plan { margin: 0 17px 14px; padding: 10px; border: 1px solid var(--border-soft); border-radius: 12px; background: var(--surface-muted); }
-.column-schedule-svg { width: 100%; height: 260px; display: block; }
-.cs-plan-col { cursor: pointer; }
-.cs-plan-col:hover { stroke: var(--primary); stroke-width: 1.5; }
+.ca-edit, .bs-edit, .ba-edit { width: 58px; height: 26px; padding: 0 6px; border: 1px solid var(--border); border-radius: 6px; background: color-mix(in srgb, var(--amber) 10%, var(--surface-muted)); color: var(--text); text-align: center; }
 tr.row-fail { background: color-mix(in srgb, var(--red) 8%, transparent); }
 .column-axial-failed { margin: 0 17px 17px; padding: 12px 14px; border: 1px solid var(--border-soft); border-radius: 12px; background: var(--surface-muted); }
 .column-axial-failed h3 { margin: 0 0 6px; color: var(--primary-dark); font-size: 12px; }

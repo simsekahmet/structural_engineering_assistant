@@ -1,6 +1,6 @@
 # Known issues and limitations
 
-Current as of **web v1.6.0 / agent v1.6.0**. Release notes live on the
+Current as of **web v1.7.0 / agent v1.7.0**. Release notes live on the
 [Releases page](https://github.com/simsekahmet/structural_engineering_assistant/releases).
 
 ## Limitations you must be aware of before relying on a result
@@ -25,9 +25,10 @@ Current as of **web v1.6.0 / agent v1.6.0**. Release notes live on the
 - **`select-frames` is O(n) over model frames.** On a ~166-frame model a "select in
   model" call takes a few hundred ms warm, but the first call after connecting has to
   enumerate every frame and can take noticeably longer.
-- **Column Schedule DXF simplifies tie details.** The exported DXF draws a plain inner
-  stirrup rectangle instead of the desktop's çiroz/etriye bulge-arc geometry. Bar
-  count, diameter and ratio — everything the schedule reports — are unaffected.
+- **All schedule ("done") modules are UI only, including Column Schedule.** Column
+  Schedule was migrated in v1.3–v1.5 and deliberately withdrawn in v1.7.0: schedules
+  are being deferred until every analysis and member check ahead of them is verified.
+  Its screen still exists with the connect button disabled.
 - **Wall modules are UI only.** Wall Shear and Wall Axial screens exist but perform no
   calculation; their connect button is disabled.
 - **Analysis-status detection is best-effort.** If ETABS does not expose

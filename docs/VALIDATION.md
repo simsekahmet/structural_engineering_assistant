@@ -72,19 +72,6 @@ Ac, Ac·fck and ratio were reproduced by hand and matched the tool.
 
 ---
 
-## VC-04 — Column Schedule, reinforcement ratio
-
-**Module:** Column Schedule · **Code:** TBDY 2018 §7.3.2
-
-Verified during migration on a live model: 54 columns clustered into 2 types; the
-rebar label was parsed from the ETABS section (3×2 + 3×2 − 4 = 8 bars, Ø18) and the
-ratio hand-checked as 1.66 %. Re-grouping after an edit split and merged types the
-same way the desktop application does.
-
-**Result: PASS.** A written-out worked example is still to be added here.
-
----
-
 ## Not yet validated
 
 - Interstory Drift (λ and the 0.008κ / 0.016κ limits)
