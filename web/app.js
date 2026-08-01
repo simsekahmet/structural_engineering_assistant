@@ -55,6 +55,8 @@ const translations = {
     'combos.loading': 'Loading combinations from the model…',
     'combos.count': '{total} combinations in the model · {selected} selected',
     'combos.loadFailed': 'Combinations could not be loaded: {error}',
+    'combos.needConnection': 'Connect to an ETABS model to load its combinations.',
+    'terminal.needConnection': 'Connect to an ETABS model first.',
     'action.reset': 'Reset results', 'status.reset': 'Results cleared.',
     'calcBasis.title': 'Calculation basis', 'calcBasis.reference': 'Code reference',
     'calcBasis.note': 'Intermediate values are listed so the result can be re-derived by hand. The responsible engineer remains accountable for the check.',
@@ -151,7 +153,7 @@ const translations = {
     'dialog.title': 'ETABS Web Connection', 'dialog.subtitle': 'Local bridge architecture', 'architecture.web': 'Web Interface',
     'architecture.agent': 'Windows Agent', 'nav.dashboard': 'Dashboard',
     'dialog.note': 'A browser cannot access COM objects directly. The local Windows tray agent reads the active ETABS model and returns data to the web interface as JSON. It is bound to the loopback address only and rejects requests from any other origin; the single endpoint that touches the model does nothing but select objects.',
-    'module.spectrum.title': 'Design Spectrum', 'module.spectrum.description': 'Create the horizontal elastic design spectrum using TBDY 2018 parameters and transfer it to the ETABS model.',
+    'module.spectrum.title': 'Reduced Design Spectrum', 'module.spectrum.description': 'Create the horizontal elastic design spectrum using TBDY 2018 parameters and transfer it to the ETABS model.',
     'module.increment.title': 'Base Shear Amplification', 'module.increment.description': 'Calculate the base shear amplification factor from modal results and analysis base shear.',
     'module.drift.title': 'Interstory Drift', 'module.drift.description': 'Calculate effective interstory drifts and compare them with TBDY 2018 limits.',
     'module.pdelta.title': 'Second-Order Effects', 'module.pdelta.description': 'Evaluate story stability coefficients and second-order amplification requirements.',
@@ -186,7 +188,7 @@ const translations = {
     'spectrum.params.title': 'TBDY 2018 Parameters', 'spectrum.params.sds': 'SDS (g)', 'spectrum.params.sd1': 'SD1 (g)',
     'spectrum.params.r': 'R', 'spectrum.params.d': 'D', 'spectrum.params.i': 'I',
     'spectrum.calculate': 'Calculate', 'spectrum.download': 'Download spectrum (.txt)',
-    'spectrum.chart.title': 'Design Spectrum', 'spectrum.chart.subtitle': 'Reduced horizontal elastic spectrum SaR(T)',
+    'spectrum.chart.title': 'Reduced Design Spectrum', 'spectrum.chart.subtitle': 'Reduced horizontal elastic spectrum SaR(T)',
     'spectrum.chart.x': 'Period T (s)', 'spectrum.chart.y': 'SaR (m/s²)',
     'spectrum.summary.peak': 'Peak SaR', 'spectrum.summary.points': 'Points',
     'spectrum.status.pending': 'Enter parameters and calculate to see the spectrum.',
@@ -207,7 +209,7 @@ const translations = {
     'increment.status.vtFetchedX': 'X direction base shear fetched.', 'increment.status.vtFetchedY': 'Y direction base shear fetched.',
     'increment.status.calculated': '{direction} direction scaling factor calculated.',
     'increment.warning.periodCapped': 'WARNING: period ({period}s) > Tmax ({tMax}s); Tmax was used.',
-    'increment.error.noSpectrum': 'Calculate the Design Spectrum first.',
+    'increment.error.noSpectrum': 'Calculate the Reduced Design Spectrum first.',
     'increment.error.invalidInputs': 'Mt, period and Vt must all be greater than zero.',
     'increment.error.noModal': 'No modal data found (Case = Modal-Ust). Run analysis first.',
     'increment.error.noComboForDirection': 'No selected combination contains "{direction}".',
@@ -285,6 +287,8 @@ const translations = {
     'combos.loading': 'Kombinasyonlar modelden yükleniyor…',
     'combos.count': 'Modelde {total} kombinasyon · {selected} seçili',
     'combos.loadFailed': 'Kombinasyonlar yüklenemedi: {error}',
+    'combos.needConnection': 'Kombinasyonların yüklenmesi için bir ETABS modeline bağlanın.',
+    'terminal.needConnection': 'Önce bir ETABS modeline bağlanın.',
     'action.reset': 'Sonuçları sıfırla', 'status.reset': 'Sonuçlar temizlendi.',
     'calcBasis.title': 'Hesap esası', 'calcBasis.reference': 'Yönetmelik dayanağı',
     'calcBasis.note': 'Sonucun elle yeniden türetilebilmesi için ara değerler listelenmiştir. Tahkikin sorumluluğu sorumlu mühendise aittir.',
@@ -381,7 +385,7 @@ const translations = {
     'dialog.title': 'ETABS Web Bağlantısı', 'dialog.subtitle': 'Yerel köprü mimarisi', 'architecture.web': 'Web Arayüzü',
     'architecture.agent': 'Windows Agent', 'nav.dashboard': 'Ana Sayfa',
     'dialog.note': "Tarayıcı COM nesnelerine doğrudan erişemez. Yerel Windows tray agent aktif ETABS modelini okur ve verileri JSON olarak web arayüzüne döndürür. Yalnızca loopback adresine bağlıdır ve başka origin’den gelen istekleri reddeder; modele dokunan tek uç yalnızca eleman seçimi yapar.",
-    'module.spectrum.title': 'Tasarım Spektrumu', 'module.spectrum.description': 'TBDY 2018 parametreleriyle yatay elastik tasarım spektrumunu oluşturun ve ETABS modeline aktarın.',
+    'module.spectrum.title': 'Azaltılmış Tasarım Spektrumu', 'module.spectrum.description': 'TBDY 2018 parametreleriyle yatay elastik tasarım spektrumunu oluşturun ve ETABS modeline aktarın.',
     'module.increment.title': 'Taban Kesme Kuvveti Büyütmesi', 'module.increment.description': 'Modal sonuçlar ve analiz taban kesme kuvveti üzerinden büyütme katsayısını hesaplayın.',
     'module.drift.title': 'Göreli Kat Ötelemesi', 'module.drift.description': 'Etkin göreli kat ötelemelerini hesaplayın ve TBDY 2018 sınırlarıyla karşılaştırın.',
     'module.pdelta.title': 'İkinci Mertebe Etkileri', 'module.pdelta.description': 'Kat stabilite katsayılarını ve ikinci mertebe büyütme gereksinimini değerlendirin.',
@@ -416,7 +420,7 @@ const translations = {
     'spectrum.params.title': 'TBDY 2018 Parametreleri', 'spectrum.params.sds': 'SDS (g)', 'spectrum.params.sd1': 'SD1 (g)',
     'spectrum.params.r': 'R', 'spectrum.params.d': 'D', 'spectrum.params.i': 'I',
     'spectrum.calculate': 'Hesapla', 'spectrum.download': 'Spektrumu indir (.txt)',
-    'spectrum.chart.title': 'Tasarım Spektrumu', 'spectrum.chart.subtitle': 'Azaltılmış yatay elastik spektrum SaR(T)',
+    'spectrum.chart.title': 'Azaltılmış Tasarım Spektrumu', 'spectrum.chart.subtitle': 'Azaltılmış yatay elastik spektrum SaR(T)',
     'spectrum.chart.x': 'Periyot T (s)', 'spectrum.chart.y': 'SaR (m/s²)',
     'spectrum.summary.peak': 'Tepe SaR', 'spectrum.summary.points': 'Nokta',
     'spectrum.status.pending': 'Parametreleri girip hesaplayın; spektrum burada görünecek.',
@@ -437,7 +441,7 @@ const translations = {
     'increment.status.vtFetchedX': 'X yönü taban kesme kuvveti çekildi.', 'increment.status.vtFetchedY': 'Y yönü taban kesme kuvveti çekildi.',
     'increment.status.calculated': '{direction} yönü artırım katsayısı hesaplandı.',
     'increment.warning.periodCapped': 'UYARI: periyot ({period}s) > Tmax ({tMax}s); hesapta Tmax kullanıldı.',
-    'increment.error.noSpectrum': 'Önce Tasarım Spektrumu sayfasından spektrum hesaplayınız.',
+    'increment.error.noSpectrum': 'Önce Azaltılmış Tasarım Spektrumu sayfasından spektrum hesaplayınız.',
     'increment.error.invalidInputs': 'Mt, periyot ve Vt değerleri sıfırdan büyük olmalıdır.',
     'increment.error.noModal': 'Modal veri bulunamadı (Case = Modal-Ust). Önce analiz çalıştırın.',
     'increment.error.noComboForDirection': 'Seçili kombinasyonlar arasında "{direction}" içeren yok.',
@@ -705,8 +709,43 @@ function applyConnectionState(data) {
   $('#bridgeStatus').textContent = t('status.connected');
   $('#bridgeStatus').classList.add('connected');
   setDisconnectVisible(true);
+  etabsConnected = true;
+  comboCachePromise = null;
   log(t('terminal.connected', { model }), 'ok');
   showPreflight(data);
+  // Re-render whatever module is open so its now-available data loads.
+  const current = location.hash.slice(1);
+  if (current && current !== 'dashboard' && moduleRenderers[current]) moduleRenderers[current]();
+}
+
+// Everything read from a model, plus the values the user typed against it. Called on
+// disconnect so the next connection cannot inherit anything from the previous one.
+function resetAllModuleData() {
+  comboCachePromise = null;
+  wallShearRaw = null;
+  for (const st of [driftState, pdeltaState, incrementState, columnAxialState,
+                    beamShearState, beamAxialState, wallAxialState, wallShearState]) {
+    st.combos = [];
+    st.selected = [];
+    st.basementCombos = [];
+    st.stories = [];
+    st.rijit = false;
+    st.rijitStory = '';
+    if ('lastResults' in st) st.lastResults = [];
+    if ('lastResult' in st) st.lastResult = null;
+  }
+  // Values read from the model rather than entered by the engineer.
+  incrementState.mt = 0;
+  incrementState.tx = 0;
+  incrementState.ty = 0;
+  incrementState.vtX = 0;
+  incrementState.vtY = 0;
+  incrementState.resultX = null;
+  incrementState.resultY = null;
+  wallShearState.detail05 = [];
+  wallShearState.detailShort = [];
+  wallShearState.activeDetail = null;
+  wallShearState.overrides = {};
 }
 
 function setDisconnectVisible(on) {
@@ -723,17 +762,8 @@ async function disconnectFromEtabs() {
     await postAgentJson('/api/etabs/disconnect', {}, 10000);
   } catch { /* the agent may already be gone; the UI still resets */ }
 
-  comboCachePromise = null;
-  wallShearRaw = null;
-  for (const st of [driftState, pdeltaState, incrementState, columnAxialState,
-                    beamShearState, beamAxialState, wallAxialState, wallShearState]) {
-    st.combos = [];
-    st.selected = [];
-    st.basementCombos = [];
-    st.stories = [];
-    if ('lastResults' in st) st.lastResults = [];
-    if ('lastResult' in st) st.lastResult = null;
-  }
+  etabsConnected = false;
+  resetAllModuleData();
 
   $('#connectionDot').classList.remove('connected');
   $('#modelName').textContent = t('model.waiting');
@@ -920,30 +950,36 @@ function rigidStateDefaults() {
   return { rijit: false, rijitStory: '', basementCombos: [], stories: [] };
 }
 
-function rigidSection(prefix, state) {
-  return setupSection(`${prefix}RigidSection`, 'wallShear.section.rigid', `
-    <div class="rigid-row">
-      <span>${t('wallShear.rigid.active')}</span>
-      <button type="button" class="switch toggle-switch" id="${prefix}Rijit"
-              role="switch" aria-checked="${state.rijit}">
-        <span class="switch-label off">${t('action.off')}</span>
-        <span class="switch-label on">${t('action.on')}</span>
-        <span class="switch-thumb" aria-hidden="true"></span>
-      </button>
-    </div>
-    <div id="${prefix}RijitBody" ${state.rijit ? '' : 'hidden'}>
-      <div class="field-grid">
-        <div class="field">
-          <label for="${prefix}RijitStory">${t('wallShear.rigid.story')}</label>
-          <select id="${prefix}RijitStory"></select>
-        </div>
+// Always visible: the label on the left, the switch on the right. Turning it on reveals
+// the story picker and — everywhere except Base Shear Amplification, which reuses the
+// main selection — a basement combination list.
+function rigidSection(prefix, state, opts = {}) {
+  const withCombos = opts.combos !== false;
+  return `<div class="rigid-block">
+      <div class="rigid-row">
+        <span class="rigid-title">${t('wallShear.section.rigid')}</span>
+        <button type="button" class="switch toggle-switch" id="${prefix}Rijit"
+                role="switch" aria-checked="${state.rijit}">
+          <span class="switch-label off">${t('action.off')}</span>
+          <span class="switch-label on">${t('action.on')}</span>
+          <span class="switch-thumb" aria-hidden="true"></span>
+        </button>
       </div>
-      <p class="combo-hint" id="${prefix}RijitNote"></p>
-      ${comboPicker(`${prefix}Basement`, 'wallShear.rigid.combosHint')}
-    </div>`, false);
+      <div id="${prefix}RijitBody" ${state.rijit ? '' : 'hidden'}>
+        <div class="field-grid">
+          <div class="field">
+            <label for="${prefix}RijitStory">${t('wallShear.rigid.story')}</label>
+            <select id="${prefix}RijitStory"></select>
+          </div>
+        </div>
+        <p class="combo-hint" id="${prefix}RijitNote"></p>
+        ${withCombos ? comboPicker(`${prefix}Basement`, 'wallShear.rigid.combosHint') : ''}
+      </div>
+    </div>`;
 }
 
-async function initRigidSection(prefix, state, allCombos) {
+async function initRigidSection(prefix, state, allCombos, opts = {}) {
+  const withCombos = opts.combos !== false;
   const toggle = $('#' + prefix + 'Rijit');
   const body = $('#' + prefix + 'RijitBody');
   const select = $('#' + prefix + 'RijitStory');
@@ -959,14 +995,17 @@ async function initRigidSection(prefix, state, allCombos) {
     if (body) body.hidden = !state.rijit;
   });
 
-  initComboPicker(`${prefix}Basement`, {
-    get combos() { return allCombos(); },
-    set combos(v) { /* shared cache owns the list */ },
-    get selected() { return state.basementCombos; },
-    set selected(v) { state.basementCombos = v; }
-  });
+  if (withCombos) {
+    initComboPicker(`${prefix}Basement`, {
+      get combos() { return allCombos(); },
+      set combos(v) { /* shared cache owns the list */ },
+      get selected() { return state.basementCombos; },
+      set selected(v) { state.basementCombos = v; }
+    });
+  }
 
   try {
+    if (!etabsConnected) return;
     if (!state.stories || state.stories.length === 0) {
       const res = await fetchAgentJson('/api/etabs/stories');
       if (res.etabsConnected) state.stories = (res.stories || []).slice().sort((a, b) => a.elevation - b.elevation);
@@ -1031,9 +1070,13 @@ function rigidRowAllowed(state, story, combo) {
 // on the right, moved with the ›/‹ buttons (or a double-click). Combinations load
 // automatically when a module opens — there is no Fetch button — and the list is
 // cached so opening several modules does not re-query the agent each time.
+// Nothing is read from the model until a connection exists. Modules render empty and
+// fill in once the user connects, so a stale list can never look like live data.
+let etabsConnected = false;
 let comboCachePromise = null;
 
 async function loadCombos(force = false) {
+  if (!etabsConnected) return [];
   if (force) comboCachePromise = null;
   if (!comboCachePromise) {
     comboCachePromise = fetchAgentJson('/api/etabs/combinations')
@@ -1104,12 +1147,16 @@ async function initComboPicker(prefix, state, onChange) {
   if (sel) sel.addEventListener('dblclick', () => move(sel, false));
 
   paintComboPicker(prefix, state);
+  const status = $('#' + prefix + 'ComboStatus');
+  if (!etabsConnected) {
+    if (status) status.textContent = t('combos.needConnection');
+    return;
+  }
   if (state.combos.length === 0) {
     try {
       state.combos = await loadCombos();
       paintComboPicker(prefix, state);
     } catch (error) {
-      const status = $('#' + prefix + 'ComboStatus');
       if (status) status.textContent = t('combos.loadFailed', { error: error.message });
     }
   }
@@ -1531,6 +1578,7 @@ function renderCalcBasis(bodySelector, blockId, html) {
 }
 
 async function runDriftCheck() {
+  if (!etabsConnected) { log(t('terminal.needConnection'), 'error'); return; }
   const panel = $('#setupPanel');
   const btn = $('#driftCalculate', panel);
   if (driftState.selected.length === 0) {
@@ -1857,6 +1905,7 @@ function renderPdeltaResultsTable(result) {
 }
 
 async function runPdeltaCheck() {
+  if (!etabsConnected) { log(t('terminal.needConnection'), 'error'); return; }
   const btn = $('#pdCalculate');
   if (pdeltaState.selected.length === 0) {
     log(t('drift.error.noCombos'), 'error');
@@ -1905,7 +1954,7 @@ async function exportPdeltaExcel() {
 }
 
 // ---------------------------------------------------------------------------
-// Design Spectrum (Tasarım Spektrumu) — ported from SpectrumManager (C#), TBDY 2018.
+// Reduced Design Spectrum (Azaltılmış Tasarım Spektrumu) — from SpectrumManager (C#), TBDY 2018.
 // Pure client-side math; result is shared with the Increment module.
 // ---------------------------------------------------------------------------
 
@@ -1987,7 +2036,8 @@ function renderSpectrumSetupPanel() {
   bind('spI', 'i');
 
   $('#spCalculate', panel).addEventListener('click', runSpectrumCalc);
-  $('#spReset', panel).addEventListener('click', () => resetModule(spectrumState, renderSpectrumModule, { periods: [], accelerations: [] }));
+  $('#spReset', panel).addEventListener('click', () => resetModule(spectrumState, renderSpectrumModule,
+    { periods: [], accelerations: [], sds: 0, sd1: 0, r: 0, d: 0, i: 0 }));
   $('#spDownload', panel).addEventListener('click', downloadSpectrumTxt);
 }
 
@@ -2123,7 +2173,7 @@ function downloadSpectrumTxt() {
 // ---------------------------------------------------------------------------
 // Base Shear Amplification (Taban Kesme Kuvveti Büyütmesi) — ported from ArtirimHesabiUI (C#).
 // β = 0.9 · max(SaR(T)·mt, 0.04·SDS·g·I·mt) / Vt ; Tmax = Hn^0.75 · Ct · 1.4
-// Depends on the Design Spectrum module's shared spectrumState (SDS, I, SaR curve).
+// Depends on the Reduced Design Spectrum module's shared spectrumState (SDS, I, SaR curve).
 // ---------------------------------------------------------------------------
 
 const incrementState = {
@@ -2138,6 +2188,7 @@ const incrementState = {
 // Pulls mass and both modal periods without the user asking. Failures are logged by
 // the individual fetchers; nothing here should block the module from rendering.
 async function incrementAutoFetchModelData() {
+  if (!etabsConnected) return;
   try { await incrementFetchMass(true); } catch { /* reported by the fetcher */ }
   try { await incrementFetchPeriod('X', true); } catch { /* reported by the fetcher */ }
   try { await incrementFetchPeriod('Y', true); } catch { /* reported by the fetcher */ }
@@ -2146,6 +2197,7 @@ async function incrementAutoFetchModelData() {
 
 // Vt needs a combination naming the direction, so this is a no-op until one is picked.
 async function incrementAutoFetchVt() {
+  if (!etabsConnected) return;
   for (const dir of ['X', 'Y']) {
     const hasCombo = incrementState.selected.some(c => c.toUpperCase().includes(dir));
     if (!hasCombo) continue;
@@ -2286,6 +2338,7 @@ async function incrementFetchVt(direction, silent = false) {
 }
 
 function incrementCalculate(direction) {
+  if (!etabsConnected) { log(t('terminal.needConnection'), 'error'); return; }
   if (spectrumState.periods.length === 0) {
     log(t('increment.error.noSpectrum'), 'error');
     return;
@@ -2380,7 +2433,7 @@ function renderIncrementSetupPanel() {
       ${numberField('incCt', 'increment.params.ct', { min: 0 })}
     </div>
     ${comboPicker('inc', 'increment.combos.hint')}
-    ${rigidSection('inc', incrementState)}
+    ${rigidSection('inc', incrementState, { combos: false })}
     <div class="increment-direction">
       <h3 class="increment-direction-title x">${t('increment.direction.x')}</h3>
       <div class="field-grid two">
@@ -2403,9 +2456,12 @@ function renderIncrementSetupPanel() {
       <button class="button button-secondary full-width" type="button" id="incReset">${t('action.reset')}</button>
     </div>`;
 
+  // Model-read fields (mass, periods, base shears) show blank until they are read,
+  // so an unconnected page never displays a plausible-looking zero.
+  const modelRead = new Set(['mt', 'tx', 'ty', 'vtX', 'vtY']);
   const bind = (id, key, isInt = false) => {
     const el = $('#' + id, panel);
-    el.value = incrementState[key];
+    el.value = (modelRead.has(key) && !incrementState[key]) ? '' : incrementState[key];
     el.addEventListener('input', () => { incrementState[key] = (isInt ? parseInt(el.value, 10) : parseFloat(el.value)) || 0; });
   };
   bind('incMt', 'mt');
@@ -2417,12 +2473,16 @@ function renderIncrementSetupPanel() {
   // whenever the selection changes as well as once on open.
   initComboPicker('inc', incrementState, incrementAutoFetchVt);
   bindSetupSections(panel);
-  initRigidSection('inc', incrementState, () => incrementState.combos);
+  initRigidSection('inc', incrementState, () => incrementState.combos, { combos: false });
   incrementAutoFetchModelData();
 
   $('#incCalcX', panel).addEventListener('click', () => incrementCalculate('X'));
   $('#incCalcY', panel).addEventListener('click', () => incrementCalculate('Y'));
-  $('#incReset', panel).addEventListener('click', () => resetModule(incrementState, renderIncrementModule, { resultX: null, resultY: null }));
+  $('#incReset', panel).addEventListener('click', () => {
+    // Clear the model-read values too, then pull them again.
+    Object.assign(incrementState, { mt: 0, tx: 0, ty: 0, vtX: 0, vtY: 0, resultX: null, resultY: null });
+    resetModule(incrementState, renderIncrementModule);
+  });
 
   incrementRenderModalInfo('X');
   incrementRenderModalInfo('Y');
@@ -2759,6 +2819,7 @@ async function columnAxialLoadElementForces() {
 // Single "Hesapla" action: fetches the frame assignments, element forces and stories fresh from
 // ETABS, then runs the check — so the user never has to pull the tables manually.
 async function runColumnAxialCheck() {
+  if (!etabsConnected) { log(t('terminal.needConnection'), 'error'); return; }
   if (columnAxialState.selected.length === 0) {
     log(t('drift.error.noCombos'), 'error');
     return;
@@ -2961,6 +3022,7 @@ async function beamSelectFailing(results) {
 }
 
 async function runBeamShearCheck() {
+  if (!etabsConnected) { log(t('terminal.needConnection'), 'error'); return; }
   if (beamShearState.selected.length === 0) { log(t('drift.error.noCombos'), 'error'); return; }
 
   const { fck, fyk, dprime } = beamShearState;
@@ -3176,6 +3238,7 @@ function renderBeamAxialSetupPanel() {
 }
 
 async function runBeamAxialCheck() {
+  if (!etabsConnected) { log(t('terminal.needConnection'), 'error'); return; }
   if (beamAxialState.selected.length === 0) { log(t('drift.error.noCombos'), 'error'); return; }
 
   const { fck, limit } = beamAxialState;
@@ -3454,6 +3517,7 @@ function renderWallAxialResultsTable() {
 }
 
 async function runWallAxialCheck() {
+  if (!etabsConnected) { log(t('terminal.needConnection'), 'error'); return; }
   if (wallAxialState.selected.length === 0) { log(t('drift.error.noCombos'), 'error'); return; }
 
   const { fck, limit } = wallAxialState;
@@ -4130,6 +4194,7 @@ function renderWallShearDetail(kind) {
 let wallShearRaw = null;
 
 async function runWallShearCheck() {
+  if (!etabsConnected) { log(t('terminal.needConnection'), 'error'); return; }
   const st = wallShearState;
   if (st.selected.length === 0) { log(t('drift.error.noCombos'), 'error'); return; }
 

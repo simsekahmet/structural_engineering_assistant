@@ -1,6 +1,6 @@
 # Module implementation status
 
-Last updated for **web v1.11.1 / agent v1.11.0**.
+Last updated for **web v1.12.0 / agent v1.12.0**.
 
 "Migrated" means the calculation itself runs against the live ETABS model and has
 been checked against an independent hand calculation. Every module listed below performs a real calculation; the schedule ("done") screens
@@ -8,7 +8,7 @@ were removed in v1.11.0.
 
 | Module | Status | Source (desktop) | Notes |
 | --- | --- | --- | --- |
-| Design Spectrum (Tasarım Spektrumu) | ✅ Migrated | `SpectrumManager.cs` | Pure TBDY 2018 math, no ETABS read. Feeds the Scaling module. |
+| Reduced Design Spectrum (Azaltılmış Tasarım Spektrumu) | ✅ Migrated | `SpectrumManager.cs` | Pure TBDY 2018 math, no ETABS read. Feeds the Scaling module. |
 | Base Shear Amplification (Taban Kesme Kuvveti Büyütmesi) | ✅ Migrated | `artirim_hesabi.cs` | Needs the Spectrum module to have been run first. |
 | Interstory Drift (Göreli Kat Ötelemesi) | ✅ Migrated | `goreli_kat_otelemesi.cs` | |
 | Second-Order Effects (İkinci Mertebe) | ✅ Migrated | `ikinci_mertebe.cs` | |

@@ -9,9 +9,9 @@ have **not** been formally validated yet — that gap is listed in `STATUS.md`.
 
 ---
 
-## VC-01 — Design Spectrum, peak SaR
+## VC-01 — Reduced Design Spectrum, peak SaR
 
-**Module:** Design Spectrum · **Code:** TBDY 2018 §2.3.4, §4.3.4
+**Module:** Reduced Design Spectrum · **Code:** TBDY 2018 §2.3.4, §4.3.4
 
 | Input | Value |
 | --- | --- |
