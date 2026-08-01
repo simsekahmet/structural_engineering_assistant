@@ -180,7 +180,10 @@ internal sealed class AgentApplicationContext : ApplicationContext
     private StoryDriftsResult GetStoryDriftsOnUiThread(string[] names)
     {
         if (_dispatcher.InvokeRequired)
-            return (StoryDriftsResult)_dispatcher.Invoke(new Func<string[], StoryDriftsResult>(_etabs.GetStoryDrifts), names);
+            // Control.Invoke's second parameter is `params object[]`, so passing the string[]
+            // bare makes each combination its own argument and the one-parameter delegate
+            // throws TargetParameterCountException. Wrap it so it stays a single argument.
+            return (StoryDriftsResult)_dispatcher.Invoke(new Func<string[], StoryDriftsResult>(_etabs.GetStoryDrifts), new object[] { names });
 
         return _etabs.GetStoryDrifts(names);
     }

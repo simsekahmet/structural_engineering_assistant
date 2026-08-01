@@ -796,7 +796,7 @@ async function confirmInstanceChoice() {
     const data = await postAgentJson('/api/etabs/connect-to', { instanceId: picked.value }, 15000);
     applyConnectionState(data);
   } catch (error) {
-    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+    log(describeError(error), 'error');
   } finally {
     setConnectButtonsLoading(false);
   }
@@ -880,6 +880,15 @@ const driftState = {
   selected: [],
   lastResult: null
 };
+
+// Only a genuine transport failure is the bridge's fault. Anything else is an error
+// from the check itself and is shown as-is, so a code or data problem is never
+// mislabelled as a connection problem.
+function describeError(error) {
+  const transport = (error instanceof TypeError)
+    || error.name === 'TimeoutError' || error.name === 'AbortError';
+  return transport ? `${t('drift.error.fetchFailed')}: ${error.message}` : error.message;
+}
 
 async function fetchAgentJson(path, timeoutMs = 8000) {
   const response = await fetch(`${AGENT_BASE}${path}`, {
@@ -1624,7 +1633,7 @@ async function runDriftCheck() {
     recordLastCheck('drift');
     log(t(result.allPassed ? 'drift.status.passed' : 'drift.status.failed'), result.allPassed ? 'ok' : 'error');
   } catch (error) {
-    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+    log(describeError(error), 'error');
   } finally {
     if (btn) btn.disabled = false;
   }
@@ -1644,7 +1653,7 @@ async function exportDriftExcel() {
       rows: sorted.map(item => ({ story: item.story, combo: item.outputCase, direction: item.direction, drift: item.drift }))
     }, 'GoreliKat_Sonuc.xlsx');
   } catch (error) {
-    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+    log(describeError(error), 'error');
   } finally {
     if (btn) btn.disabled = false;
   }
@@ -1702,6 +1711,8 @@ function pdeltaBucketCombos(selected) {
 }
 
 function pdeltaComputeResult(forces, drifts, mass, stories, selected, params) {
+  // "Base" carries no story drift of its own, so it never takes part in the check.
+  const nonBase = stories.filter(s => s.name.toLowerCase() !== 'base');
   const basementNames = new Set();
 
   let { xUST, xALT, yUST, yALT } = pdeltaBucketCombos(selected);
@@ -1930,7 +1941,7 @@ async function runPdeltaCheck() {
     recordLastCheck('pdelta');
     log(t(result.allOk ? 'pdelta.status.passed' : 'pdelta.status.failed'), result.allOk ? 'ok' : 'error');
   } catch (error) {
-    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+    log(describeError(error), 'error');
   } finally {
     if (btn) btn.disabled = false;
   }
@@ -1947,7 +1958,7 @@ async function exportPdeltaExcel() {
       rows: result.items.map(item => ({ story: item.story, combo: item.loadCase, direction: item.direction, vi: item.vi, wij: item.wij, driftRatio: item.driftRatio }))
     }, 'IkinciMertebe_Sonuc.xlsx');
   } catch (error) {
-    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+    log(describeError(error), 'error');
   } finally {
     if (btn) btn.disabled = false;
   }
@@ -2233,7 +2244,7 @@ async function incrementFetchMass(silent = false) {
     $('#incMt').value = total.toFixed(2);
     if (!silent) log(t('increment.status.massFetched'), 'ok');
   } catch (error) {
-    if (!silent) log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+    if (!silent) log(describeError(error), 'error');
   } finally {
     if (btn) btn.disabled = false;
   }
@@ -2275,7 +2286,7 @@ async function incrementFetchPeriod(direction, silent = false) {
     incrementRenderModalInfo(direction);
     if (!silent) log(t(direction === 'X' ? 'increment.status.periodFetchedX' : 'increment.status.periodFetchedY'), 'ok');
   } catch (error) {
-    if (!silent) log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+    if (!silent) log(describeError(error), 'error');
   } finally {
     if (btn) btn.disabled = false;
   }
@@ -2331,7 +2342,7 @@ async function incrementFetchVt(direction, silent = false) {
     else { incrementState.vtY = vt; $('#incVtY').value = vt.toFixed(2); }
     if (!silent) log(t(direction === 'X' ? 'increment.status.vtFetchedX' : 'increment.status.vtFetchedY'), 'ok');
   } catch (error) {
-    if (!silent) log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+    if (!silent) log(describeError(error), 'error');
   } finally {
     if (btn) btn.disabled = false;
   }
@@ -2859,7 +2870,7 @@ async function runColumnAxialCheck() {
     const failCount = new Set(results.filter(r => !r.isOk).map(r => `${r.column}|${r.story}`)).size;
     log(failCount > 0 ? t('columnAxial.status.failed', { count: failCount }) : t('columnAxial.status.passed'), failCount > 0 ? 'error' : 'ok');
   } catch (error) {
-    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+    log(describeError(error), 'error');
   } finally {
     if (btn) btn.disabled = false;
   }
@@ -2877,7 +2888,7 @@ async function columnAxialSelectFailing() {
     if (!res.etabsConnected) throw new Error(res.error || t('drift.error.notConnected'));
     log(t('columnAxial.status.selected', { count: res.selectedCount }), 'ok');
   } catch (error) {
-    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+    log(describeError(error), 'error');
   }
 }
 
@@ -2898,7 +2909,7 @@ async function columnAxialExportExcel() {
       }))
     }, 'Kolon_Eksenel_Raporu.xlsx');
   } catch (error) {
-    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+    log(describeError(error), 'error');
   } finally {
     if (btn) btn.disabled = false;
   }
@@ -3017,7 +3028,7 @@ async function beamSelectFailing(results) {
     if (!res.etabsConnected) throw new Error(res.error || t('drift.error.notConnected'));
     log(t('beam.status.selected', { count: res.selectedCount }), 'ok');
   } catch (error) {
-    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+    log(describeError(error), 'error');
   }
 }
 
@@ -3063,7 +3074,7 @@ async function runBeamShearCheck() {
     const failCount = beamShearState.lastResults.filter(r => !r.ok).length;
     log(failCount > 0 ? t('beamShear.status.failed', { count: failCount }) : t('beamShear.status.passed'), failCount > 0 ? 'error' : 'ok');
   } catch (error) {
-    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+    log(describeError(error), 'error');
   } finally {
     if (btn) btn.disabled = false;
   }
@@ -3175,7 +3186,7 @@ async function beamShearExportExcel() {
       rows: results.map(r => ({ story: r.story, label: r.label, section: r.section, vd: r.vd, b: r.b, h: r.h, d: r.d, n: r.n, phi: r.phi, s: r.s }))
     }, 'Kiris_Kesme_Raporu.xlsx');
   } catch (error) {
-    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+    log(describeError(error), 'error');
   } finally {
     if (btn) btn.disabled = false;
   }
@@ -3283,7 +3294,7 @@ async function runBeamAxialCheck() {
     const failCount = beamAxialState.lastResults.filter(r => !r.ok).length;
     log(failCount > 0 ? t('beamAxial.status.failed', { count: failCount }) : t('beamAxial.status.passed'), failCount > 0 ? 'error' : 'ok');
   } catch (error) {
-    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+    log(describeError(error), 'error');
   } finally {
     if (btn) btn.disabled = false;
   }
@@ -3384,7 +3395,7 @@ async function beamAxialExportExcel() {
       rows: results.map(r => ({ story: r.story, label: r.label, unique: r.unique, loadCase: r.case, section: r.section, b: r.b, d: r.d, p: r.p }))
     }, 'Kiris_Eksenel_Raporu.xlsx');
   } catch (error) {
-    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+    log(describeError(error), 'error');
   } finally {
     if (btn) btn.disabled = false;
   }
@@ -3567,7 +3578,7 @@ async function runWallAxialCheck() {
     const failCount = results.filter(r => !r.ok).length;
     log(failCount > 0 ? t('wallAxial.status.failed', { count: failCount }) : t('wallAxial.status.passed'), failCount > 0 ? 'error' : 'ok');
   } catch (error) {
-    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+    log(describeError(error), 'error');
   } finally {
     if (btn) btn.disabled = false;
   }
@@ -3586,7 +3597,7 @@ async function wallAxialSelectFailing() {
     if (!res.etabsConnected) throw new Error(res.error || t('drift.error.notConnected'));
     log(t('wallAxial.status.selected', { count: res.selectedCount }), 'ok');
   } catch (error) {
-    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+    log(describeError(error), 'error');
   } finally {
     if (btn) btn.disabled = false;
   }
@@ -3604,7 +3615,7 @@ async function wallAxialExportExcel() {
       rows: results.map(r => ({ story: r.story, pier: r.pier, loadCase: r.loadCase, b: r.bw, d: r.lw, p: r.p }))
     }, 'Perde_Eksenel_Raporu.xlsx');
   } catch (error) {
-    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+    log(describeError(error), 'error');
   } finally {
     if (btn) btn.disabled = false;
   }
@@ -4239,7 +4250,7 @@ async function runWallShearCheck() {
     log(failCount > 0 ? t('wallShear.status.failed', { count: failCount }) : t('wallShear.status.passed'),
         failCount > 0 ? 'error' : 'ok');
   } catch (error) {
-    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+    log(describeError(error), 'error');
   } finally {
     if (btn) btn.disabled = false;
   }
@@ -4296,7 +4307,7 @@ async function wallShearExportExcel() {
       }))
     }, 'Perde_Kesme_Raporu.xlsx');
   } catch (error) {
-    log(`${t('drift.error.fetchFailed')}: ${error.message}`, 'error');
+    log(describeError(error), 'error');
   } finally {
     if (btn) btn.disabled = false;
   }
