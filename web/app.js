@@ -169,7 +169,7 @@ const translations = {
     'drift.combos.title': 'Load Combinations', 'drift.combos.fetch': 'Fetch from ETABS',
     'drift.combos.hint': 'Select combinations containing direction (X/Y) and level (UST/ALT), e.g. RSXUST.',
     'drift.combos.fetched': '{count} combinations/cases found.',
-    'drift.calculate': 'Calculate', 'drift.export': 'Download Excel',
+    'drift.calculate': 'Calculate', 'drift.export': 'Export to Excel',
     'drift.table.story': 'Story', 'drift.table.combo': 'Combination', 'drift.table.direction': 'Direction',
     'drift.table.drift': 'Drift', 'drift.table.lambdaDrift': 'λδi/hi', 'drift.table.limit': 'Limit', 'drift.table.status': 'Status',
     'drift.table.empty': 'Fetch combinations, select the ones to check, then Calculate.',
@@ -401,7 +401,7 @@ const translations = {
     'drift.combos.title': 'Yük Kombinasyonları', 'drift.combos.fetch': "ETABS'tan Getir",
     'drift.combos.hint': 'Yön (X/Y) ve seviye (ÜST/ALT) içeren kombinasyonları seçin, örn. RSXUST.',
     'drift.combos.fetched': '{count} kombinasyon/case bulundu.',
-    'drift.calculate': 'Hesapla', 'drift.export': 'Excel İndir',
+    'drift.calculate': 'Hesapla', 'drift.export': "Excel'e Aktar",
     'drift.table.story': 'Kat', 'drift.table.combo': 'Kombinasyon', 'drift.table.direction': 'Yön',
     'drift.table.drift': 'Drift', 'drift.table.lambdaDrift': 'λδi/hi', 'drift.table.limit': 'Limit', 'drift.table.status': 'Durum',
     'drift.table.empty': 'Kombinasyonları getirin, tahkik edilecekleri seçin, ardından Hesaplayın.',
@@ -981,7 +981,7 @@ function rigidSection(prefix, state, opts = {}) {
             <select id="${prefix}RijitStory"></select>
           </div>
         </div>
-        <p class="combo-hint" id="${prefix}RijitNote"></p>
+        <p class="rigid-note" id="${prefix}RijitNote"></p>
         ${withCombos ? comboPicker(`${prefix}Basement`, 'wallShear.rigid.combosHint') : ''}
       </div>
     </div>`;
@@ -1453,8 +1453,18 @@ function calculateDriftItems(rows, params) {
 }
 
 function sortDriftItems(items) {
+  // Model order, highest story first — matching Second-Order Effects. driftState.stories
+  // is lowest-first, so a larger index means a higher story. Falls back to the name when
+  // the story list is unavailable.
+  const order = (driftState.stories || []).map(s => s.name);
+  const rank = name => {
+    const i = order.indexOf(name);
+    return i < 0 ? -1 : i;
+  };
   return [...items].sort((a, b) =>
-    (a.direction === 'X' ? 0 : 1) - (b.direction === 'X' ? 0 : 1) || a.story.localeCompare(b.story));
+    (a.direction === 'X' ? 0 : 1) - (b.direction === 'X' ? 0 : 1) ||
+    rank(b.story) - rank(a.story) ||
+    b.story.localeCompare(a.story));
 }
 
 function renderDriftModule() {
@@ -2625,9 +2635,8 @@ function renderColumnAxialSetupPanel() {
       <button class="button button-primary full-width" type="button" id="caCalculate">${t('columnAxial.calculate')}</button>
       <button class="button button-secondary full-width" type="button" id="caReset" style="margin-top:8px">${t('action.reset')}</button>
     </div>
-    <div class="panel-actions two-up">
-      <button class="button button-secondary" type="button" id="caSelectFailing">${t('columnAxial.selectFailing')}</button>
-      <button class="button button-secondary" type="button" id="caExport">${t('columnAxial.export')}</button>
+    <div class="panel-actions">
+      <button class="button button-secondary full-width" type="button" id="caSelectFailing">${t('columnAxial.selectFailing')}</button>
     </div>`;
 
   const bind = (id, key, isInt = false) => {
@@ -2644,13 +2653,14 @@ function renderColumnAxialSetupPanel() {
   $('#caCalculate', panel).addEventListener('click', runColumnAxialCheck);
   $('#caReset', panel).addEventListener('click', () => resetModule(columnAxialState, renderColumnAxialModule));
   $('#caSelectFailing', panel).addEventListener('click', columnAxialSelectFailing);
-  $('#caExport', panel).addEventListener('click', columnAxialExportExcel);
 }
 
 function renderColumnAxialResultsPanel() {
   const panel = $('#resultsPanel');
   panel.innerHTML = `
-    <div class="panel-heading compact"><div><span class="step-number">2</span><div><h2>${t('results.title')}</h2><p>${t('results.description')}</p></div></div></div>
+    <div class="panel-heading compact"><div><span class="step-number">2</span><div><h2>${t('results.title')}</h2><p>${t('results.description')}</p></div></div>
+      <button class="button button-secondary" type="button" id="caExport" ${columnAxialState.lastResults.length ? '' : 'disabled'}>${t('drift.export')}</button>
+    </div>
     <div class="status-banner pending" id="caStatusBanner">${t('columnAxial.status.pending')}</div>
     <div class="table-wrap">
       <table>
@@ -2668,6 +2678,7 @@ function renderColumnAxialResultsPanel() {
       <h3>${t('columnAxial.failed.title')}</h3>
       <p id="caFailedList">${t('columnAxial.failed.none')}</p>
     </div>`;
+  $('#caExport', panel).addEventListener('click', columnAxialExportExcel);
   if (columnAxialState.lastResults.length) renderColumnAxialResultsTable();
 }
 
@@ -2694,6 +2705,8 @@ function renderColumnAxialResultsTable() {
 
   installTableFilter(body);
   columnAxialUpdateSummary();
+  const caExportBtn = $('#caExport');
+  if (caExportBtn) caExportBtn.disabled = results.length === 0;
 
   if (results.length) {
     const worst = results.reduce((a, b) => (b.ndRatio > a.ndRatio ? b : a), results[0]);
@@ -2993,9 +3006,8 @@ function renderBeamShearSetupPanel() {
       <button class="button button-primary full-width" type="button" id="bsCalculate">${t('columnAxial.calculate')}</button>
       <button class="button button-secondary full-width" type="button" id="bsReset" style="margin-top:8px">${t('action.reset')}</button>
     </div>
-    <div class="panel-actions two-up">
-      <button class="button button-secondary" type="button" id="bsSelectFailing">${t('beamShear.selectFailing')}</button>
-      <button class="button button-secondary" type="button" id="bsExport">${t('columnAxial.export')}</button>
+    <div class="panel-actions">
+      <button class="button button-secondary full-width" type="button" id="bsSelectFailing">${t('beamShear.selectFailing')}</button>
     </div>`;
 
   const bind = (id, key) => {
@@ -3016,7 +3028,6 @@ function renderBeamShearSetupPanel() {
   $('#bsCalculate', panel).addEventListener('click', runBeamShearCheck);
   $('#bsReset', panel).addEventListener('click', () => resetModule(beamShearState, renderBeamShearModule));
   $('#bsSelectFailing', panel).addEventListener('click', () => beamSelectFailing(beamShearState.lastResults));
-  $('#bsExport', panel).addEventListener('click', beamShearExportExcel);
 }
 
 async function beamSelectFailing(results) {
@@ -3083,7 +3094,9 @@ async function runBeamShearCheck() {
 function renderBeamShearResultsPanel() {
   const panel = $('#resultsPanel');
   panel.innerHTML = `
-    <div class="panel-heading compact"><div><span class="step-number">2</span><div><h2>${t('results.title')}</h2><p>${t('results.description')}</p></div></div></div>
+    <div class="panel-heading compact"><div><span class="step-number">2</span><div><h2>${t('results.title')}</h2><p>${t('results.description')}</p></div></div>
+      <button class="button button-secondary" type="button" id="bsExport" ${beamShearState.lastResults.length ? '' : 'disabled'}>${t('drift.export')}</button>
+    </div>
     <div class="status-banner pending" id="bsStatusBanner">${t('columnAxial.status.pending')}</div>
     <div class="table-wrap">
       <table>
@@ -3096,6 +3109,7 @@ function renderBeamShearResultsPanel() {
         <tbody id="bsResultsBody"><tr><td colspan="12" class="table-empty">${t('drift.table.empty')}</td></tr></tbody>
       </table>
     </div>`;
+  $('#bsExport', panel).addEventListener('click', beamShearExportExcel);
   if (beamShearState.lastResults.length) renderBeamShearResultsTable();
 }
 
@@ -3118,6 +3132,8 @@ function renderBeamShearResultsTable() {
   $$('.bs-edit', body).forEach(input => input.addEventListener('input', () => beamShearRecalcRow(parseInt(input.dataset.index, 10))));
   installTableFilter(body);
   beamShearUpdateBanner();
+  const bsExportBtn = $('#bsExport');
+  if (bsExportBtn) bsExportBtn.disabled = results.length === 0;
 
   if (results.length) {
     const { fck, fyk, useVc } = beamShearState;
@@ -3229,9 +3245,8 @@ function renderBeamAxialSetupPanel() {
       <button class="button button-primary full-width" type="button" id="baCalculate">${t('columnAxial.calculate')}</button>
       <button class="button button-secondary full-width" type="button" id="baReset" style="margin-top:8px">${t('action.reset')}</button>
     </div>
-    <div class="panel-actions two-up">
-      <button class="button button-secondary" type="button" id="baSelectFailing">${t('beamAxial.selectFailing')}</button>
-      <button class="button button-secondary" type="button" id="baExport">${t('columnAxial.export')}</button>
+    <div class="panel-actions">
+      <button class="button button-secondary full-width" type="button" id="baSelectFailing">${t('beamAxial.selectFailing')}</button>
     </div>`;
 
   const fck = $('#baFck', panel), limit = $('#baLimit', panel);
@@ -3245,7 +3260,6 @@ function renderBeamAxialSetupPanel() {
   $('#baCalculate', panel).addEventListener('click', runBeamAxialCheck);
   $('#baReset', panel).addEventListener('click', () => resetModule(beamAxialState, renderBeamAxialModule));
   $('#baSelectFailing', panel).addEventListener('click', () => beamSelectFailing(beamAxialState.lastResults));
-  $('#baExport', panel).addEventListener('click', beamAxialExportExcel);
 }
 
 async function runBeamAxialCheck() {
@@ -3303,7 +3317,9 @@ async function runBeamAxialCheck() {
 function renderBeamAxialResultsPanel() {
   const panel = $('#resultsPanel');
   panel.innerHTML = `
-    <div class="panel-heading compact"><div><span class="step-number">2</span><div><h2>${t('results.title')}</h2><p>${t('results.description')}</p></div></div></div>
+    <div class="panel-heading compact"><div><span class="step-number">2</span><div><h2>${t('results.title')}</h2><p>${t('results.description')}</p></div></div>
+      <button class="button button-secondary" type="button" id="baExport" ${beamAxialState.lastResults.length ? '' : 'disabled'}>${t('drift.export')}</button>
+    </div>
     <div class="status-banner pending" id="baStatusBanner">${t('columnAxial.status.pending')}</div>
     <div class="table-wrap">
       <table>
@@ -3315,6 +3331,7 @@ function renderBeamAxialResultsPanel() {
         <tbody id="baResultsBody"><tr><td colspan="11" class="table-empty">${t('drift.table.empty')}</td></tr></tbody>
       </table>
     </div>`;
+  $('#baExport', panel).addEventListener('click', beamAxialExportExcel);
   if (beamAxialState.lastResults.length) renderBeamAxialResultsTable();
 }
 
@@ -3336,6 +3353,8 @@ function renderBeamAxialResultsTable() {
   $$('.ba-edit', body).forEach(input => input.addEventListener('input', () => beamAxialRecalcRow(parseInt(input.dataset.index, 10))));
   installTableFilter(body);
   beamAxialUpdateBanner();
+  const baExportBtn = $('#baExport');
+  if (baExportBtn) baExportBtn.disabled = results.length === 0;
 
   if (results.length) {
     const worst = results.reduce((a, b) => (b.ratio > a.ratio ? b : a), results[0]);
@@ -3441,9 +3460,8 @@ function renderWallAxialSetupPanel() {
       <button class="button button-primary full-width" type="button" id="waCalculate">${t('drift.calculate')}</button>
       <button class="button button-secondary full-width" type="button" id="waReset" style="margin-top:8px">${t('action.reset')}</button>
     </div>
-    <div class="panel-actions two-up">
-      <button class="button button-secondary" type="button" id="waSelectFailing">${t('wallAxial.selectFailing')}</button>
-      <button class="button button-secondary" type="button" id="waExport">${t('columnAxial.export')}</button>
+    <div class="panel-actions">
+      <button class="button button-secondary full-width" type="button" id="waSelectFailing">${t('wallAxial.selectFailing')}</button>
     </div>`;
 
   const bind = (id, key) => {
@@ -3459,14 +3477,15 @@ function renderWallAxialSetupPanel() {
   initRigidSection('wa', wallAxialState, () => wallAxialState.combos);
   $('#waCalculate', panel).addEventListener('click', runWallAxialCheck);
   $('#waReset', panel).addEventListener('click', () => resetModule(wallAxialState, renderWallAxialModule));
-  $('#waExport', panel).addEventListener('click', wallAxialExportExcel);
   $('#waSelectFailing', panel).addEventListener('click', wallAxialSelectFailing);
 }
 
 function renderWallAxialResultsPanel() {
   const panel = $('#resultsPanel');
   panel.innerHTML = `
-    <div class="panel-heading compact"><div><span class="step-number">2</span><div><h2>${t('results.title')}</h2><p>${t('results.description')}</p></div></div></div>
+    <div class="panel-heading compact"><div><span class="step-number">2</span><div><h2>${t('results.title')}</h2><p>${t('results.description')}</p></div></div>
+      <button class="button button-secondary" type="button" id="waExport" ${wallAxialState.lastResults.length ? '' : 'disabled'}>${t('drift.export')}</button>
+    </div>
     <div class="status-banner pending" id="waStatusBanner">${t('columnAxial.status.pending')}</div>
     <div class="table-wrap">
       <table>
@@ -3479,6 +3498,7 @@ function renderWallAxialResultsPanel() {
         <tbody id="waResultsBody"><tr><td colspan="10" class="table-empty">${t('drift.table.empty')}</td></tr></tbody>
       </table>
     </div>`;
+  $('#waExport', panel).addEventListener('click', wallAxialExportExcel);
   if (wallAxialState.lastResults.length) renderWallAxialResultsTable();
 }
 
@@ -3497,6 +3517,8 @@ function renderWallAxialResultsTable() {
     : `<tr><td colspan="10" class="table-empty">${t('drift.table.empty')}</td></tr>`;
 
   installTableFilter(body);
+  const waExportBtn = $('#waExport');
+  if (waExportBtn) waExportBtn.disabled = results.length === 0;
 
   const banner = $('#waStatusBanner');
   const failCount = results.filter(r => !r.ok).length;
@@ -3948,9 +3970,7 @@ function renderWallShearSetupPanel() {
       <button class="button button-primary full-width" type="button" id="wsCalculate">${t('columnAxial.calculate')}</button>
       <button class="button button-secondary full-width" type="button" id="wsReset" style="margin-top:8px">${t('action.reset')}</button>
     </div>
-    <div class="panel-actions">
-      <button class="button button-secondary full-width" type="button" id="wsExport">${t('columnAxial.export')}</button>
-    </div>`;
+`;
 
   bindSetupSections(panel);
 
@@ -4006,7 +4026,6 @@ function renderWallShearSetupPanel() {
   $('#wsCalculate', panel).addEventListener('click', runWallShearCheck);
   $('#wsReset', panel).addEventListener('click', () => resetModule(wallShearState, renderWallShearModule,
     { detail05: [], detailShort: [], activeDetail: null, overrides: {} }));
-  $('#wsExport', panel).addEventListener('click', wallShearExportExcel);
   $('#wsShortDetail', panel).addEventListener('click', () => wallShearShowDetail('short'));
   $('#wsV05Detail', panel).addEventListener('click', () => wallShearShowDetail('v05'));
 
@@ -4045,9 +4064,12 @@ async function wallShearLoadSplitStory() {
 function renderWallShearResultsPanel() {
   const panel = $('#resultsPanel');
   panel.innerHTML = `
-    <div class="panel-heading compact"><div><span class="step-number">2</span><div><h2>${t('results.title')}</h2><p>${t('results.description')}</p></div></div></div>
+    <div class="panel-heading compact"><div><span class="step-number">2</span><div><h2>${t('results.title')}</h2><p>${t('results.description')}</p></div></div>
+      <button class="button button-secondary" type="button" id="wsExport" ${wallShearState.lastResults.length ? '' : 'disabled'}>${t('drift.export')}</button>
+    </div>
     <div class="status-banner pending" id="wsStatusBanner">${t('columnAxial.status.pending')}</div>
     <div id="wsResultsWrap"></div>`;
+  $('#wsExport', panel).addEventListener('click', wallShearExportExcel);
   if (wallShearState.lastResults.length) renderWallShearResultsTable();
 }
 
@@ -4118,6 +4140,9 @@ function renderWallShearResultsTable() {
       wallShearRecalculate();
     });
   });
+
+  const wsExportBtn = $('#wsExport');
+  if (wsExportBtn) wsExportBtn.disabled = results.length === 0;
 
   const banner = $('#wsStatusBanner');
   const failCount = results.filter(r => !r.ok).length;

@@ -238,6 +238,7 @@ tr.ws-group td { padding: 7px 10px; color: var(--primary-dark); background: var(
 .rigid-block { border-top: 1px solid var(--border-soft); padding-top: 4px; }
 .rigid-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 17px; color: var(--text); font-size: 11px; }
 .rigid-title { color: var(--primary-dark); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+.rigid-note { margin: 2px 0 10px; padding: 0 17px; color: var(--muted); font-size: 10px; line-height: 1.5; }
 .toggle-switch { width: 92px; border: 1px solid var(--border); font: 700 9px/1 inherit; }
 .toggle-switch .switch-thumb { width: 43px; }
 .toggle-switch .switch-label { font-size: 9px; letter-spacing: .04em; }
