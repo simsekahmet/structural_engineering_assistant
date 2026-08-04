@@ -419,7 +419,10 @@ tr.row-fail { background: color-mix(in srgb, var(--red) 8%, transparent); }
 .rep-toolbar-field select { height: 30px; padding: 0 7px; border: 1px solid var(--border); border-radius: 8px; color: var(--text); background: var(--surface-muted); font-size: 11px; }
 
 .rep-inline-note { margin: 11px 13px 0; padding: 12px 13px; border: 1px dashed var(--border); border-radius: 10px; color: var(--muted); font-size: 10.5px; line-height: 1.6; }
-.rep-from-model { padding: 1px 6px; border-radius: 999px; color: var(--green); background: color-mix(in srgb, var(--green) 14%, transparent); font: 700 7.5px Arial, sans-serif; letter-spacing: .06em; }
+.rep-field-note { margin: 0; color: var(--amber); font-size: 9.5px; line-height: 1.5; }
+/* Steps without a preview give the form the full panel width. */
+.rep-workspace.single { grid-template-columns: minmax(0, 1fr); }
+.rep-workspace.single .field-grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
 
 .rep-storeys { padding: 11px 13px 0; }
 .rep-storey-table { width: 100%; border-collapse: collapse; font-size: 11px; }
@@ -463,14 +466,15 @@ th.rep-pick.on { color: #fff; background: var(--red); }
    whole point of the preview. */
 .rep-preview { position: sticky; top: calc(var(--topbar) + 24px); align-self: start; }
 .rep-preview-label { margin: 0 0 8px; color: var(--muted); font-size: 9px; text-transform: uppercase; letter-spacing: .08em; }
-.rep-page { --rep-scale: 1; display: flex; flex-direction: column; aspect-ratio: 1 / 1.414; padding: 24px 20px; border: 1px solid var(--border); border-radius: 8px; color: #17243b; background: #fff; box-shadow: 0 8px 22px rgba(40, 66, 112, .14); }
+.rep-page { --rep-scale: 1; display: flex; flex-direction: column; aspect-ratio: 1 / 1.414; padding: 30px 22px 26px; border: 1px solid var(--border); border-radius: 8px; color: #17243b; background: #fff; box-shadow: 0 8px 22px rgba(40, 66, 112, .14); }
 .rep-page p { margin: 0; }
-.rep-page-title { text-align: center; font-size: calc(13px * var(--rep-scale)); font-weight: 700; letter-spacing: .04em; }
-.rep-page-image { flex: 1; display: grid; place-items: center; overflow: hidden; margin: 16px 0; padding: 8px; border: 1px solid #dbe3ee; border-radius: 5px; color: #8494ab; font-size: calc(8.5px * var(--rep-scale)); letter-spacing: .06em; text-align: center; }
+/* The four identity/title lines: one block, centred, in capitals — as the report
+   template sets them. */
+.rep-page-head { text-align: center; }
+.rep-page-head p { font-size: calc(11px * var(--rep-scale)); font-weight: 700; line-height: 1.5; letter-spacing: .02em; }
+.rep-page-image { flex: 1; display: grid; place-items: center; overflow: hidden; margin: 20px 0; padding: 8px; border: 1px solid #dbe3ee; border-radius: 5px; color: #8494ab; font-size: calc(8.5px * var(--rep-scale)); letter-spacing: .06em; text-align: center; }
 .rep-page-image img { width: 100%; height: 100%; object-fit: contain; }
-.rep-page-date { text-align: center; font-size: calc(11px * var(--rep-scale)); }
-.rep-page-footer { margin-top: 15px; padding-top: 9px; border-top: 1px solid #dbe3ee; color: #64748b; font-size: calc(8.5px * var(--rep-scale)); line-height: 1.5; text-align: center; }
-.rep-preview-note { padding: 24px 16px; border: 1px dashed var(--border); border-radius: 11px; color: var(--muted); font-size: 10px; line-height: 1.6; text-align: center; }
+.rep-page-date { text-align: center; font-size: calc(9.5px * var(--rep-scale)); font-weight: 700; letter-spacing: .04em; }
 
 .rep-nav { display: flex; justify-content: space-between; gap: 10px; padding: 13px 17px 17px; }
 .rep-nav .button:disabled { cursor: not-allowed; }

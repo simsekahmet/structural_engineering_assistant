@@ -210,6 +210,8 @@ const translations = {
     'report.part.il': '{v} Province', 'report.part.ilce': '{v} District', 'report.part.mahalle': '{v} Neighbourhood',
     'report.part.ada': 'block (ada) {v}', 'report.part.parsel': 'parcel {v}',
     'report.part.location': ', located on {v}',
+    'report.part.ilLine': '{v} PROVINCE', 'report.part.ilceLine': '{v} DISTRICT',
+    'report.part.mahalleLine': '{v} NEIGHBOURHOOD', 'report.part.adaLine': 'BLOCK {v}', 'report.part.parselLine': 'PARCEL {v}',
     'report.part.projectBlock': 'block {block} of the {project} project',
     'report.part.projectBlockNamed': '{block} of the {project} project',
     'report.part.project': 'the {project} project', 'report.part.block': 'block {block}',
@@ -224,7 +226,6 @@ const translations = {
     'report.image.readFailed': 'The image could not be read.',
     'report.preview.title': 'COVER PREVIEW', 'report.preview.imageArea': 'COVER IMAGE AREA',
     'report.preview.date': 'DATE', 'report.preview.footer': 'FOOTER',
-    'report.preview.pending': 'The preview of this step will be added together with the step itself.',
     'validate.year': 'Year {value} is not plausible. Expected 2000–2100.',
 
     'report.step.intro.desc': 'Mark which storey is which on the model’s storey list; the counts and heights of the report sentence follow from it.',
@@ -249,7 +250,9 @@ const translations = {
     'report.field.foundationTower': 'Under the tower', 'report.field.foundationPark': 'Car-park zone',
     'report.field.systemClass': 'System class', 'report.field.foundationType': 'Foundation type',
     'report.field.slabSystem': 'Slab system', 'report.field.slabThickness': 'Slab thickness (cm)',
-    'report.select.empty': 'Select…', 'report.fromModel': 'from model',
+    'report.select.empty': 'Select…',
+    'report.model.agentOld': 'The running Windows agent is older than this page and does not provide model data yet. Download the current agent and restart it, or enter the values by hand.',
+    'report.text.identity': 'COVER · PROJECT IDENTITY',
     'report.measure.button': 'Measure from model', 'report.measure.working': 'Measuring…',
     'report.measure.needConnection': 'Connect to a model to measure.',
     'report.measure.done': 'Plan extent measured on storey {story}.',
@@ -592,6 +595,8 @@ const translations = {
     'report.part.il': '{v} İli', 'report.part.ilce': '{v} İlçesi', 'report.part.mahalle': '{v} Mahallesi',
     'report.part.ada': '{v} Ada', 'report.part.parsel': '{v} Parsel',
     'report.part.location': '{v} üzerinde yer alan',
+    'report.part.ilLine': '{v} İLİ', 'report.part.ilceLine': '{v} İLÇESİ',
+    'report.part.mahalleLine': '{v} MAHALLESİ', 'report.part.adaLine': '{v} ADA', 'report.part.parselLine': '{v} PARSEL',
     'report.part.projectBlock': '{project} projesinin {block} bloğuna',
     'report.part.projectBlockNamed': '{project} projesinin {block} yapısına',
     'report.part.project': '{project} projesine', 'report.part.block': '{block} bloğuna',
@@ -606,7 +611,6 @@ const translations = {
     'report.image.readFailed': 'Görsel okunamadı.',
     'report.preview.title': 'KAPAK ÖNİZLEMESİ', 'report.preview.imageArea': 'KAPAK GÖRSELİ ALANI',
     'report.preview.date': 'TARİH', 'report.preview.footer': 'ALT BİLGİ',
-    'report.preview.pending': 'Bu adımın önizlemesi, adımın kendisiyle birlikte eklenecek.',
     'validate.year': '{value} yılı makul değil. 2000–2100 aralığı bekleniyor.',
 
     'report.step.intro.desc': 'Modelin kat listesinde hangi katın ne olduğunu işaretleyin; rapor cümlesindeki kat sayıları ve yükseklikler buradan üretilir.',
@@ -631,7 +635,9 @@ const translations = {
     'report.field.foundationTower': 'Yükselen blok altında', 'report.field.foundationPark': 'Otopark bölgesinde',
     'report.field.systemClass': 'Sistem sınıfı', 'report.field.foundationType': 'Temel tipi',
     'report.field.slabSystem': 'Döşeme sistemi', 'report.field.slabThickness': 'Döşeme kalınlığı (cm)',
-    'report.select.empty': 'Seçiniz…', 'report.fromModel': 'modelden',
+    'report.select.empty': 'Seçiniz…',
+    'report.model.agentOld': 'Çalışan Windows agent bu sayfadan eski; model verisi uçlarını henüz sunmuyor. Güncel agent’ı indirip yeniden başlatın veya değerleri elle girin.',
+    'report.text.identity': 'KAPAK · PROJE KİMLİĞİ',
     'report.measure.button': 'Modelden ölç', 'report.measure.working': 'Ölçülüyor…',
     'report.measure.needConnection': 'Ölçmek için bir modele bağlanın.',
     'report.measure.done': 'İzdüşüm {story} katından ölçüldü.',
@@ -1029,6 +1035,12 @@ function applyConnectionState(data) {
 function resetAllModuleData() {
   comboCachePromise = null;
   wallShearRaw = null;
+  // The report keeps what the engineer typed, but everything it read from the
+  // model must be re-read against the next one.
+  reportModelLoaded = false;
+  reportState.stories = [];
+  reportState.modelHints = {};
+  reportState.modelError = '';
   for (const st of [driftState, pdeltaState, incrementState, columnAxialState,
                     beamShearState, beamAxialState, wallAxialState, wallShearState]) {
     st.combos = [];
@@ -4759,6 +4771,7 @@ const reportSteps = {
         {
           titleKey: 'report.group.texts',
           fields: [
+            { id: 'coverIdentity', type: 'autotext', labelKey: 'report.text.identity', lines: ['coverLine1', 'coverLine2', 'coverLine3'] },
             { id: 'coverText', type: 'autotext', labelKey: 'report.text.cover' },
             { id: 'scopeText', type: 'autotext', labelKey: 'report.text.scope' },
             { id: 'footerText', type: 'autotext', labelKey: 'report.text.footer' }
@@ -4898,7 +4911,28 @@ const reportSteps = {
 // A report text is composed from the shared project variables. Empty variables are
 // left out of the sentence rather than printed as gaps, and a text whose variables
 // are all empty stays empty — which is exactly what gets printed in the report.
+// The cover and the running footer print the project identity in capitals however
+// it was typed. Turkish needs the locale-aware mapping (i -> İ), never toUpperCase().
+function reportUpper(value) {
+  return String(value ?? '').trim().toLocaleUpperCase(currentLanguage === 'tr' ? 'tr-TR' : 'en-GB');
+}
+
 const reportComposers = {
+  // The three identity lines of the cover, in the report template's own wording.
+  // An empty variable drops its phrase; an empty line is simply not printed.
+  coverLine1: f => [
+    f.il && t('report.part.ilLine', { v: reportUpper(f.il) }),
+    f.ilce && t('report.part.ilceLine', { v: reportUpper(f.ilce) })
+  ].filter(Boolean).join(' '),
+
+  coverLine2: f => [
+    f.mahalle && t('report.part.mahalleLine', { v: reportUpper(f.mahalle) }),
+    f.ada && t('report.part.adaLine', { v: reportUpper(f.ada) }),
+    f.parsel && t('report.part.parselLine', { v: reportUpper(f.parsel) })
+  ].filter(Boolean).join(' '),
+
+  coverLine3: f => [reportUpper(f.projectName), reportUpper(f.blockName)].filter(Boolean).join(' '),
+
   coverText: () => t('report.template.cover'),
 
   scopeText: f => {
@@ -4918,11 +4952,11 @@ const reportComposers = {
       .replace(/\s+/g, ' ').replace(/\s+([.,])/g, '$1').trim();
   },
 
-  footerText: f => {
-    const clean = key => String(f[key] ?? '').trim();
-    const place = [clean('il'), clean('ilce')].filter(Boolean).join(' / ');
-    return [clean('projectName'), clean('blockName'), place].filter(Boolean).join(' · ');
-  },
+  // The running footer of the inner pages: the same three identity lines on one
+  // line. The cover itself carries no footer, so it is not shown in the preview.
+  footerText: f => [
+    reportComposers.coverLine1(f), reportComposers.coverLine2(f), reportComposers.coverLine3(f)
+  ].filter(Boolean).join(' '),
 
   // 1 Introduction — storey make-up and heights.
   introText: f => {
@@ -5030,7 +5064,7 @@ function reportDefaults() {
     process: 'intro', step: 'cover', fields: {}, texts: {}, images: {}, fontScale: 100,
     // Storey name -> basement / ground / normal / roof / none, marked by the engineer
     // against the storey list read from the connected model.
-    storeyRoles: {}, stories: [],
+    storeyRoles: {}, stories: [], modelHints: {}, modelError: '',
     // Fields the engineer has typed into. Model-derived defaults keep refreshing
     // until then; once a field is here, nothing overwrites it automatically.
     touched: {}
@@ -5103,15 +5137,26 @@ function reportComposedText(id) {
   return composer ? composer(reportState.fields) : '';
 }
 
+// A multi-line auto-text (the cover identity block) composes each of its lines and
+// drops the empty ones, so the cover never prints a blank line.
+function reportComposedLines(field) {
+  if (reportState.texts[field.id] !== undefined) {
+    return String(reportState.texts[field.id]).split('\n').filter(line => line.trim());
+  }
+  return (field.lines || []).map(id => reportComposers[id](reportState.fields)).filter(Boolean);
+}
+
 function reportMonthNames() {
   const fmt = new Intl.DateTimeFormat(currentLanguage === 'tr' ? 'tr-TR' : 'en-GB', { month: 'long' });
   return Array.from({ length: 12 }, (_, i) => fmt.format(new Date(2000, i, 1)));
 }
 
+// "AĞUSTOS 2026" — the report prints the month in capitals, so the picker shows
+// it in title case but the cover does not.
 function reportDateLabel() {
   const month = Number(reportState.fields.month);
   const year = String(reportState.fields.year ?? '').trim();
-  const name = month >= 1 && month <= 12 ? reportMonthNames()[month - 1] : '';
+  const name = month >= 1 && month <= 12 ? reportUpper(reportMonthNames()[month - 1]) : '';
   return [name, year].filter(Boolean).join(' ');
 }
 
@@ -5126,7 +5171,9 @@ function renderReportModule() {
   renderReportEditorPanel();
   // Model-backed fields fill themselves in as soon as a model is connected; nothing
   // is read (or shown) while it is not, so a stale value can never look live.
-  if (etabsConnected) reportLoadModelData();
+  // Read once per connection — re-reading on every step change would re-query the
+  // agent (and re-report any failure) on every click.
+  if (etabsConnected && !reportModelLoaded) reportLoadModelData();
 }
 
 // Reads the storey list, the materials assigned in the model and the slab
@@ -5135,6 +5182,7 @@ function renderReportModule() {
 async function reportLoadModelData() {
   if (reportModelLoading) return;
   reportModelLoading = true;
+  reportState.modelError = '';
   try {
     if ((reportState.stories || []).length === 0) {
       const res = await fetchAgentJson('/api/etabs/stories');
@@ -5157,18 +5205,24 @@ async function reportLoadModelData() {
         if (reportState.modelHints[key] && !reportState.touched[key]) reportState.fields[key] = reportState.modelHints[key];
       }
     }
+    reportModelLoaded = true;
     saveReportState();
     renderReportStructurePanel();
     renderReportEditorPanel();
   } catch (error) {
-    // The report is usable without the model; say what failed and carry on.
-    log(t('report.model.readFailed', { error: describeError(error) }), 'info');
+    // The report works perfectly well without the model, so a failed read is not a
+    // toast on every click — it is a note next to the fields it would have filled.
+    // A 404 means the running agent predates these endpoints and needs updating.
+    reportState.modelError = /404/.test(error.message) ? t('report.model.agentOld') : describeError(error);
+    reportModelLoaded = true;
+    renderReportEditorPanel();
   } finally {
     reportModelLoading = false;
   }
 }
 
 let reportModelLoading = false;
+let reportModelLoaded = false;
 
 // X and Y span of a middle storey — the figure the report quotes as the standard
 // floor plan extent. A middle storey is used because the base and the roof are
@@ -5188,8 +5242,9 @@ async function reportMeasurePlanExtent() {
     renderReportEditorPanel();
     log(t('report.measure.done', { story: res.story || '' }), 'ok');
   } catch (error) {
-    if (note) note.textContent = describeError(error);
-    log(describeError(error), 'error');
+    const message = /404/.test(error.message) ? t('report.model.agentOld') : describeError(error);
+    if (note) note.textContent = message;
+    log(message, 'error');
   } finally {
     const again = $('#repMeasurePlan');
     if (again) again.disabled = false;
@@ -5312,16 +5367,17 @@ function renderReportEditorPanel() {
         index: index + 1, total: steps.length
       })}</p>
     </div></div></div>
-    <div class="rep-workspace">
+    <div class="rep-workspace${step.id === 'cover' ? '' : ' single'}">
       <div class="rep-form">
         <h3 class="rep-step-title">${t(step.titleKey)}</h3>
         ${step.descKey ? `<p class="rep-step-desc">${t(step.descKey)}</p>` : ''}
         ${step.pending ? reportPendingBlock() : reportStepBody(step)}
       </div>
+      ${step.id === 'cover' ? `
       <aside class="rep-preview">
         <p class="rep-preview-label">${t('report.preview.title')}</p>
-        <div id="repPreviewSlot">${reportPreviewFor(step)}</div>
-      </aside>
+        <div id="repPreviewSlot">${reportCoverPreview()}</div>
+      </aside>` : ''}
     </div>
     <div class="rep-nav">
       <button class="button button-secondary" type="button" id="repPrev"${index <= 0 ? ' disabled' : ''}>${t('report.prev')}</button>
@@ -5427,7 +5483,8 @@ function reportMeasureHtml(field) {
       </div>
       <div class="rep-measure-actions">
         <button class="button button-secondary" type="button" id="repMeasurePlan"${etabsConnected ? '' : ' disabled'}>${t('report.measure.button')}</button>
-        <span class="rep-measure-note" id="repMeasureNote">${etabsConnected ? '' : t('report.measure.needConnection')}</span>
+        <span class="rep-measure-note" id="repMeasureNote">${escapeHtml(
+          !etabsConnected ? t('report.measure.needConnection') : (reportState.modelError || ''))}</span>
       </div>
     </div>`.replace('id="repPlanWidth"', `id="repPlanWidth" value="${escapeHtml(w)}"`)
       .replace('id="repPlanDepth"', `id="repPlanDepth" value="${escapeHtml(d)}"`);
@@ -5496,16 +5553,16 @@ function reportPlainFieldHtml(field) {
       </div>`;
   }
   const html = textField(id, labelKey, { span: field.span || 1 });
-  // Fields the model fills in carry a badge saying so; the value stays editable
-  // because an automatic read can be wrong and the engineer signs the report.
-  return field.source === 'model'
-    ? html.replace('</label>', ` <span class="rep-from-model">${t('report.fromModel')}</span></label>`)
+  // A model-backed field says so only when the read actually failed — otherwise the
+  // value is simply there and needs no explanation.
+  return field.source === 'model' && reportState.modelError
+    ? html.replace('</div>', `<p class="rep-field-note">${escapeHtml(reportState.modelError)}</p></div>`)
     : html;
 }
 
 function reportAutoTextHtml(field) {
   const manual = reportState.texts[field.id] !== undefined;
-  const value = reportComposedText(field.id);
+  const value = field.lines ? reportComposedLines(field).join('\n') : reportComposedText(field.id);
   const empty = !manual && !value;
   return `<div class="rep-text" data-text="${field.id}">
       <div class="rep-text-head">
@@ -5539,17 +5596,23 @@ function reportImageFieldHtml(field) {
     </div>`;
 }
 
-function reportPreviewFor(step) {
-  if (step.id !== 'cover') return `<p class="rep-preview-note">${t('report.preview.pending')}</p>`;
-  const cover = escapeHtml(reportComposedText('coverText'));
-  const footer = escapeHtml(reportComposedText('footerText'));
-  const date = escapeHtml(reportDateLabel());
+// The cover as the report template lays it out: three identity lines and the
+// report title in capitals, then the image, then the date. The cover page carries
+// no running footer, so none is drawn here either.
+function reportCoverPreview() {
+  const identityField = reportStepFields(reportActiveSteps().find(s => s.id === 'cover'))
+    .find(f => f.id === 'coverIdentity');
+  const lines = identityField ? reportComposedLines(identityField) : [];
+  const title = reportComposedText('coverText');
+  const date = reportDateLabel();
   const img = reportState.images.KAPAK;
   return `<div class="rep-page" style="--rep-scale:${(reportState.fontScale || 100) / 100}">
-      <p class="rep-page-title">${cover || '&nbsp;'}</p>
+      <div class="rep-page-head">
+        ${lines.map(line => `<p>${escapeHtml(line)}</p>`).join('')}
+        ${title ? `<p>${escapeHtml(title)}</p>` : ''}
+      </div>
       <div class="rep-page-image">${img ? `<img src="${img}" alt="">` : `<span>${t('report.preview.imageArea')}</span>`}</div>
-      <p class="rep-page-date">${date || t('report.preview.date')}</p>
-      <p class="rep-page-footer">${footer || t('report.preview.footer')}</p>
+      <p class="rep-page-date">${escapeHtml(date) || t('report.preview.date')}</p>
     </div>`;
 }
 
@@ -5558,13 +5621,16 @@ function reportPreviewFor(step) {
 // are refreshed on `change` instead, once the field is left.
 function reportRefreshDerived() {
   const slot = $('#repPreviewSlot');
-  if (slot) slot.innerHTML = reportPreviewFor(reportActiveStep());
+  if (slot) slot.innerHTML = reportCoverPreview();
+  const step = reportActiveStep();
+  const byId = new Map(reportStepFields(step).map(f => [f.id, f]));
   $$('.rep-text').forEach(el => {
     const id = el.dataset.text;
     if (reportState.texts[id] !== undefined) return;
     const body = $('.rep-text-body', el);
     if (!body) return;
-    const value = reportComposedText(id);
+    const field = byId.get(id);
+    const value = field && field.lines ? reportComposedLines(field).join('\n') : reportComposedText(id);
     body.classList.toggle('muted', !value);
     body.textContent = value || t('report.text.empty');
   });
