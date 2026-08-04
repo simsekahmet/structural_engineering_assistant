@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -78,7 +78,10 @@ internal sealed class AgentApplicationContext : ApplicationContext
             SelectFramesOnUiThread,
             GetFrameSectionsOnUiThread,
             GetModelMaterialsOnUiThread,
-            GetPlanExtentOnUiThread);
+            GetPlanExtentOnUiThread,
+            GetLoadPatternsOnUiThread,
+            GetWallSectionsOnUiThread,
+            CaptureOnUiThread);
         try
         {
             _server.Start();
@@ -228,6 +231,30 @@ internal sealed class AgentApplicationContext : ApplicationContext
             return (PlanExtentResult)_dispatcher.Invoke(new Func<PlanExtentResult>(_etabs.GetPlanExtent));
 
         return _etabs.GetPlanExtent();
+    }
+
+    private LoadPatternsResult GetLoadPatternsOnUiThread()
+    {
+        if (_dispatcher.InvokeRequired)
+            return (LoadPatternsResult)_dispatcher.Invoke(new Func<LoadPatternsResult>(_etabs.GetLoadPatterns));
+
+        return _etabs.GetLoadPatterns();
+    }
+
+    private WallSectionsResult GetWallSectionsOnUiThread()
+    {
+        if (_dispatcher.InvokeRequired)
+            return (WallSectionsResult)_dispatcher.Invoke(new Func<WallSectionsResult>(_etabs.GetWallSections));
+
+        return _etabs.GetWallSections();
+    }
+
+    private CaptureResult CaptureOnUiThread()
+    {
+        if (_dispatcher.InvokeRequired)
+            return (CaptureResult)_dispatcher.Invoke(new Func<CaptureResult>(_etabs.CaptureEtabsWindow));
+
+        return _etabs.CaptureEtabsWindow();
     }
 
     private void ShowConnectionResult()
@@ -913,6 +940,133 @@ internal sealed class EtabsConnection : IDisposable
         }
     }
 
+    // Captures the ETABS main window as a PNG.
+    //
+    // The v1 API has no view control at all — cView exposes only RefreshView and
+    // RefreshWindow — so there is no supported way to switch to a plan view, turn on
+    // shell-load display or ask ETABS for a picture. What CAN be done reliably is to
+    // photograph the window the engineer has already set up, which is what this does:
+    // bring ETABS to the front, let it repaint, and copy its client area.
+    public CaptureResult CaptureEtabsWindow()
+    {
+        if (!EnsureModelReady(out var error))
+            return new CaptureResult(true, false, error, null, 0, 0);
+
+        try
+        {
+            var handle = FindEtabsWindow();
+            if (handle == IntPtr.Zero)
+                return new CaptureResult(true, true, "ETABS main window could not be found.", null, 0, 0);
+
+            WindowCapture.SetForegroundWindow(handle);
+            // ETABS repaints asynchronously after being raised; without this the
+            // capture can catch a half-drawn or still-obscured window.
+            System.Threading.Thread.Sleep(450);
+
+            if (!WindowCapture.GetClientRect(handle, out var rect) || rect.Right <= 0 || rect.Bottom <= 0)
+                return new CaptureResult(true, true, "ETABS window has no drawable area.", null, 0, 0);
+
+            var origin = new WindowCapture.POINT { X = 0, Y = 0 };
+            WindowCapture.ClientToScreen(handle, ref origin);
+
+            using var bitmap = new System.Drawing.Bitmap(rect.Right, rect.Bottom);
+            using (var graphics = System.Drawing.Graphics.FromImage(bitmap))
+            {
+                graphics.CopyFromScreen(origin.X, origin.Y, 0, 0, new System.Drawing.Size(rect.Right, rect.Bottom));
+            }
+
+            using var buffer = new MemoryStream();
+            bitmap.Save(buffer, System.Drawing.Imaging.ImageFormat.Png);
+            return new CaptureResult(true, true, null,
+                "data:image/png;base64," + Convert.ToBase64String(buffer.ToArray()), bitmap.Width, bitmap.Height);
+        }
+        catch (Exception ex)
+        {
+            AgentLog.Write($"CaptureEtabsWindow failed: {ex}");
+            return new CaptureResult(true, false, ex.Message, null, 0, 0);
+        }
+    }
+
+    private static IntPtr FindEtabsWindow()
+    {
+        foreach (var name in new[] { "ETABS", "etabs" })
+        {
+            foreach (var process in System.Diagnostics.Process.GetProcessesByName(name))
+            {
+                if (process.MainWindowHandle != IntPtr.Zero) return process.MainWindowHandle;
+            }
+        }
+        return IntPtr.Zero;
+    }
+
+    // Load patterns defined in the model, with their type, so the report's load
+    // boxes offer what the model actually has instead of hard-coded SDL/LL names.
+    public LoadPatternsResult GetLoadPatterns()
+    {
+        if (!EnsureModelReady(out var error))
+            return new LoadPatternsResult(true, false, error, Array.Empty<LoadPatternInfo>());
+
+        try
+        {
+            var sap = _sapModel!;
+            var prop = _sapModelInterface!.GetProperty("LoadPatterns")!;
+            var patterns = prop.GetValue(sap)!;
+            var type = prop.PropertyType;
+
+            var getNameList = type.GetMethods().First(m => m.Name == "GetNameList" && m.GetParameters().Length == 2);
+            var nameArgs = new object?[] { 0, null };
+            getNameList.Invoke(patterns, nameArgs);
+            var names = (string[]?)nameArgs[1] ?? Array.Empty<string>();
+
+            var getLoadType = type.GetMethods().FirstOrDefault(m => m.Name == "GetLoadType");
+            var list = new List<LoadPatternInfo>(names.Length);
+            foreach (var name in names)
+            {
+                var kind = "";
+                if (getLoadType is not null)
+                {
+                    var args = new object?[] { name, 0 };
+                    try { getLoadType.Invoke(patterns, args); kind = args[1]?.ToString() ?? ""; } catch { /* keep blank */ }
+                }
+                list.Add(new LoadPatternInfo(name, kind));
+            }
+            return new LoadPatternsResult(true, true, null, list.ToArray());
+        }
+        catch (Exception ex)
+        {
+            AgentLog.Write($"GetLoadPatterns failed: {ex}");
+            return new LoadPatternsResult(true, false, ex.Message, Array.Empty<LoadPatternInfo>());
+        }
+    }
+
+    // Wall section names, so the report can pick out the basement-wall sections
+    // (the ones whose name starts with the agreed prefix) for the soil-pressure views.
+    public WallSectionsResult GetWallSections()
+    {
+        if (!EnsureModelReady(out var error))
+            return new WallSectionsResult(true, false, error, Array.Empty<string>());
+
+        try
+        {
+            var sap = _sapModel!;
+            var prop = _sapModelInterface!.GetProperty("PropArea")!;
+            var propArea = prop.GetValue(sap)!;
+            var type = prop.PropertyType;
+
+            // GetNameList(ref Number, ref Names, PropType) — PropType 1 = wall.
+            var getNameList = type.GetMethods().First(m => m.Name == "GetNameList" && m.GetParameters().Length == 3);
+            var args = new object?[] { 0, null, 1 };
+            getNameList.Invoke(propArea, args);
+            var names = (string[]?)args[1] ?? Array.Empty<string>();
+            return new WallSectionsResult(true, true, null, names);
+        }
+        catch (Exception ex)
+        {
+            AgentLog.Write($"GetWallSections failed: {ex}");
+            return new WallSectionsResult(true, false, ex.Message, Array.Empty<string>());
+        }
+    }
+
     // Concrete class, rebar class and slab thickness as the report quotes them.
     //
     // The class is taken from the MATERIAL NAME when it already carries one (models
@@ -1557,6 +1711,9 @@ internal sealed class LocalBridgeServer : IDisposable
     private readonly Func<FrameSectionsResult> _getFrameSections;
     private readonly Func<ModelMaterialsResult> _getModelMaterials;
     private readonly Func<PlanExtentResult> _getPlanExtent;
+    private readonly Func<LoadPatternsResult> _getLoadPatterns;
+    private readonly Func<WallSectionsResult> _getWallSections;
+    private readonly Func<CaptureResult> _capture;
     private readonly CancellationTokenSource _cancellation = new();
     private TcpListener? _listener;
 
@@ -1576,7 +1733,10 @@ internal sealed class LocalBridgeServer : IDisposable
         Func<IReadOnlyList<FrameKey>, SelectResult> selectFrames,
         Func<FrameSectionsResult> getFrameSections,
         Func<ModelMaterialsResult> getModelMaterials,
-        Func<PlanExtentResult> getPlanExtent)
+        Func<PlanExtentResult> getPlanExtent,
+        Func<LoadPatternsResult> getLoadPatterns,
+        Func<WallSectionsResult> getWallSections,
+        Func<CaptureResult> capture)
     {
         _getSnapshot = getSnapshot;
         _getCombinations = getCombinations;
@@ -1594,6 +1754,9 @@ internal sealed class LocalBridgeServer : IDisposable
         _getFrameSections = getFrameSections;
         _getModelMaterials = getModelMaterials;
         _getPlanExtent = getPlanExtent;
+        _getLoadPatterns = getLoadPatterns;
+        _getWallSections = getWallSections;
+        _capture = capture;
     }
 
     public void Start()
@@ -1747,6 +1910,24 @@ internal sealed class LocalBridgeServer : IDisposable
                     if (path == "/api/etabs/plan-extent")
                     {
                         await WriteResponseAsync(stream, 200, "OK", _getPlanExtent(), origin, cancellationToken);
+                        return;
+                    }
+
+                    if (path == "/api/etabs/load-patterns")
+                    {
+                        await WriteResponseAsync(stream, 200, "OK", _getLoadPatterns(), origin, cancellationToken);
+                        return;
+                    }
+
+                    if (path == "/api/etabs/wall-sections")
+                    {
+                        await WriteResponseAsync(stream, 200, "OK", _getWallSections(), origin, cancellationToken);
+                        return;
+                    }
+
+                    if (path == "/api/etabs/capture")
+                    {
+                        await WriteResponseAsync(stream, 200, "OK", _capture(), origin, cancellationToken);
                         return;
                     }
 
@@ -2083,6 +2264,32 @@ internal sealed record ModelMaterialsResult(bool AgentOnline, bool EtabsConnecte
     string? ConcreteClass, string? RebarClass, string? SlabThickness);
 internal sealed record PlanExtentResult(bool AgentOnline, bool EtabsConnected, string? Error,
     double Width, double Depth, string? Story);
+internal sealed record LoadPatternInfo(string Name, string Kind);
+internal sealed record LoadPatternsResult(bool AgentOnline, bool EtabsConnected, string? Error, LoadPatternInfo[] Patterns);
+internal sealed record WallSectionsResult(bool AgentOnline, bool EtabsConnected, string? Error, string[] Names);
+internal sealed record CaptureResult(bool AgentOnline, bool EtabsConnected, string? Error, string? Image, int Width, int Height);
+
+// Win32 calls needed to photograph the ETABS window. The v1 API exposes no picture
+// export and no view control, so the window itself is the only source of a view image.
+internal static class WindowCapture
+{
+    [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+    internal struct RECT { public int Left, Top, Right, Bottom; }
+
+    [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+    internal struct POINT { public int X, Y; }
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    internal static extern bool SetForegroundWindow(IntPtr hWnd);
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    internal static extern bool GetClientRect(IntPtr hWnd, out RECT lpRect);
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    internal static extern bool ClientToScreen(IntPtr hWnd, ref POINT lpPoint);
+}
+
+
 
 internal sealed record PierForceRow(string Story, string Pier, string LoadCase, string Location, double P, double V2, double V3);
 

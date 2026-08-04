@@ -253,6 +253,46 @@ const translations = {
     'report.select.empty': 'Select…',
     'report.model.agentOld': 'The running Windows agent is older than this page and does not provide model data yet. Download the current agent and restart it, or enter the values by hand.',
     'report.text.identity': 'COVER · PROJECT IDENTITY',
+
+    'report.step.loads.desc': 'Load patterns come from the model. Choose which one each figure is drawn for, group the storeys that share a drawing, and capture the views.',
+    'report.group.loadBoxes': 'LOAD BOXES · 6.1–6.3',
+    'report.group.loadBoxes.hint': 'The patterns listed are the ones defined in the model. Pick one per box — a figure is drawn for a single load pattern.',
+    'report.group.planGroups': 'PLAN VIEWS AND THE STOREYS THEY REPRESENT',
+    'report.group.planGroups.hint': 'Storeys placed in the same group share one drawing. Every storey left outside a group gets its own.',
+    'report.group.soilWater': '6.5 SOIL AND WATER EFFECTS',
+    'report.group.soilPressure.hint': 'Table 6.1 of the report: the pressure assumed on the basement walls, and the load patterns the 3D views are captured for.',
+    'report.load.61': 'Dead loads', 'report.load.62': 'Wall loads', 'report.load.63': 'Live loads',
+    'report.load.area': '6.1 · AREA LOAD', 'report.load.line': '6.2 · LINE LOAD',
+    'report.load.rigidTitle': 'RIGID BASEMENT',
+    'report.load.rigidNote': 'When on, the chosen storey and everything below it take the basement selection; the rest take the other one.',
+    'report.load.limitStorey': 'Limit storey',
+    'report.load.rigidLoads': 'Basement loads', 'report.load.otherLoads': 'Other storey loads', 'report.load.allLoads': 'Loads',
+    'report.load.noPatterns': 'The model defines no load patterns.',
+    'report.load.needConnection': 'Connect to the model to list its load patterns.',
+    'report.pg.storeys': 'STOREYS', 'report.pg.storeysHint': '{count} drawn on their own',
+    'report.pg.groups': 'GROUPS', 'report.pg.groupsHint': 'one drawing each',
+    'report.pg.makeGroup': 'Group the selected storeys',
+    'report.pg.noGroups': 'No group yet — every storey is drawn on its own.',
+    'report.pg.groupName': 'Group {n}', 'report.pg.dissolve': 'Dissolve',
+    'report.pg.looseNote': '{count} storey(s) outside a group, each with its own drawing.',
+    'report.pg.needTwo': 'Select at least two storeys to group them.',
+    'report.pg.generate': 'Generate load views',
+    'report.pg.generateHint': '{count} drawing(s) × the selected load patterns.',
+    'report.pg.nothingToDo': 'Select at least one load pattern first.',
+    'report.soilP.tableTitle': 'TABLE 6.1 · SOIL PRESSURE ON THE BASEMENT WALLS',
+    'report.soilP.cohesionless': 'Cohesionless soil', 'report.soilP.softStiff': 'Soft – medium stiff cohesive soil',
+    'report.soilP.stiffHard': 'Stiff – hard cohesive soil',
+    'report.soilP.fullHeight': 'Over the full height', 'report.soilP.split': 'Upper 20% / lower 80%',
+    'report.soilP.static': 'Static soil load pattern', 'report.soilP.dynamic': 'Dynamic soil load pattern',
+    'report.soilP.generate': 'Generate soil-load views',
+    'report.soilP.generateHint': 'Wall sections whose name starts with "{prefix}" are the basement walls.',
+    'report.soilP.needPattern': 'Choose a static or dynamic soil load pattern first.',
+    'report.capture.title': 'VIEWS TO CAPTURE',
+    'report.capture.help': 'The ETABS API cannot switch views or export a picture, so each view is set up in ETABS and photographed here. Open the view described on the row, then press Capture.',
+    'report.capture.row': '{target} · {pattern}',
+    'report.capture.button': 'Capture', 'report.capture.recapture': 'Capture again',
+    'report.capture.done': 'View captured: {what}.',
+    'report.capture.clear': 'Clear the list',
     'report.measure.button': 'Measure from model', 'report.measure.working': 'Measuring…',
     'report.measure.needConnection': 'Connect to a model to measure.',
     'report.measure.done': 'Plan extent measured on storey {story}.',
@@ -638,6 +678,46 @@ const translations = {
     'report.select.empty': 'Seçiniz…',
     'report.model.agentOld': 'Çalışan Windows agent bu sayfadan eski; model verisi uçlarını henüz sunmuyor. Güncel agent’ı indirip yeniden başlatın veya değerleri elle girin.',
     'report.text.identity': 'KAPAK · PROJE KİMLİĞİ',
+
+    'report.step.loads.desc': 'Yük tanımları modelden gelir. Her şeklin hangi yük için çizileceğini seçin, aynı görselde gösterilecek katları gruplayın ve görünümleri yakalayın.',
+    'report.group.loadBoxes': 'YÜK KUTUCUKLARI · 6.1–6.3',
+    'report.group.loadBoxes.hint': 'Listelenen yükler modelde tanımlı olanlardır. Her kutuda bir tane seçin — bir şekil tek bir yük için çizilir.',
+    'report.group.planGroups': 'ÇİZİLECEK PLANLAR VE TEMSİL ETTİĞİ KATLAR',
+    'report.group.planGroups.hint': 'Aynı gruba alınan katlar tek bir görselde çizilir. Gruba alınmayan her kat kendi görselini alır.',
+    'report.group.soilWater': '6.5 TOPRAK VE SU ETKİLERİ',
+    'report.group.soilPressure.hint': 'Raporun Tablo 6.1’i: bodrum perdelerine etkiyen zemin basıncı ve 3B görünümlerin yakalanacağı yükler.',
+    'report.load.61': 'Sabit Yükler', 'report.load.62': 'Duvar Yükleri', 'report.load.63': 'Hareketli Yükler',
+    'report.load.area': '6.1 · ALAN YÜKÜ', 'report.load.line': '6.2 · ÇİZGİSEL YÜK',
+    'report.load.rigidTitle': 'RİJİT BODRUM KAT',
+    'report.load.rigidNote': 'Açıkken seçilen kat ve altındakiler bodrum seçimini, diğerleri öteki seçimi kullanır.',
+    'report.load.limitStorey': 'Sınır katı',
+    'report.load.rigidLoads': 'Rijit bodrum yükleri', 'report.load.otherLoads': 'Diğer kat yükleri', 'report.load.allLoads': 'Yükler',
+    'report.load.noPatterns': 'Modelde tanımlı yük yok.',
+    'report.load.needConnection': 'Modeldeki yükleri listelemek için bağlanın.',
+    'report.pg.storeys': 'KATLAR', 'report.pg.storeysHint': '{count} tanesi ayrı çizilecek',
+    'report.pg.groups': 'GRUPLAR', 'report.pg.groupsHint': 'her biri tek görsel',
+    'report.pg.makeGroup': 'Seçili katları grupla',
+    'report.pg.noGroups': 'Henüz grup yok — her kat ayrı çizilecek.',
+    'report.pg.groupName': 'Grup {n}', 'report.pg.dissolve': 'Gruptan çıkar',
+    'report.pg.looseNote': '{count} kat grup dışında, her biri kendi görselinde.',
+    'report.pg.needTwo': 'Gruplamak için en az iki kat seçin.',
+    'report.pg.generate': 'Yük görsellerini üret',
+    'report.pg.generateHint': '{count} görsel × seçili yükler.',
+    'report.pg.nothingToDo': 'Önce en az bir yük seçin.',
+    'report.soilP.tableTitle': 'TABLO 6.1 · BODRUM PERDELERİNE ETKİYEN ZEMİN BASINÇLARI',
+    'report.soilP.cohesionless': 'Kohezyonsuz zemin', 'report.soilP.softStiff': 'Yumuşak – orta katı kohezyonlu zemin',
+    'report.soilP.stiffHard': 'Katı – sert kohezyonlu zemin',
+    'report.soilP.fullHeight': 'Tüm yükseklik boyunca', 'report.soilP.split': 'Üst %20 boyunca / Alt %80 boyunca',
+    'report.soilP.static': 'Statik toprak yükü', 'report.soilP.dynamic': 'Dinamik toprak yükü',
+    'report.soilP.generate': 'Toprak yükü görsellerini üret',
+    'report.soilP.generateHint': 'Adı "{prefix}" ile başlayan perde kesitleri bodrum perdesi kabul edilir.',
+    'report.soilP.needPattern': 'Önce statik veya dinamik toprak yükünü seçin.',
+    'report.capture.title': 'YAKALANACAK GÖRÜNÜMLER',
+    'report.capture.help': 'ETABS API’si görünüm değiştiremiyor ve görsel dışa aktarmıyor; bu yüzden her görünüm ETABS’ta açılır ve buradan fotoğraflanır. Satırda yazan görünümü ETABS’ta açın, sonra Yakala’ya basın.',
+    'report.capture.row': '{target} · {pattern}',
+    'report.capture.button': 'Yakala', 'report.capture.recapture': 'Yeniden yakala',
+    'report.capture.done': 'Görünüm yakalandı: {what}.',
+    'report.capture.clear': 'Listeyi temizle',
     'report.measure.button': 'Modelden ölç', 'report.measure.working': 'Ölçülüyor…',
     'report.measure.needConnection': 'Ölçmek için bir modele bağlanın.',
     'report.measure.done': 'İzdüşüm {story} katından ölçüldü.',
@@ -4895,7 +4975,28 @@ const reportSteps = {
         }
       ]
     },
-    { id: 'loads', titleKey: 'report.step.loads.title', pending: true },
+    {
+      id: 'loads',
+      titleKey: 'report.step.loads.title',
+      descKey: 'report.step.loads.desc',
+      groups: [
+        {
+          titleKey: 'report.group.loadBoxes',
+          hintKey: 'report.group.loadBoxes.hint',
+          fields: [{ id: 'loadBoxes', type: 'loadBoxes' }]
+        },
+        {
+          titleKey: 'report.group.planGroups',
+          hintKey: 'report.group.planGroups.hint',
+          fields: [{ id: 'planGroups', type: 'planGroups' }]
+        },
+        {
+          titleKey: 'report.group.soilWater',
+          hintKey: 'report.group.soilPressure.hint',
+          fields: [{ id: 'soilPressure', type: 'soilPressure' }]
+        }
+      ]
+    },
     { id: 'seismic', titleKey: 'report.step.seismic.title', pending: true },
     { id: 'design', titleKey: 'report.step.design.title', pending: true },
     { id: 'model', titleKey: 'report.step.model.title', pending: true },
@@ -5065,6 +5166,9 @@ function reportDefaults() {
     // Storey name -> basement / ground / normal / roof / none, marked by the engineer
     // against the storey list read from the connected model.
     storeyRoles: {}, stories: [], modelHints: {}, modelError: '',
+    // Load patterns and wall sections read from the model, plus the plan-view
+    // groups: each group is one drawing that represents the storeys inside it.
+    loadPatterns: [], wallSections: [], planGroups: [],
     // Fields the engineer has typed into. Model-derived defaults keep refreshing
     // until then; once a field is here, nothing overwrites it automatically.
     touched: {}
@@ -5191,6 +5295,15 @@ async function reportLoadModelData() {
         reportPrefillStoreyHeights();
       }
     }
+    // Load patterns and wall sections drive the Loads step; a failure there must
+    // not stop the materials read, so they are requested on their own.
+    try {
+      const lp = await fetchAgentJson('/api/etabs/load-patterns', 15000);
+      if (lp.etabsConnected) reportState.loadPatterns = (lp.patterns || []).map(p => p.name).filter(Boolean);
+      const ws = await fetchAgentJson('/api/etabs/wall-sections', 15000);
+      if (ws.etabsConnected) reportState.wallSections = ws.names || [];
+    } catch { /* reported through modelError below if materials fail too */ }
+
     const info = await fetchAgentJson('/api/etabs/model-materials', 20000);
     if (info.etabsConnected) {
       reportState.modelHints = {
@@ -5249,6 +5362,63 @@ async function reportMeasurePlanExtent() {
     const again = $('#repMeasurePlan');
     if (again) again.disabled = false;
   }
+}
+
+// --- Capturing views from ETABS ---------------------------------------------
+// The v1 API has no view control and no picture export (cView offers only
+// RefreshView / RefreshWindow), so ETABS cannot be driven to a plan view or told
+// to show shell loads from here. What works is to photograph the window the
+// engineer has set up: the queue below names each view the report needs, and each
+// one is captured with a single click once ETABS is showing it.
+function reportViewQueue() {
+  const stories = (reportState.stories || []).slice().reverse();
+  const groups = reportState.planGroups || [];
+  const grouped = new Set(groups.flatMap(g => g.stories));
+  const targets = [
+    ...groups.map((g, i) => ({ code: `S6-G${i + 1}`, label: g.stories.join(' · '), stories: g.stories })),
+    ...stories.filter(s => !grouped.has(s.name)).map(s => ({ code: `S6-${s.name}`, label: s.name, stories: [s.name] }))
+  ];
+  // One view per target per selected load pattern, which is what section 6 prints.
+  const patterns = [...new Set(REPORT_LOAD_BOXES
+    .flatMap(box => [reportState.fields[`${box.id}Rigid`], reportState.fields[`${box.id}Other`]])
+    .filter(Boolean))];
+  return targets.flatMap(target => patterns.map(pattern => ({
+    key: `${target.code}::${pattern}`,
+    target: target.label,
+    stories: target.stories,
+    pattern
+  })));
+}
+
+async function reportCaptureInto(key, describe) {
+  try {
+    const res = await fetchAgentJson('/api/etabs/capture', 30000);
+    if (!res.etabsConnected || !res.image) throw new Error(res.error || t('drift.error.notConnected'));
+    reportState.images[key] = res.image;
+    saveReportState();
+    renderReportModule();
+    log(t('report.capture.done', { what: describe }), 'ok');
+  } catch (error) {
+    log(/404/.test(error.message) ? t('report.model.agentOld') : describeError(error), 'error');
+  }
+}
+
+function reportGenerateLoadViews() {
+  const queue = reportViewQueue();
+  if (queue.length === 0) { log(t('report.pg.nothingToDo'), 'error'); return; }
+  reportState.captureQueue = queue.map(item => item.key);
+  reportState.captureKind = 'loads';
+  saveReportState();
+  renderReportEditorPanel();
+}
+
+function reportGenerateSoilViews() {
+  const patterns = [reportState.fields.soilStatic, reportState.fields.soilDynamic].filter(Boolean);
+  if (patterns.length === 0) { log(t('report.soilP.needPattern'), 'error'); return; }
+  reportState.captureQueue = patterns.map(p => `S65::${p}`);
+  reportState.captureKind = 'soil';
+  saveReportState();
+  renderReportEditorPanel();
 }
 
 // Report-wide controls live in the page heading, next to the Dashboard button.
@@ -5403,7 +5573,24 @@ function reportStepBody(step) {
 
 // Field types that own their whole width and render their own block; everything
 // else is packed into the shared two-column .field-grid.
-const REPORT_BLOCK_TYPES = new Set(['autotext', 'image', 'storeyRoles', 'measure', 'tableSelect']);
+const REPORT_BLOCK_TYPES = new Set([
+  'autotext', 'image', 'storeyRoles', 'measure', 'tableSelect',
+  'loadBoxes', 'planGroups', 'soilPressure'
+]);
+
+// The three load boxes of section 6, in the report template's own order and units.
+const REPORT_LOAD_BOXES = [
+  { id: 'l61', labelKey: 'report.load.61', kindKey: 'report.load.area', unit: 'kN/m²' },
+  { id: 'l62', labelKey: 'report.load.62', kindKey: 'report.load.line', unit: 'kN/m' },
+  { id: 'l63', labelKey: 'report.load.63', kindKey: 'report.load.area', unit: 'kN/m²' }
+];
+
+// Table 6.1 of the template: the soil pressure assumed on the basement walls.
+const REPORT_SOIL_PRESSURE = [
+  { id: 'cohesionless', labelKey: 'report.soilP.cohesionless', overKey: 'report.soilP.fullHeight', formula: '0.2 (γ·Hb + q)' },
+  { id: 'softStiff', labelKey: 'report.soilP.softStiff', overKey: 'report.soilP.split', formula: '0.2 (γ·Hb + q) / 0.3 (γ·Hb + q)' },
+  { id: 'stiffHard', labelKey: 'report.soilP.stiffHard', overKey: 'report.soilP.fullHeight', formula: '0.3 (γ·Hb + q)' }
+];
 
 function reportGroupHtml(group) {
   // Order is preserved: consecutive grid fields are collected into one .field-grid,
@@ -5436,8 +5623,188 @@ function reportBlockFieldHtml(field) {
   if (field.type === 'storeyRoles') return reportStoreyRolesHtml(field);
   if (field.type === 'measure') return reportMeasureHtml(field);
   if (field.type === 'tableSelect') return reportTableSelectHtml(field);
+  if (field.type === 'loadBoxes') return reportLoadBoxesHtml();
+  if (field.type === 'planGroups') return reportPlanGroupsHtml();
+  if (field.type === 'soilPressure') return reportSoilPressureHtml();
   return '';
 }
+
+// --- 6.1-6.3 load boxes ------------------------------------------------------
+// The pattern names offered are the model's own — nothing is hard-coded. With the
+// rigid-basement rule on, each load carries two selections (basement / other
+// storeys); with it off, one. Exactly one pattern per selection, since the report
+// figure is drawn for a single load pattern.
+function reportLoadBoxesHtml() {
+  const patterns = reportState.loadPatterns || [];
+  const rigidOn = !!reportState.fields.loadRigid;
+  const stories = (reportState.stories || []).slice().reverse();
+
+  const chips = (key, selected) => patterns.length
+    ? `<div class="rep-chips" data-chipset="${key}">
+        ${patterns.map(p => `<button type="button" class="rep-chip${selected === p ? ' on' : ''}" data-chip="${escapeHtml(p)}" aria-pressed="${selected === p}">${escapeHtml(p)}</button>`).join('')}
+      </div>`
+    : `<p class="rep-chip-empty">${t(etabsConnected ? 'report.load.noPatterns' : 'report.load.needConnection')}</p>`;
+
+  return `<div class="rep-loads">
+      <div class="rigid-row rep-rigid-row">
+        <span class="rigid-title">${t('report.load.rigidTitle')}</span>
+        <div class="rep-rigid-right">
+          ${rigidOn ? `
+            <label class="rep-rigid-story" for="repLoadRigidStory">${t('report.load.limitStorey')}</label>
+            <select id="repLoadRigidStory">
+              <option value="">${t('report.select.empty')}</option>
+              ${stories.map(s => `<option value="${escapeHtml(s.name)}"${reportState.fields.loadRigidStory === s.name ? ' selected' : ''}>${escapeHtml(s.name)}</option>`).join('')}
+            </select>` : ''}
+          <button type="button" class="switch toggle-switch" id="repLoadRigid" role="switch" aria-checked="${rigidOn}">
+            <span class="switch-label off">${t('action.off')}</span>
+            <span class="switch-label on">${t('action.on')}</span>
+            <span class="switch-thumb" aria-hidden="true"></span>
+          </button>
+        </div>
+      </div>
+      <p class="rigid-note">${t('report.load.rigidNote')}</p>
+
+      ${REPORT_LOAD_BOXES.map(box => `
+        <div class="rep-load-box">
+          <div class="rep-load-meta">
+            <span class="rep-load-kind">${t(box.kindKey)}</span>
+            <strong>${t(box.labelKey)}</strong>
+            <span class="rep-load-unit">${box.unit}</span>
+          </div>
+          <div class="rep-load-picks">
+            ${rigidOn ? `
+              <div class="rep-load-pick">
+                <span>${t('report.load.rigidLoads')}</span>
+                ${chips(`${box.id}Rigid`, reportState.fields[`${box.id}Rigid`])}
+              </div>
+              <div class="rep-load-pick">
+                <span>${t('report.load.otherLoads')}</span>
+                ${chips(`${box.id}Other`, reportState.fields[`${box.id}Other`])}
+              </div>`
+            : `
+              <div class="rep-load-pick">
+                <span>${t('report.load.allLoads')}</span>
+                ${chips(`${box.id}Other`, reportState.fields[`${box.id}Other`])}
+              </div>`}
+          </div>
+        </div>`).join('')}
+    </div>`;
+}
+
+// --- Plan view groups --------------------------------------------------------
+// Left: the model's storeys. Right: the groups. Storeys inside a group share one
+// drawing; every storey left outside gets its own. That is the whole rule.
+function reportPlanGroupsHtml() {
+  const stories = (reportState.stories || []).slice().reverse();
+  if (stories.length === 0) {
+    return `<p class="rep-inline-note">${t(etabsConnected ? 'report.storeys.loading' : 'report.storeys.needConnection')}</p>`;
+  }
+  const groups = reportState.planGroups || [];
+  const grouped = new Set(groups.flatMap(g => g.stories));
+  const loose = stories.filter(s => !grouped.has(s.name));
+
+  return `<div class="rep-plangroups">
+      <div class="rep-pg-cols">
+        <div class="rep-pg-col">
+          <p class="rep-pg-head">${t('report.pg.storeys')} <small>${t('report.pg.storeysHint', { count: loose.length })}</small></p>
+          <div class="rep-pg-list" id="repPgStoreys">
+            ${stories.map(s => `
+              <label class="rep-pg-item${grouped.has(s.name) ? ' used' : ''}">
+                <input type="checkbox" value="${escapeHtml(s.name)}"${grouped.has(s.name) ? ' disabled' : ''}>
+                <span>${escapeHtml(s.name)}</span>
+              </label>`).join('')}
+          </div>
+          <button class="button button-secondary full-width" type="button" id="repPgAdd">${t('report.pg.makeGroup')}</button>
+        </div>
+        <div class="rep-pg-col">
+          <p class="rep-pg-head">${t('report.pg.groups')} <small>${t('report.pg.groupsHint')}</small></p>
+          <div class="rep-pg-groups">
+            ${groups.length === 0 ? `<p class="rep-pg-empty">${t('report.pg.noGroups')}</p>` : groups.map((g, i) => `
+              <div class="rep-pg-group">
+                <div class="rep-pg-group-head">
+                  <strong>${t('report.pg.groupName', { n: i + 1 })}</strong>
+                  <button type="button" class="text-button" data-ungroup="${i}">${t('report.pg.dissolve')}</button>
+                </div>
+                <p>${g.stories.map(escapeHtml).join(' · ')}</p>
+              </div>`).join('')}
+          </div>
+          <p class="rep-pg-note">${t('report.pg.looseNote', { count: loose.length })}</p>
+        </div>
+      </div>
+      <div class="rep-pg-actions">
+        <button class="button button-primary" type="button" id="repGenLoadViews"${etabsConnected ? '' : ' disabled'}>${t('report.pg.generate')}</button>
+        <span class="rep-measure-note" id="repGenNote">${etabsConnected ? t('report.pg.generateHint', { count: groups.length + loose.length }) : t('report.measure.needConnection')}</span>
+      </div>
+      ${reportState.captureKind === 'loads' ? reportCaptureListHtml(reportViewQueue()) : ''}
+    </div>`;
+}
+
+// Each row is one view the report needs. ETABS cannot be driven to it from here,
+// so the row says what to open and the button photographs whatever is on screen.
+function reportCaptureListHtml(items) {
+  if (!items.length) return '';
+  return `<div class="rep-capture">
+      <div class="rep-capture-head">
+        <p class="rep-pg-head">${t('report.capture.title')}</p>
+        <button type="button" class="text-button" id="repCaptureClear">${t('report.capture.clear')}</button>
+      </div>
+      <p class="rep-capture-help">${t('report.capture.help')}</p>
+      <ul class="rep-capture-list">
+        ${items.map(item => {
+          const shot = reportState.images[item.key];
+          return `<li>
+            <div class="rep-capture-info">
+              <strong>${escapeHtml(t('report.capture.row', { target: item.target, pattern: item.pattern }))}</strong>
+              ${shot ? `<img src="${shot}" alt="">` : ''}
+            </div>
+            <button class="button button-secondary" type="button" data-capture="${escapeHtml(item.key)}"
+                    data-describe="${escapeHtml(t('report.capture.row', { target: item.target, pattern: item.pattern }))}">
+              ${shot ? t('report.capture.recapture') : t('report.capture.button')}
+            </button>
+          </li>`;
+        }).join('')}
+      </ul>
+    </div>`;
+}
+
+// --- 6.5 Soil and water ------------------------------------------------------
+function reportSoilPressureHtml() {
+  const current = reportState.fields.soilPressure || '';
+  const patterns = reportState.loadPatterns || [];
+  const select = (id, labelKey) => `<div class="field">
+      <label for="${reportDomId(id)}">${t(labelKey)}</label>
+      <select id="${reportDomId(id)}">
+        <option value="">${t('report.select.empty')}</option>
+        ${patterns.map(p => `<option value="${escapeHtml(p)}"${reportState.fields[id] === p ? ' selected' : ''}>${escapeHtml(p)}</option>`).join('')}
+      </select>
+    </div>`;
+
+  return `<div class="rep-soilp">
+      <p class="rep-pg-head">${t('report.soilP.tableTitle')}</p>
+      <div class="rep-soilp-cards">
+        ${REPORT_SOIL_PRESSURE.map(row => `
+          <button type="button" class="rep-soilp-card${current === row.id ? ' on' : ''}" data-soilp="${row.id}" aria-pressed="${current === row.id}">
+            <strong>${t(row.labelKey)}</strong>
+            <small>${t(row.overKey)}</small>
+            <code>${row.formula}</code>
+          </button>`).join('')}
+      </div>
+      <div class="field-grid">
+        ${select('soilStatic', 'report.soilP.static')}
+        ${select('soilDynamic', 'report.soilP.dynamic')}
+      </div>
+      <div class="rep-pg-actions">
+        <button class="button button-primary" type="button" id="repGenSoilViews"${etabsConnected ? '' : ' disabled'}>${t('report.soilP.generate')}</button>
+        <span class="rep-measure-note" id="repSoilNote">${etabsConnected ? t('report.soilP.generateHint', { prefix: REPORT_BASEMENT_WALL_PREFIX }) : t('report.measure.needConnection')}</span>
+      </div>
+      ${reportState.captureKind === 'soil' ? reportCaptureListHtml(
+        [reportState.fields.soilStatic, reportState.fields.soilDynamic].filter(Boolean)
+          .map(p => ({ key: `S65::${p}`, target: t('report.soilP.tableTitle'), pattern: p }))) : ''}
+    </div>`;
+}
+
+// Basement-wall sections are recognised by this prefix on the wall section name.
+const REPORT_BASEMENT_WALL_PREFIX = 'BAP';
 
 // Storey roles: the storey list comes from the connected model, and marking each
 // one basement / ground / normal / roof is what produces the counts the report
@@ -5642,6 +6009,9 @@ function bindReportStep(panel, step) {
     if (field.type === 'storeyRoles') { bindReportStoreyRoles(panel); continue; }
     if (field.type === 'measure') { bindReportMeasure(panel); continue; }
     if (field.type === 'tableSelect') { bindReportTableSelect(panel, field); continue; }
+    if (field.type === 'loadBoxes') { bindReportLoadBoxes(panel); continue; }
+    if (field.type === 'planGroups') { bindReportPlanGroups(panel); continue; }
+    if (field.type === 'soilPressure') { bindReportSoilPressure(panel); continue; }
     const el = $('#' + reportDomId(field.id), panel);
     if (!el) continue;
     if (field.type !== 'autotext') el.value = reportState.fields[field.id] ?? '';
@@ -5748,6 +6118,90 @@ function bindReportTableSelect(panel, field) {
       if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); choose(cell.dataset.pick); }
     });
   });
+}
+
+function bindReportLoadBoxes(panel) {
+  const rigid = $('#repLoadRigid', panel);
+  if (rigid) rigid.addEventListener('click', () => {
+    reportState.fields.loadRigid = !reportState.fields.loadRigid;
+    saveReportState();
+    renderReportModule();
+  });
+
+  const story = $('#repLoadRigidStory', panel);
+  if (story) story.addEventListener('change', () => {
+    reportState.fields.loadRigidStory = story.value;
+    saveReportState();
+    renderReportStructurePanel();
+  });
+
+  $$('[data-chipset]', panel).forEach(set => {
+    const key = set.dataset.chipset;
+    $$('[data-chip]', set).forEach(chip => chip.addEventListener('click', () => {
+      // One pattern per box: picking the selected one again clears it.
+      reportState.fields[key] = reportState.fields[key] === chip.dataset.chip ? '' : chip.dataset.chip;
+      saveReportState();
+      renderReportModule();
+    }));
+  });
+}
+
+function bindReportPlanGroups(panel) {
+  const add = $('#repPgAdd', panel);
+  if (add) add.addEventListener('click', () => {
+    const picked = $$('#repPgStoreys input:checked', panel).map(input => input.value);
+    if (picked.length < 2) { log(t('report.pg.needTwo'), 'error'); return; }
+    reportState.planGroups = [...(reportState.planGroups || []), { stories: picked }];
+    saveReportState();
+    renderReportModule();
+  });
+
+  $$('[data-ungroup]', panel).forEach(button => button.addEventListener('click', () => {
+    const index = Number(button.dataset.ungroup);
+    reportState.planGroups = (reportState.planGroups || []).filter((_, i) => i !== index);
+    saveReportState();
+    renderReportModule();
+  }));
+
+  const generate = $('#repGenLoadViews', panel);
+  if (generate) generate.addEventListener('click', reportGenerateLoadViews);
+  bindReportCaptureList(panel);
+}
+
+function bindReportCaptureList(panel) {
+  $$('[data-capture]', panel).forEach(button => button.addEventListener('click', () => {
+    button.disabled = true;
+    reportCaptureInto(button.dataset.capture, button.dataset.describe)
+      .finally(() => { const again = $(`[data-capture="${CSS.escape(button.dataset.capture)}"]`); if (again) again.disabled = false; });
+  }));
+  const clear = $('#repCaptureClear', panel);
+  if (clear) clear.addEventListener('click', () => {
+    reportState.captureKind = '';
+    saveReportState();
+    renderReportEditorPanel();
+  });
+}
+
+function bindReportSoilPressure(panel) {
+  $$('[data-soilp]', panel).forEach(card => card.addEventListener('click', () => {
+    reportState.fields.soilPressure = reportState.fields.soilPressure === card.dataset.soilp ? '' : card.dataset.soilp;
+    saveReportState();
+    renderReportModule();
+  }));
+
+  ['soilStatic', 'soilDynamic'].forEach(id => {
+    const el = $('#' + reportDomId(id), panel);
+    if (!el) return;
+    el.addEventListener('change', () => {
+      reportState.fields[id] = el.value;
+      saveReportState();
+      renderReportStructurePanel();
+    });
+  });
+
+  const generate = $('#repGenSoilViews', panel);
+  if (generate) generate.addEventListener('click', reportGenerateSoilViews);
+  bindReportCaptureList(panel);
 }
 
 function bindReportImageField(panel, field) {

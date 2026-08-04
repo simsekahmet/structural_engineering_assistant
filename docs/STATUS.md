@@ -1,6 +1,6 @@
 # Module implementation status
 
-Last updated for **web v1.14.1 / agent v1.13.0**.
+Last updated for **web v1.15.0 / agent v1.14.0**.
 
 "Migrated" means the calculation itself runs against the live ETABS model and has
 been checked against an independent hand calculation. Every check module listed below
@@ -32,7 +32,8 @@ only what has been settled is implemented — no step is filled in by guesswork.
 | Introduction → 2. Introduction | ✅ Implemented | Storey list read from the model and marked basement / ground / normal / roof; the counts and heights of the report sentence follow from those marks. Figures 1.1 and 1.2 (codes `S1-1`, `S1-2`). |
 | Introduction → 3. Structural system | ✅ Implemented | Plan extent measured from the model, system class, foundation type and zone thicknesses, slab system (the paragraph switches between flat-plate and beam-and-slab) with the thickness read from the slab sections assigned in the model. Figure 2.1 (code `S2-1`). |
 | Introduction → 4. Materials / soil | ✅ Implemented | Concrete and rebar classes pre-selected from the model's materials and overridable on the reference table itself; local soil class selected on TBDY Table 5.1. |
-| Introduction → steps 5–11 | ⬜ Not defined yet | Listed under their outline names and marked "to be defined" in the interface. |
+| Introduction → 5. Loads | 🚧 Partly | Load patterns read from the model feed the 6.1–6.3 boxes (one pattern per box, split by the rigid-basement rule). Plan-view groups decide which storeys share a drawing. Table 6.1 soil pressure and the static/dynamic soil load patterns are selected here. Views are captured from the ETABS window — see the note below. |
+| Introduction → steps 6–11 | ⬜ Not defined yet | Listed under their outline names and marked "to be defined" in the interface. |
 | Appendices B (beam) / C (column) / D (wall) | ⬜ Not defined yet | Shown as processes; no steps defined. |
 | Word / PDF output | ⬜ Not started | The report is composed and previewed but cannot yet be written to a document file. |
 
@@ -42,6 +43,14 @@ variables inside it change. Values a model can supply (storey heights, plan exte
 slab thickness, concrete and rebar class) are read through the agent as *suggestions*
 — the engineer's own entry always wins, because an automatic read can pick the wrong
 material and they sign the report.
+
+**View capture is deliberately semi-automatic.** The ETABS v1 API exposes no view
+control and no picture export — `cView` offers only `RefreshView` and
+`RefreshWindow` — so ETABS cannot be driven to a plan view or told to display shell
+loads from the agent. The Loads step therefore lists every view the report needs,
+the engineer sets that view up in ETABS, and the agent photographs the ETABS window
+on a single click. Fully automating this would mean driving ETABS menus with
+synthetic input, which breaks on any menu or version change.
 
 Report data is held in the browser's local storage on the engineer's own machine and
 is never sent anywhere. Clearing browser data clears it — use *Save template* to keep
