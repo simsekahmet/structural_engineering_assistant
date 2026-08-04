@@ -185,11 +185,6 @@ const translations = {
     'report.reset.confirm': 'Every piece of report information you entered — including the images — will be cleared. Continue?',
     'report.reset.done': 'Report information cleared.',
     'report.saved': 'Report information is kept in this browser and is never sent anywhere.',
-    'report.bulk.title': 'BULK IMAGE MAPPING',
-    'report.bulk.text': 'Places the images in a folder automatically by their code names. The code is written next to every image slot — for example KAPAK.',
-    'report.bulk.button': 'Select image folder',
-    'report.bulk.result': '{count} image(s) matched by code.',
-    'report.bulk.none': 'No file in the folder matched an image code.',
     'report.step.cover.title': 'Cover',
     'report.step.cover.desc': 'The cover text, the report scope and the footer are composed together from the shared project information.',
     'report.step.intro.title': '1 Introduction', 'report.step.system.title': '2 Structural System',
@@ -231,6 +226,93 @@ const translations = {
     'report.preview.date': 'DATE', 'report.preview.footer': 'FOOTER',
     'report.preview.pending': 'The preview of this step will be added together with the step itself.',
     'validate.year': 'Year {value} is not plausible. Expected 2000–2100.',
+
+    'report.step.intro.desc': 'Mark which storey is which on the model’s storey list; the counts and heights of the report sentence follow from it.',
+    'report.step.system.desc': 'Plan extents measured from the model, structural system class, foundation and slab system.',
+    'report.step.material.desc': 'Concrete and reinforcement come from the connected model; you choose the local soil class.',
+    'report.group.storeys': 'STOREYS', 'report.group.storeys.hint': 'The storey list is read from the connected model. Mark each storey; the counts are produced from these marks.',
+    'report.group.storeyHeights': 'STOREY HEIGHTS', 'report.group.storeyHeights.hint': 'Pre-filled from the model’s storey table — the height most storeys share. Change any value that is not what the report should quote.',
+    'report.group.figures': 'FIGURES',
+    'report.group.plan': 'STANDARD FLOOR PLAN EXTENT', 'report.group.plan.hint': 'Measured from the model: the X and Y span of a middle storey.',
+    'report.group.systemClass': 'STRUCTURAL SYSTEM',
+    'report.group.foundation': 'FOUNDATION SYSTEM', 'report.group.foundation.hint': 'A thickness left blank is not added to the sentence.',
+    'report.group.slab': 'SLAB SYSTEM', 'report.group.slab.hint': 'The paragraph changes with the chosen system. The thickness is read from the slab sections assigned in the model.',
+    'report.group.concrete': 'CONCRETE', 'report.group.concrete.hint': 'Pre-selected from the model’s concrete material. Pick a different row if the automatic read is wrong.',
+    'report.group.rebar': 'REINFORCING STEEL', 'report.group.rebar.hint': 'Pre-selected from the model’s rebar material. Pick a different column if the automatic read is wrong.',
+    'report.group.soil': 'LOCAL SOIL CLASS', 'report.group.soil.hint': 'Select the row of the soil class; the report highlights that row.',
+    'report.role.basement': 'Basement', 'report.role.ground': 'Ground', 'report.role.normal': 'Normal',
+    'report.role.roof': 'Roof', 'report.role.none': '—',
+    'report.storeys.needConnection': 'Connect to the ETABS model to read its storey list.',
+    'report.storeys.loading': 'Reading the storey list from the model…',
+    'report.field.basementH': 'Basement storey height', 'report.field.typicalH': 'Other storey height',
+    'report.field.totalH': 'Total height', 'report.field.planWidth': 'Plan extent X', 'report.field.planDepth': 'Plan extent Y',
+    'report.field.foundationTower': 'Under the tower', 'report.field.foundationPark': 'Car-park zone',
+    'report.field.systemClass': 'System class', 'report.field.foundationType': 'Foundation type',
+    'report.field.slabSystem': 'Slab system', 'report.field.slabThickness': 'Slab thickness (cm)',
+    'report.select.empty': 'Select…', 'report.fromModel': 'from model',
+    'report.measure.button': 'Measure from model', 'report.measure.working': 'Measuring…',
+    'report.measure.needConnection': 'Connect to a model to measure.',
+    'report.measure.done': 'Plan extent measured on storey {story}.',
+    'report.measure.empty': 'No plan extent could be measured — the storey has no point objects.',
+    'report.model.readFailed': 'Model data could not be read: {error}. The report still works; enter the values by hand.',
+    'report.auto.suggests': 'The model suggests {v}.', 'report.auto.matched': 'Matches the model ({v}).',
+    'report.opt.systemClass.wallOnly': 'Ductile solid RC walls (all seismic load)',
+    'report.opt.systemClass.wallOnly.phrase': 'buildings in which the whole of the earthquake effect is resisted by high-ductility solid reinforced-concrete walls',
+    'report.opt.systemClass.frameWall': 'RC frame + wall (dual system)',
+    'report.opt.systemClass.frameWall.phrase': 'a high-ductility dual system of reinforced-concrete frames and walls',
+    'report.opt.systemClass.frame': 'RC frame',
+    'report.opt.systemClass.frame.phrase': 'a high-ductility reinforced-concrete frame system',
+    'report.opt.foundationType.raft': 'Raft foundation', 'report.opt.foundationType.raft.phrase': 'a raft foundation',
+    'report.opt.foundationType.strip': 'Strip footing', 'report.opt.foundationType.strip.phrase': 'strip footings',
+    'report.opt.foundationType.pad': 'Pad footing', 'report.opt.foundationType.pad.phrase': 'pad footings',
+    'report.opt.foundationType.pile': 'Piled foundation', 'report.opt.foundationType.pile.phrase': 'a piled foundation',
+    'report.opt.slabSystem.flat': 'Flat plate (beamless)', 'report.opt.slabSystem.flat.phrase': 'flat plate',
+    'report.opt.slabSystem.beam': 'Beam-and-slab', 'report.opt.slabSystem.beam.phrase': 'beam-and-slab',
+    'report.text.intro': '1 INTRODUCTION · BUILDING DESCRIPTION',
+    'report.text.system': '2 STRUCTURAL SYSTEM · TEXT',
+    'report.text.foundation': '2.1 FOUNDATION SYSTEM · TEXT',
+    'report.text.slab': '2.3 SLAB SYSTEM · TEXT',
+    'report.text.concrete': '4.1.1 CONCRETE PROPERTIES · TEXT',
+    'report.text.rebar': '4.1.2 REINFORCING STEEL · TEXT',
+    'report.part.and': 'and',
+    'report.part.basementCount': '{n} basement storeys', 'report.part.groundCount': '{n} ground storey',
+    'report.part.normalCount': '{n} normal storeys', 'report.part.roofCount': '{n} roof storey',
+    'report.part.totalHeight': ', giving a total height of {h} m',
+    'report.part.foundationTower': '{v} cm under the tower', 'report.part.foundationPark': '{v} cm in the car-park zone',
+    'report.part.slabThickness': ' as {v} cm',
+    'report.template.storeyMakeup': 'The building has {list}.',
+    'report.template.basementHeight': 'In the part of the building formed by the {n} basement storeys extending from the top of the foundation up to ground level, the storey height is {h} m.',
+    'report.template.typicalHeight': 'In every other storey the storey height is {h} m{total}.',
+    'report.template.planExtent': 'The standard floor plan of the building measures approximately {w} m x {d} m.',
+    'report.template.systemMembers': 'The structural system of the building consists of reinforced-concrete walls, reinforced-concrete columns and reinforced-concrete beams.',
+    'report.template.systemClass': 'The structural system will be designed as {v}.',
+    'report.template.slabMention': 'The building is formed of a {v} slab system.',
+    'report.template.systemContinuity': 'In laying out the structural system, sufficient stiffness and strength have been provided to transfer the forces acting on the building during an earthquake continuously and safely down to the foundation soil.',
+    'report.template.foundationType': 'The foundation of the building is designed as {v}.',
+    'report.template.foundationThickness': 'According to the analyses carried out under the combined effect of vertical loads and earthquake, the {v} thickness is {list}.',
+    'report.template.slabUsed': 'A {v} slab system is used in the floor slabs of the building.',
+    'report.template.slabLimits': 'The thicknesses have been selected{thickness} in accordance with the TS 500 {v} proportioning requirements and the long-term service deflection limits, and the safe transfer of earthquake forces within the diaphragm has been ensured.',
+    'report.template.concrete': 'Concrete with a 28-day characteristic cylinder compressive strength of {fck} MPa ({v}) has been used for the frame system, the core walls, the basement columns and slabs, and the foundations.',
+    'report.template.rebar': '{v} class {surface} reinforcement with a minimum yield strength of {fy} MPa will be used in the reinforced-concrete structural members.',
+    'report.table.concrete': 'Table 4.1 Concrete class properties', 'report.table.concrete.note': 'The selected row is highlighted in the report',
+    'report.table.rebar': 'Table 4.2', 'report.table.rebar.note': 'The selected column is highlighted in the report',
+    'report.table.soil': 'Table 5.1 Local soil classes', 'report.table.soil.note': 'The selected row is highlighted in the report',
+    'report.col.concreteClass': 'Concrete class', 'report.col.fck': 'fck', 'report.col.fctk': 'fctk', 'report.col.e': 'E', 'report.col.g': 'G',
+    'report.col.soilClass': 'Local soil class', 'report.col.soilType': 'Soil description',
+    'report.col.vs30': '(Vs)30 [m/s]', 'report.col.n60': '(N60)30 [blows/30 cm]', 'report.col.cu30': '(cu)30 [kPa]',
+    'report.row.surface': 'Surface type', 'report.row.re': 'Yield strength Re (N/mm²)', 'report.row.rm': 'Tensile strength Rm (N/mm²)',
+    'report.row.rmRe': 'Rm / Re', 'report.row.reActNom': 'Re act / Re nom (max)',
+    'report.row.a5': 'Elongation at rupture A5 (%)', 'report.row.agt': 'Total elongation Agt (%)',
+    'report.surface.plain': 'Plain', 'report.surface.ribbed': 'Ribbed', 'report.surface.profiled': 'Profiled',
+    'report.soil.za': 'Strong, hard rock', 'report.soil.zb': 'Slightly weathered, moderately strong rock',
+    'report.soil.zc': 'Very dense sand, gravel and hard clay layers, or weathered, heavily fractured weak rock',
+    'report.soil.zd': 'Medium dense to dense sand, gravel or very stiff clay layers',
+    'report.soil.ze': 'Loose sand, gravel or soft to stiff clay layers',
+    'report.soil.zf': 'Soils requiring site-specific investigation and evaluation',
+    'report.soil.siteSpecific': 'Site-specific',
+    'report.fig.s11': 'Figure 1.1 Building section', 'report.fig.s12': 'Figure 1.2 3D analysis model',
+    'report.fig.s21': 'Figure 2.1 Typical floor formwork plan',
+    'report.fig.hint': 'If no image is uploaded, this figure is not printed in the report.',
     'drift.params.title': 'Earthquake Parameters', 'drift.params.sdsDD2': 'SDS (DD-2)', 'drift.params.sdsDD3': 'SDS (DD-3)',
     'drift.params.sd1DD2': 'SD1 (DD-2)', 'drift.params.sd1DD3': 'SD1 (DD-3)', 'drift.params.k': 'k', 'drift.params.tp': 'Tp',
     'drift.params.flexibleJoint': 'Flexible joint present? (Yes: 0.016, No: 0.008)', 'drift.params.basement': 'Basement assumption?',
@@ -485,11 +567,6 @@ const translations = {
     'report.reset.confirm': 'Girdiğiniz tüm rapor bilgileri — görseller dâhil — silinecek. Devam edilsin mi?',
     'report.reset.done': 'Rapor bilgileri temizlendi.',
     'report.saved': 'Rapor bilgileri bu tarayıcıda saklanır, hiçbir yere gönderilmez.',
-    'report.bulk.title': 'TOPLU GÖRSEL EŞLEME',
-    'report.bulk.text': 'Klasördeki görselleri kod adlarına göre otomatik yerleştirir. Kod, her görsel alanının yanında yazar — örneğin KAPAK.',
-    'report.bulk.button': 'Görsel klasörü seç',
-    'report.bulk.result': '{count} görsel koduna göre eşleştirildi.',
-    'report.bulk.none': 'Klasördeki hiçbir dosya bir görsel koduyla eşleşmedi.',
     'report.step.cover.title': 'Kapak',
     'report.step.cover.desc': 'Ortak proje bilgilerinden kapak yazısı, rapor kapsamı ve alt bilgi birlikte oluşturulur.',
     'report.step.intro.title': '1 Giriş', 'report.step.system.title': '2 Taşıyıcı Sistem',
@@ -531,6 +608,93 @@ const translations = {
     'report.preview.date': 'TARİH', 'report.preview.footer': 'ALT BİLGİ',
     'report.preview.pending': 'Bu adımın önizlemesi, adımın kendisiyle birlikte eklenecek.',
     'validate.year': '{value} yılı makul değil. 2000–2100 aralığı bekleniyor.',
+
+    'report.step.intro.desc': 'Modelin kat listesinde hangi katın ne olduğunu işaretleyin; rapor cümlesindeki kat sayıları ve yükseklikler buradan üretilir.',
+    'report.step.system.desc': 'Modelden ölçülen izdüşüm boyutları, taşıyıcı sistem sınıfı, temel ve döşeme sistemi.',
+    'report.step.material.desc': 'Beton ve donatı bağlı modelden gelir; yerel zemin sınıfını siz seçersiniz.',
+    'report.group.storeys': 'KATLAR', 'report.group.storeys.hint': 'Kat listesi bağlı modelden okunur. Her katı işaretleyin; sayılar bu işaretlemelerden üretilir.',
+    'report.group.storeyHeights': 'KAT YÜKSEKLİKLERİ', 'report.group.storeyHeights.hint': 'Modelin kat tablosundan, katların çoğunda ortak olan yükseklik ile önden doldurulur. Raporda geçmesi gereken değer bu değilse değiştirin.',
+    'report.group.figures': 'ŞEKİLLER',
+    'report.group.plan': 'STANDART KAT İZDÜŞÜMÜ', 'report.group.plan.hint': 'Modelden ölçülür: bir ara katın X ve Y yönündeki açıklığı.',
+    'report.group.systemClass': 'TAŞIYICI SİSTEM',
+    'report.group.foundation': 'TEMEL SİSTEMİ', 'report.group.foundation.hint': 'Girilmeyen kalınlık cümleye eklenmez.',
+    'report.group.slab': 'DÖŞEME SİSTEMİ', 'report.group.slab.hint': 'Paragraf seçilen sisteme göre değişir. Kalınlık, modelde atanmış döşeme kesitlerinden okunur.',
+    'report.group.concrete': 'BETON', 'report.group.concrete.hint': 'Modeldeki beton malzemesinden önden seçilir. Otomatik okuma yanlışsa farklı bir satır seçin.',
+    'report.group.rebar': 'DONATI ÇELİĞİ', 'report.group.rebar.hint': 'Modeldeki donatı malzemesinden önden seçilir. Otomatik okuma yanlışsa farklı bir sütun seçin.',
+    'report.group.soil': 'YEREL ZEMİN SINIFINI SEÇİN', 'report.group.soil.hint': 'Zemin sınıfının satırını seçin; raporda o satır vurgulanır.',
+    'report.role.basement': 'Bodrum', 'report.role.ground': 'Zemin', 'report.role.normal': 'Normal',
+    'report.role.roof': 'Çatı', 'report.role.none': '—',
+    'report.storeys.needConnection': 'Kat listesini okumak için ETABS modeline bağlanın.',
+    'report.storeys.loading': 'Kat listesi modelden okunuyor…',
+    'report.field.basementH': 'Bodrum kat yüksekliği', 'report.field.typicalH': 'Diğer kat yüksekliği',
+    'report.field.totalH': 'Toplam yükseklik', 'report.field.planWidth': 'İzdüşüm X', 'report.field.planDepth': 'İzdüşüm Y',
+    'report.field.foundationTower': 'Yükselen blok altında', 'report.field.foundationPark': 'Otopark bölgesinde',
+    'report.field.systemClass': 'Sistem sınıfı', 'report.field.foundationType': 'Temel tipi',
+    'report.field.slabSystem': 'Döşeme sistemi', 'report.field.slabThickness': 'Döşeme kalınlığı (cm)',
+    'report.select.empty': 'Seçiniz…', 'report.fromModel': 'modelden',
+    'report.measure.button': 'Modelden ölç', 'report.measure.working': 'Ölçülüyor…',
+    'report.measure.needConnection': 'Ölçmek için bir modele bağlanın.',
+    'report.measure.done': 'İzdüşüm {story} katından ölçüldü.',
+    'report.measure.empty': 'İzdüşüm ölçülemedi — katta nokta nesnesi bulunamadı.',
+    'report.model.readFailed': 'Model verisi okunamadı: {error}. Rapor yine çalışır; değerleri elle girebilirsiniz.',
+    'report.auto.suggests': 'Model {v} öneriyor.', 'report.auto.matched': 'Modelle aynı ({v}).',
+    'report.opt.systemClass.wallOnly': 'Süneklik düzeyi yüksek boşluksuz betonarme perde',
+    'report.opt.systemClass.wallOnly.phrase': 'deprem etkilerinin tamamının süneklik düzeyi yüksek boşluksuz betonarme perdelerle karşılandığı binalar',
+    'report.opt.systemClass.frameWall': 'Betonarme çerçeve + perde (karma)',
+    'report.opt.systemClass.frameWall.phrase': 'süneklik düzeyi yüksek betonarme çerçeve ve perdelerden oluşan karma sistem',
+    'report.opt.systemClass.frame': 'Betonarme çerçeve',
+    'report.opt.systemClass.frame.phrase': 'süneklik düzeyi yüksek betonarme çerçeve sistemi',
+    'report.opt.foundationType.raft': 'Radye temel', 'report.opt.foundationType.raft.phrase': 'radye temel',
+    'report.opt.foundationType.strip': 'Sürekli temel', 'report.opt.foundationType.strip.phrase': 'sürekli temel',
+    'report.opt.foundationType.pad': 'Tekil temel', 'report.opt.foundationType.pad.phrase': 'tekil temel',
+    'report.opt.foundationType.pile': 'Kazıklı temel', 'report.opt.foundationType.pile.phrase': 'kazıklı temel',
+    'report.opt.slabSystem.flat': 'Kirişsiz plak', 'report.opt.slabSystem.flat.phrase': 'kirişsiz plak',
+    'report.opt.slabSystem.beam': 'Kirişli plak', 'report.opt.slabSystem.beam.phrase': 'kirişli plak',
+    'report.text.intro': '1 GİRİŞ · BİNA TANIMI',
+    'report.text.system': '2 TAŞIYICI SİSTEM · METİN',
+    'report.text.foundation': '2.1 TEMEL SİSTEMİ · METİN',
+    'report.text.slab': '2.3 DÖŞEME SİSTEMİ · METİN',
+    'report.text.concrete': '4.1.1 BETON ÖZELLİKLERİ · METİN',
+    'report.text.rebar': '4.1.2 DONATI ÇELİĞİ ÖZELLİKLERİ · METİN',
+    'report.part.and': 've',
+    'report.part.basementCount': '{n} bodrum kata', 'report.part.groundCount': '{n} zemin kata',
+    'report.part.normalCount': '{n} normal kata', 'report.part.roofCount': '{n} çatı kata',
+    'report.part.totalHeight': ' olup toplam yükseklik {h} m’dir',
+    'report.part.foundationTower': 'yükselen blok altında {v} cm', 'report.part.foundationPark': 'otopark bölgesinde {v} cm',
+    'report.part.slabThickness': ' {v} cm olarak',
+    'report.template.storeyMakeup': 'Bina {list} sahiptir.',
+    'report.template.basementHeight': 'Binanın, temel üstünden zemin seviyesine kadar uzanan {n} bodrum kattan oluşan bölümünde, kat yüksekliği {h} m’dir.',
+    'report.template.typicalHeight': 'Diğer tüm katlarda ise kat yüksekliği {h} m{total}.',
+    'report.template.planExtent': 'Binanın standart kat izdüşümün boyutları yaklaşık {w} m x {d} m’dir.',
+    'report.template.systemMembers': 'Yapının taşıyıcı sistemi, betonarme perdelerden, betonarme kolonlar ve betonarme kirişlerden oluşmaktadır.',
+    'report.template.systemClass': 'Yapının taşıyıcı sistemi {v} olarak tasarlanacaktır.',
+    'report.template.slabMention': 'Yapı {v} döşeme sisteminden oluşmaktadır.',
+    'report.template.systemContinuity': 'Taşıyıcı sistem teşkil edilirken, deprem sırasında binaya etki edecek kuvvetlerin temel zeminine kadar sürekli bir şekilde ve güvenli olarak aktarılmasını sağlayacak yeterli rijitlik ve dayanım sağlanmıştır.',
+    'report.template.foundationType': 'Binanın temeli {v} olarak tasarlanmıştır.',
+    'report.template.foundationThickness': 'Düşey yükler ve depremin ortak etkisi altında gerçekleştirilen hesaplara göre, {v} kalınlığı {list} olmaktadır.',
+    'report.template.slabUsed': 'Bina kat tabliyelerinde {v} döşeme sistemi kullanılmıştır.',
+    'report.template.slabLimits': 'Kalınlıklar, TS500 {v} boyutlandırma şartlarına ve servis durumundaki uzun süreli sehim limitlerine göre{thickness} seçilmiş olup, deprem kuvvetlerinin diyafram içinde güvenle aktarılması sağlanmıştır.',
+    'report.template.concrete': 'Beton sınıfı 28 günlük karakteristik silindir basınç dayanımı, çerçeve sistemi ve çekirdek perdeleri, bodrum kolon ve döşemeleri ve temeller için {fck} MPa ({v}) olan beton kullanılmıştır.',
+    'report.template.rebar': 'Betonarme taşıyıcı sistem elemanlarında minimum akma dayanımı {fy} MPa olan {v} sınıfı {surface} donatı kullanılacaktır.',
+    'report.table.concrete': 'Tablo 4.1 Beton sınıfı özellikleri', 'report.table.concrete.note': 'Seçilen satır raporda vurgulanır',
+    'report.table.rebar': 'Tablo 4.2', 'report.table.rebar.note': 'Seçilen sütun raporda vurgulanır',
+    'report.table.soil': 'Tablo 5.1 Yerel zemin sınıfları', 'report.table.soil.note': 'Seçilen satır raporda vurgulanır',
+    'report.col.concreteClass': 'Beton sınıfı', 'report.col.fck': 'fck', 'report.col.fctk': 'fctk', 'report.col.e': 'E', 'report.col.g': 'G',
+    'report.col.soilClass': 'Yerel zemin sınıfı', 'report.col.soilType': 'Zemin cinsi',
+    'report.col.vs30': '(Vs)30 [m/s]', 'report.col.n60': '(N60)30 [darbe/30 cm]', 'report.col.cu30': '(cu)30 [kPa]',
+    'report.row.surface': 'Yüzey tipi', 'report.row.re': 'Akma dayanımı Re (N/mm²)', 'report.row.rm': 'Çekme dayanımı Rm (N/mm²)',
+    'report.row.rmRe': 'Rm / Re', 'report.row.reActNom': 'Re act / Re nom (max)',
+    'report.row.a5': 'Kopma uzaması A5 (%)', 'report.row.agt': 'Toplam uzama Agt (%)',
+    'report.surface.plain': 'Düz yüzeyli', 'report.surface.ribbed': 'Nervürlü', 'report.surface.profiled': 'Profilli',
+    'report.soil.za': 'Sağlam, sert kayalar', 'report.soil.zb': 'Az ayrışmış, orta sağlam kayalar',
+    'report.soil.zc': 'Çok sıkı kum, çakıl ve sert kil tabakaları veya ayrışmış, çok çatlaklı zayıf kayalar',
+    'report.soil.zd': 'Orta sıkı–sıkı kum, çakıl veya çok katı kil tabakaları',
+    'report.soil.ze': 'Gevşek kum, çakıl veya yumuşak–katı kil tabakaları',
+    'report.soil.zf': 'Sahaya özel araştırma ve değerlendirme gerektiren zeminler',
+    'report.soil.siteSpecific': 'Sahaya özel',
+    'report.fig.s11': 'Şekil 1.1 Bina boy kesiti', 'report.fig.s12': 'Şekil 1.2 3D analiz modeli görseli',
+    'report.fig.s21': 'Şekil 2.1 Normal kat kalıp planı',
+    'report.fig.hint': 'Görsel yüklenmezse bu şekil rapora basılmaz.',
     'drift.params.title': 'Deprem Parametreleri', 'drift.params.sdsDD2': 'SDS (DD-2)', 'drift.params.sdsDD3': 'SDS (DD-3)',
     'drift.params.sd1DD2': 'SD1 (DD-2)', 'drift.params.sd1DD3': 'SD1 (DD-3)', 'drift.params.k': 'k', 'drift.params.tp': 'Tp',
     'drift.params.flexibleJoint': 'Esnek derz var mı? (Var: 0.016, Yok: 0.008)', 'drift.params.basement': 'Bodrum kabulü var mı?',
@@ -765,6 +929,10 @@ function setActiveView(id) {
     ? t(module.categoryKey).toLocaleUpperCase('tr-TR')
     : t(module.categoryKey).toUpperCase();
   $('#moduleDescription').textContent = t(`module.${module.key}.description`);
+  // Module-owned controls next to the "Dashboard" button. Cleared on every view
+  // change so one module's toolbar can never leak into another's heading.
+  const headingSlot = $('#moduleHeadingSlot');
+  if (headingSlot) headingSlot.innerHTML = '';
   dashboard.classList.remove('active');
   moduleView.classList.add('active');
   $$('.nav-item').forEach(item => item.classList.toggle('active', item.dataset.view === id));
@@ -4513,6 +4681,65 @@ const reportProcesses = [
   { id: 'wall', labelKey: 'report.process.wall', pending: true }
 ];
 
+// Reference tables the report prints verbatim (TS 500 Table 4.1, TBDY 2018
+// Table 5.1, and the rebar table of the report template). They are data because
+// the document reproduces them as-is and highlights the engineer's selection.
+const REPORT_TABLES = {
+  concrete: {
+    kind: 'rows',
+    titleKey: 'report.table.concrete', noteKey: 'report.table.concrete.note',
+    headKeys: ['report.col.concreteClass', 'report.col.fck', 'report.col.fctk', 'report.col.e', 'report.col.g'],
+    rows: [
+      ['C25', '25', '1.75', '30250', '12604'], ['C30', '30', '1.91', '31801', '13250'],
+      ['C35', '35', '2.07', '33227', '13845'], ['C40', '40', '2.21', '34555', '14398'],
+      ['C45', '45', '2.34', '35802', '14917'], ['C50', '50', '2.47', '36981', '15409'],
+      ['C55', '55', '2.60', '38103', '15876'], ['C60', '60', '2.71', '39174', '16323'],
+      ['C65', '65', '2.82', '40202', '16751'], ['C70', '70', '2.93', '41191', '17163']
+    ]
+  },
+  // The rebar table is transposed in the report: one COLUMN per class.
+  rebar: {
+    kind: 'columns',
+    titleKey: 'report.table.rebar', noteKey: 'report.table.rebar.note',
+    classes: ['S220', 'S420', 'B420B', 'B420C', 'B500B', 'B500C', 'B500A'],
+    rowKeys: ['report.row.surface', 'report.row.re', 'report.row.rm', 'report.row.rmRe',
+      'report.row.reActNom', 'report.row.a5', 'report.row.agt'],
+    values: [
+      ['report.surface.plain', 'report.surface.ribbed', 'report.surface.ribbed', 'report.surface.ribbed',
+        'report.surface.ribbed', 'report.surface.ribbed', 'report.surface.profiled'],
+      ['220', '420', '420', '420', '500', '500', '500'],
+      ['340', '500', '—', '—', '—', '—', '550'],
+      ['≥1.20', '≥1.15', '≥1.08', '≥1.15 / <1.35', '≥1.08', '≥1.15 / <1.35', '—'],
+      ['—', '1.30', '—', '1.30', '—', '1.30', '—'],
+      ['18', '10', '12', '12', '12', '12', '5'],
+      ['—', '—', '5', '7.5', '5', '7.5', '2.5']
+    ]
+  },
+  soil: {
+    kind: 'rows',
+    titleKey: 'report.table.soil', noteKey: 'report.table.soil.note',
+    headKeys: ['report.col.soilClass', 'report.col.soilType', 'report.col.vs30', 'report.col.n60', 'report.col.cu30'],
+    rows: [
+      ['ZA', 'report.soil.za', '>1500', '—', '—'],
+      ['ZB', 'report.soil.zb', '760–1500', '—', '—'],
+      ['ZC', 'report.soil.zc', '360–760', '>50', '>250'],
+      ['ZD', 'report.soil.zd', '180–360', '15–50', '70–250'],
+      ['ZE', 'report.soil.ze', '<180', '<15', '<70'],
+      ['ZF', 'report.soil.zf', 'report.soil.siteSpecific', 'report.soil.siteSpecific', 'report.soil.siteSpecific']
+    ]
+  }
+};
+
+// Option lists whose wording ends up inside a report sentence, so each carries the
+// label shown in the picker and the phrase the composer splices into the text.
+const REPORT_OPTIONS = {
+  systemClass: ['wallOnly', 'frameWall', 'frame'],
+  foundationType: ['raft', 'strip', 'pad', 'pile'],
+  slabSystem: ['flat', 'beam']
+};
+
+const REPORT_STOREY_ROLES = ['basement', 'ground', 'normal', 'roof', 'none'];
+
 const reportSteps = {
   intro: [
     {
@@ -4551,9 +4778,110 @@ const reportSteps = {
         }
       ]
     },
-    { id: 'intro1', titleKey: 'report.step.intro.title', pending: true },
-    { id: 'system', titleKey: 'report.step.system.title', pending: true },
-    { id: 'material', titleKey: 'report.step.material.title', pending: true },
+    {
+      id: 'intro1',
+      titleKey: 'report.step.intro.title',
+      descKey: 'report.step.intro.desc',
+      groups: [
+        {
+          titleKey: 'report.group.storeys',
+          hintKey: 'report.group.storeys.hint',
+          fields: [{ id: 'storeyRoles', type: 'storeyRoles' }]
+        },
+        {
+          titleKey: 'report.group.storeyHeights',
+          hintKey: 'report.group.storeyHeights.hint',
+          fields: [
+            { id: 'basementH', type: 'number', min: 1.5, max: 10, unit: 'm' },
+            { id: 'typicalH', type: 'number', min: 1.5, max: 10, unit: 'm' },
+            { id: 'totalH', type: 'number', min: 1.5, max: 500, unit: 'm' }
+          ]
+        },
+        {
+          titleKey: 'report.group.texts',
+          fields: [{ id: 'introText', type: 'autotext', labelKey: 'report.text.intro' }]
+        },
+        {
+          titleKey: 'report.group.figures',
+          badgeKey: 'report.optional',
+          fields: [
+            { id: 'figSection', type: 'image', code: 'S1-1', optional: true, figure: 'report.fig.s11' },
+            { id: 'fig3d', type: 'image', code: 'S1-2', optional: true, figure: 'report.fig.s12' }
+          ]
+        }
+      ]
+    },
+    {
+      id: 'system',
+      titleKey: 'report.step.system.title',
+      descKey: 'report.step.system.desc',
+      groups: [
+        {
+          titleKey: 'report.group.plan',
+          hintKey: 'report.group.plan.hint',
+          fields: [{ id: 'planExtent', type: 'measure' }]
+        },
+        {
+          titleKey: 'report.group.systemClass',
+          fields: [
+            { id: 'systemClass', type: 'select', options: 'systemClass', span: 2 },
+            { id: 'systemText', type: 'autotext', labelKey: 'report.text.system' }
+          ]
+        },
+        {
+          titleKey: 'report.group.foundation',
+          hintKey: 'report.group.foundation.hint',
+          fields: [
+            { id: 'foundationType', type: 'select', options: 'foundationType', span: 2 },
+            { id: 'foundationTower', type: 'number', min: 10, max: 500, unit: 'cm' },
+            { id: 'foundationPark', type: 'number', min: 10, max: 500, unit: 'cm' },
+            { id: 'foundationText', type: 'autotext', labelKey: 'report.text.foundation' }
+          ]
+        },
+        {
+          titleKey: 'report.group.slab',
+          hintKey: 'report.group.slab.hint',
+          fields: [
+            { id: 'slabSystem', type: 'select', options: 'slabSystem', span: 2 },
+            { id: 'slabThickness', type: 'text', source: 'model', span: 2 },
+            { id: 'slabText', type: 'autotext', labelKey: 'report.text.slab' }
+          ]
+        },
+        {
+          titleKey: 'report.group.figures',
+          badgeKey: 'report.optional',
+          fields: [{ id: 'figPlan', type: 'image', code: 'S2-1', optional: true, figure: 'report.fig.s21' }]
+        }
+      ]
+    },
+    {
+      id: 'material',
+      titleKey: 'report.step.material.title',
+      descKey: 'report.step.material.desc',
+      groups: [
+        {
+          titleKey: 'report.group.concrete',
+          hintKey: 'report.group.concrete.hint',
+          fields: [
+            { id: 'concreteClass', type: 'tableSelect', table: 'concrete' },
+            { id: 'concreteText', type: 'autotext', labelKey: 'report.text.concrete' }
+          ]
+        },
+        {
+          titleKey: 'report.group.rebar',
+          hintKey: 'report.group.rebar.hint',
+          fields: [
+            { id: 'rebarClass', type: 'tableSelect', table: 'rebar' },
+            { id: 'rebarText', type: 'autotext', labelKey: 'report.text.rebar' }
+          ]
+        },
+        {
+          titleKey: 'report.group.soil',
+          hintKey: 'report.group.soil.hint',
+          fields: [{ id: 'soilClass', type: 'tableSelect', table: 'soil' }]
+        }
+      ]
+    },
     { id: 'loads', titleKey: 'report.step.loads.title', pending: true },
     { id: 'seismic', titleKey: 'report.step.seismic.title', pending: true },
     { id: 'design', titleKey: 'report.step.design.title', pending: true },
@@ -4594,11 +4922,119 @@ const reportComposers = {
     const clean = key => String(f[key] ?? '').trim();
     const place = [clean('il'), clean('ilce')].filter(Boolean).join(' / ');
     return [clean('projectName'), clean('blockName'), place].filter(Boolean).join(' · ');
+  },
+
+  // 1 Introduction — storey make-up and heights.
+  introText: f => {
+    const counts = reportStoreyCounts();
+    const num = key => { const v = Number(f[key]); return Number.isFinite(v) && v > 0 ? String(v) : ''; };
+    const parts = [];
+    const make = [
+      counts.basement && t('report.part.basementCount', { n: counts.basement }),
+      counts.ground && t('report.part.groundCount', { n: counts.ground }),
+      counts.normal && t('report.part.normalCount', { n: counts.normal }),
+      counts.roof && t('report.part.roofCount', { n: counts.roof })
+    ].filter(Boolean);
+    if (make.length) parts.push(t('report.template.storeyMakeup', { list: listPhrase(make) }));
+    if (counts.basement && num('basementH')) {
+      parts.push(t('report.template.basementHeight', { n: counts.basement, h: num('basementH') }));
+    }
+    if (num('typicalH')) {
+      parts.push(t('report.template.typicalHeight', {
+        h: num('typicalH'),
+        total: num('totalH') ? t('report.part.totalHeight', { h: num('totalH') }) : ''
+      }));
+    }
+    return joinSentences(parts);
+  },
+
+  // 2 Structural system — plan extents, system class and slab system.
+  systemText: f => {
+    const parts = [];
+    const w = String(f.planWidth ?? '').trim(), d = String(f.planDepth ?? '').trim();
+    if (w && d) parts.push(t('report.template.planExtent', { w, d }));
+    parts.push(t('report.template.systemMembers'));
+    if (f.systemClass) parts.push(t('report.template.systemClass', { v: t(`report.opt.systemClass.${f.systemClass}.phrase`) }));
+    if (f.slabSystem) parts.push(t('report.template.slabMention', { v: t(`report.opt.slabSystem.${f.slabSystem}.phrase`) }));
+    parts.push(t('report.template.systemContinuity'));
+    return joinSentences(parts);
+  },
+
+  // 2.1 Foundation — a thickness that was not entered is left out of the sentence.
+  foundationText: f => {
+    if (!f.foundationType) return '';
+    const parts = [t('report.template.foundationType', { v: t(`report.opt.foundationType.${f.foundationType}.phrase`) })];
+    const tower = String(f.foundationTower ?? '').trim(), park = String(f.foundationPark ?? '').trim();
+    const zones = [
+      tower && t('report.part.foundationTower', { v: tower }),
+      park && t('report.part.foundationPark', { v: park })
+    ].filter(Boolean);
+    if (zones.length) {
+      parts.push(t('report.template.foundationThickness', {
+        v: t(`report.opt.foundationType.${f.foundationType}.phrase`), list: listPhrase(zones)
+      }));
+    }
+    return joinSentences(parts);
+  },
+
+  // 2.3 Slab — the whole paragraph switches with the chosen system, exactly as the
+  // report template words it for flat-plate and beam-and-slab construction.
+  slabText: f => {
+    if (!f.slabSystem) return '';
+    const name = t(`report.opt.slabSystem.${f.slabSystem}.phrase`);
+    const thickness = String(f.slabThickness ?? '').trim();
+    return joinSentences([
+      t('report.template.slabUsed', { v: name }),
+      t('report.template.slabLimits', {
+        v: name,
+        thickness: thickness ? t('report.part.slabThickness', { v: thickness }) : ''
+      })
+    ]);
+  },
+
+  concreteText: f => {
+    if (!f.concreteClass) return '';
+    const row = REPORT_TABLES.concrete.rows.find(r => r[0] === f.concreteClass);
+    return t('report.template.concrete', { fck: row ? row[1] : '', v: f.concreteClass });
+  },
+
+  rebarText: f => {
+    if (!f.rebarClass) return '';
+    const idx = REPORT_TABLES.rebar.classes.indexOf(f.rebarClass);
+    const fy = idx >= 0 ? REPORT_TABLES.rebar.values[1][idx] : '';
+    const surfaceKey = idx >= 0 ? REPORT_TABLES.rebar.values[0][idx] : '';
+    return t('report.template.rebar', { fy, v: f.rebarClass, surface: surfaceKey ? t(surfaceKey).toLocaleLowerCase(currentLanguage === 'tr' ? 'tr-TR' : 'en-GB') : '' });
   }
 };
 
+// "a, b and c" / "a, b ve c" — the report writes these as running prose.
+function listPhrase(items) {
+  if (items.length <= 1) return items[0] || '';
+  return items.slice(0, -1).join(', ') + ' ' + t('report.part.and') + ' ' + items[items.length - 1];
+}
+
+function joinSentences(parts) {
+  return parts.filter(Boolean).join(' ').replace(/\s+/g, ' ').replace(/\s+([.,])/g, '$1').trim();
+}
+
+// Storey roles the engineer marked, counted per role.
+function reportStoreyCounts() {
+  const roles = reportState.storeyRoles || {};
+  const counts = { basement: 0, ground: 0, normal: 0, roof: 0 };
+  for (const role of Object.values(roles)) if (counts[role] !== undefined) counts[role]++;
+  return counts;
+}
+
 function reportDefaults() {
-  return { process: 'intro', step: 'cover', fields: {}, texts: {}, images: {}, fontScale: 100 };
+  return {
+    process: 'intro', step: 'cover', fields: {}, texts: {}, images: {}, fontScale: 100,
+    // Storey name -> basement / ground / normal / roof / none, marked by the engineer
+    // against the storey list read from the connected model.
+    storeyRoles: {}, stories: [],
+    // Fields the engineer has typed into. Model-derived defaults keep refreshing
+    // until then; once a field is here, nothing overwrites it automatically.
+    touched: {}
+  };
 }
 
 function loadReportState() {
@@ -4637,6 +5073,11 @@ function reportStepFields(step) {
 
 function reportFieldFilled(field) {
   if (field.type === 'image') return !!reportState.images[field.code];
+  // Storey roles count as filled once at least one storey has been classified.
+  if (field.type === 'storeyRoles') return Object.values(reportState.storeyRoles || {}).some(r => r && r !== 'none');
+  if (field.type === 'measure') {
+    return ['planWidth', 'planDepth'].every(k => String(reportState.fields[k] ?? '').trim() !== '');
+  }
   return String(reportState.fields[field.id] ?? '').trim() !== '';
 }
 
@@ -4646,17 +5087,14 @@ function reportEmptyCount(step) {
 }
 
 function reportProcessCounts() {
-  const steps = reportActiveSteps();
-  const fields = steps.flatMap(reportStepFields);
+  const fields = reportActiveSteps().flatMap(reportStepFields);
+  const isVariable = f => !['image', 'autotext', 'tableSelect'].includes(f.type);
   return {
-    variables: fields.filter(f => f.type !== 'image' && f.type !== 'autotext').length,
+    // A measure field carries two numbers; storey roles carry one per storey.
+    variables: fields.filter(isVariable).reduce((sum, f) => sum + (f.type === 'measure' ? 2 : 1), 0),
     images: fields.filter(f => f.type === 'image').length,
-    tables: steps.reduce((sum, s) => sum + (s.tables || []).length, 0)
+    tables: fields.filter(f => f.type === 'tableSelect').length
   };
-}
-
-function reportImageCodes() {
-  return reportActiveSteps().flatMap(s => reportStepFields(s).filter(f => f.type === 'image').map(f => f.code));
 }
 
 function reportComposedText(id) {
@@ -4683,8 +5121,121 @@ function reportDomId(fieldId) {
 }
 
 function renderReportModule() {
+  renderReportHeadingTools();
   renderReportStructurePanel();
   renderReportEditorPanel();
+  // Model-backed fields fill themselves in as soon as a model is connected; nothing
+  // is read (or shown) while it is not, so a stale value can never look live.
+  if (etabsConnected) reportLoadModelData();
+}
+
+// Reads the storey list, the materials assigned in the model and the slab
+// thicknesses in one pass. Everything it produces is a *suggestion*: the engineer's
+// own entry always wins, because an automatic read can pick the wrong material.
+async function reportLoadModelData() {
+  if (reportModelLoading) return;
+  reportModelLoading = true;
+  try {
+    if ((reportState.stories || []).length === 0) {
+      const res = await fetchAgentJson('/api/etabs/stories');
+      if (res.etabsConnected) {
+        reportState.stories = (res.stories || []).slice().sort((a, b) => a.elevation - b.elevation);
+        reportPrefillStoreyHeights();
+      }
+    }
+    const info = await fetchAgentJson('/api/etabs/model-materials', 20000);
+    if (info.etabsConnected) {
+      reportState.modelHints = {
+        concreteClass: info.concreteClass || '',
+        rebarClass: info.rebarClass || ''
+      };
+      if (info.slabThickness && !reportState.touched.slabThickness) {
+        reportState.fields.slabThickness = info.slabThickness;
+      }
+      // Only pre-select a class the engineer has not overridden themselves.
+      for (const key of ['concreteClass', 'rebarClass']) {
+        if (reportState.modelHints[key] && !reportState.touched[key]) reportState.fields[key] = reportState.modelHints[key];
+      }
+    }
+    saveReportState();
+    renderReportStructurePanel();
+    renderReportEditorPanel();
+  } catch (error) {
+    // The report is usable without the model; say what failed and carry on.
+    log(t('report.model.readFailed', { error: describeError(error) }), 'info');
+  } finally {
+    reportModelLoading = false;
+  }
+}
+
+let reportModelLoading = false;
+
+// X and Y span of a middle storey — the figure the report quotes as the standard
+// floor plan extent. A middle storey is used because the base and the roof are
+// usually not representative of the typical floor.
+async function reportMeasurePlanExtent() {
+  const button = $('#repMeasurePlan');
+  const note = $('#repMeasureNote');
+  if (button) button.disabled = true;
+  if (note) note.textContent = t('report.measure.working');
+  try {
+    const res = await fetchAgentJson('/api/etabs/plan-extent', 25000);
+    if (!res.etabsConnected) throw new Error(res.error || t('drift.error.notConnected'));
+    if (!(res.width > 0) || !(res.depth > 0)) throw new Error(t('report.measure.empty'));
+    reportState.fields.planWidth = res.width.toFixed(2);
+    reportState.fields.planDepth = res.depth.toFixed(2);
+    saveReportState();
+    renderReportEditorPanel();
+    log(t('report.measure.done', { story: res.story || '' }), 'ok');
+  } catch (error) {
+    if (note) note.textContent = describeError(error);
+    log(describeError(error), 'error');
+  } finally {
+    const again = $('#repMeasurePlan');
+    if (again) again.disabled = false;
+  }
+}
+
+// Report-wide controls live in the page heading, next to the Dashboard button.
+function renderReportHeadingTools() {
+  const slot = $('#moduleHeadingSlot');
+  if (!slot) return;
+  slot.innerHTML = `
+    <div class="rep-toolbar">
+      <div class="rep-toolbar-field">
+        <label for="repFontScale">${t('report.settings.fontScale')}</label>
+        <select id="repFontScale">
+          ${[90, 95, 100, 105, 110].map(v => `<option value="${v}"${v === reportState.fontScale ? ' selected' : ''}>${v}%</option>`).join('')}
+        </select>
+      </div>
+      <button class="button button-secondary" type="button" id="repSaveTemplate">${t('report.template.save')}</button>
+      <button class="button button-secondary" type="button" id="repLoadTemplate">${t('report.template.load')}</button>
+      <button class="button button-secondary" type="button" id="repReset">${t('report.reset')}</button>
+      <input type="file" id="repTemplateFile" accept="application/json,.json" hidden>
+    </div>`;
+
+  const scale = $('#repFontScale', slot);
+  scale.addEventListener('change', () => {
+    reportState.fontScale = Number(scale.value) || 100;
+    saveReportState();
+    reportRefreshDerived();
+  });
+
+  const templateFile = $('#repTemplateFile', slot);
+  $('#repSaveTemplate', slot).addEventListener('click', reportSaveTemplate);
+  $('#repLoadTemplate', slot).addEventListener('click', () => templateFile.click());
+  templateFile.addEventListener('change', () => {
+    if (templateFile.files[0]) reportLoadTemplate(templateFile.files[0]);
+    templateFile.value = '';
+  });
+
+  $('#repReset', slot).addEventListener('click', () => {
+    if (!window.confirm(t('report.reset.confirm'))) return;
+    Object.assign(reportState, reportDefaults());
+    saveReportState();
+    renderReportModule();
+    log(t('report.reset.done'), 'ok');
+  });
 }
 
 // --- Panel 1: the report outline -------------------------------------------
@@ -4712,26 +5263,7 @@ function renderReportStructurePanel() {
       </div>
     </div>
     <ol class="rep-steps">${steps.map((step, index) => reportStepItem(step, index, active)).join('')}</ol>
-    ${setupSection('repSettings', 'report.settings.title', `
-      <div class="field-grid">
-        <div class="field">
-          <label for="repFontScale">${t('report.settings.fontScale')}</label>
-          <select id="repFontScale">
-            ${[90, 95, 100, 105, 110].map(v => `<option value="${v}"${v === reportState.fontScale ? ' selected' : ''}>${v}%</option>`).join('')}
-          </select>
-        </div>
-      </div>
-      <div class="panel-actions two-up">
-        <button class="button button-secondary" type="button" id="repSaveTemplate">${t('report.template.save')}</button>
-        <button class="button button-secondary" type="button" id="repLoadTemplate">${t('report.template.load')}</button>
-      </div>
-      <p class="rep-note">${t('report.saved')}</p>`, false)}
-    <div class="panel-actions">
-      <button class="button button-secondary full-width" type="button" id="repReset">${t('report.reset')}</button>
-    </div>
-    <input type="file" id="repTemplateFile" accept="application/json,.json" hidden>`;
-
-  bindSetupSections(panel);
+    <p class="rep-note">${t('report.saved')}</p>`;
 
   $$('[data-process]', panel).forEach(btn => btn.addEventListener('click', () => {
     reportState.process = btn.dataset.process;
@@ -4746,28 +5278,6 @@ function renderReportStructurePanel() {
     renderReportModule();
   }));
 
-  const scale = $('#repFontScale', panel);
-  scale.addEventListener('change', () => {
-    reportState.fontScale = Number(scale.value) || 100;
-    saveReportState();
-    reportRefreshDerived();
-  });
-
-  const templateFile = $('#repTemplateFile', panel);
-  $('#repSaveTemplate', panel).addEventListener('click', reportSaveTemplate);
-  $('#repLoadTemplate', panel).addEventListener('click', () => templateFile.click());
-  templateFile.addEventListener('change', () => {
-    if (templateFile.files[0]) reportLoadTemplate(templateFile.files[0]);
-    templateFile.value = '';
-  });
-
-  $('#repReset', panel).addEventListener('click', () => {
-    if (!window.confirm(t('report.reset.confirm'))) return;
-    Object.assign(reportState, reportDefaults());
-    saveReportState();
-    renderReportModule();
-    log(t('report.reset.done'), 'ok');
-  });
 }
 
 function reportStepItem(step, index, active) {
@@ -4832,37 +5342,148 @@ function reportPendingBlock() {
 }
 
 function reportStepBody(step) {
-  const hasImages = reportStepFields(step).some(f => f.type === 'image');
-  const bulk = hasImages ? `
-    <div class="rep-bulk">
-      <div><h4>${t('report.bulk.title')}</h4><p>${t('report.bulk.text')}</p></div>
-      <button class="button button-secondary" type="button" id="repBulkPick">${t('report.bulk.button')}</button>
-      <input type="file" id="repBulkFolder" webkitdirectory directory multiple hidden>
-    </div>` : '';
-  return bulk + (step.groups || []).map(reportGroupHtml).join('');
+  return (step.groups || []).map(reportGroupHtml).join('');
 }
 
+// Field types that own their whole width and render their own block; everything
+// else is packed into the shared two-column .field-grid.
+const REPORT_BLOCK_TYPES = new Set(['autotext', 'image', 'storeyRoles', 'measure', 'tableSelect']);
+
 function reportGroupHtml(group) {
-  const plain = group.fields.filter(f => f.type !== 'autotext' && f.type !== 'image');
-  const rest = group.fields.filter(f => f.type === 'autotext' || f.type === 'image');
-  const grid = plain.length ? `<div class="field-grid">${plain.map(reportPlainFieldHtml).join('')}</div>` : '';
+  // Order is preserved: consecutive grid fields are collected into one .field-grid,
+  // and a block field flushes it, so a schema reads top-to-bottom as it renders.
+  const chunks = [];
+  let pending = [];
+  const flush = () => {
+    if (pending.length) chunks.push(`<div class="field-grid">${pending.map(reportPlainFieldHtml).join('')}</div>`);
+    pending = [];
+  };
+  for (const field of group.fields) {
+    if (!REPORT_BLOCK_TYPES.has(field.type)) { pending.push(field); continue; }
+    flush();
+    chunks.push(reportBlockFieldHtml(field));
+  }
+  flush();
   return `<section class="rep-group">
       <div class="rep-group-head">
         <h4>${t(group.titleKey)}</h4>
         ${group.badgeKey ? `<span class="rep-badge">${t(group.badgeKey)}</span>` : ''}
       </div>
       ${group.hintKey ? `<p class="rep-group-hint">${t(group.hintKey)}</p>` : ''}
-      <div class="rep-group-body">
-        ${grid}
-        ${rest.map(f => f.type === 'image' ? reportImageFieldHtml(f) : reportAutoTextHtml(f)).join('')}
-      </div>
+      <div class="rep-group-body">${chunks.join('')}</div>
     </section>`;
+}
+
+function reportBlockFieldHtml(field) {
+  if (field.type === 'image') return reportImageFieldHtml(field);
+  if (field.type === 'autotext') return reportAutoTextHtml(field);
+  if (field.type === 'storeyRoles') return reportStoreyRolesHtml(field);
+  if (field.type === 'measure') return reportMeasureHtml(field);
+  if (field.type === 'tableSelect') return reportTableSelectHtml(field);
+  return '';
+}
+
+// Storey roles: the storey list comes from the connected model, and marking each
+// one basement / ground / normal / roof is what produces the counts the report
+// sentence needs. Nothing is shown until a model is connected — a made-up storey
+// list would be worse than none.
+function reportStoreyRolesHtml(field) {
+  const stories = reportState.stories || [];
+  if (!etabsConnected && stories.length === 0) {
+    return `<p class="rep-inline-note">${t('report.storeys.needConnection')}</p>`;
+  }
+  if (stories.length === 0) return `<p class="rep-inline-note">${t('report.storeys.loading')}</p>`;
+  const counts = reportStoreyCounts();
+  const roles = reportState.storeyRoles || {};
+  return `<div class="rep-storeys" data-field="${field.id}">
+      <table class="rep-storey-table"><tbody>
+        ${stories.slice().reverse().map(s => `
+          <tr>
+            <th scope="row">${escapeHtml(s.name)}</th>
+            <td class="rep-storey-elev">${Number.isFinite(s.elevation) ? `${s.elevation.toFixed(2)} m` : ''}</td>
+            <td>
+              <select class="rep-storey-role" data-storey="${escapeHtml(s.name)}" aria-label="${escapeHtml(s.name)}">
+                ${REPORT_STOREY_ROLES.map(role => `<option value="${role}"${(roles[s.name] || 'none') === role ? ' selected' : ''}>${t(`report.role.${role}`)}</option>`).join('')}
+              </select>
+            </td>
+          </tr>`).join('')}
+      </tbody></table>
+      <div class="rep-storey-counts">
+        ${['basement', 'ground', 'normal', 'roof'].map(role =>
+          `<span><strong>${counts[role]}</strong><small>${t(`report.role.${role}`)}</small></span>`).join('')}
+      </div>
+    </div>`;
+}
+
+// Plan extents are measured from the model rather than typed: the X and Y span of
+// the points on a middle storey, which is what the report quotes.
+function reportMeasureHtml(field) {
+  const w = reportState.fields.planWidth ?? '';
+  const d = reportState.fields.planDepth ?? '';
+  return `<div class="rep-measure" data-field="${field.id}">
+      <div class="field-grid">
+        ${numberField('repPlanWidth', 'report.field.planWidth', { step: '0.01', min: 0, unit: 'm' })}
+        ${numberField('repPlanDepth', 'report.field.planDepth', { step: '0.01', min: 0, unit: 'm' })}
+      </div>
+      <div class="rep-measure-actions">
+        <button class="button button-secondary" type="button" id="repMeasurePlan"${etabsConnected ? '' : ' disabled'}>${t('report.measure.button')}</button>
+        <span class="rep-measure-note" id="repMeasureNote">${etabsConnected ? '' : t('report.measure.needConnection')}</span>
+      </div>
+    </div>`.replace('id="repPlanWidth"', `id="repPlanWidth" value="${escapeHtml(w)}"`)
+      .replace('id="repPlanDepth"', `id="repPlanDepth" value="${escapeHtml(d)}"`);
+}
+
+// A reference table with one selectable row (or column). The selection is what the
+// report highlights, so picking it here IS the input — there is no separate list.
+function reportTableSelectHtml(field) {
+  const spec = REPORT_TABLES[field.table];
+  const current = reportState.fields[field.id] ?? '';
+  const auto = reportState.modelHints && reportState.modelHints[field.id];
+  const autoNote = auto
+    ? `<span class="rep-auto-note">${t(auto === current ? 'report.auto.matched' : 'report.auto.suggests', { v: auto })}</span>`
+    : '';
+
+  const body = spec.kind === 'columns'
+    ? `<table class="rep-ref-table columns"><tbody>
+        <tr><th scope="row">${t(spec.titleKey)}</th>
+          ${spec.classes.map(c => `<th class="rep-pick${c === current ? ' on' : ''}" data-pick="${c}" tabindex="0" role="button" aria-pressed="${c === current}">${c}</th>`).join('')}</tr>
+        ${spec.rowKeys.map((key, r) => `<tr><th scope="row">${t(key)}</th>
+          ${spec.values[r].map((v, i) => `<td class="${spec.classes[i] === current ? 'on' : ''}">${escapeHtml(v.startsWith('report.') ? t(v) : v)}</td>`).join('')}</tr>`).join('')}
+      </tbody></table>`
+    : `<table class="rep-ref-table"><thead><tr>${spec.headKeys.map(k => `<th>${t(k)}</th>`).join('')}</tr></thead><tbody>
+        ${spec.rows.map(row => `
+          <tr class="rep-pick${row[0] === current ? ' on' : ''}" data-pick="${row[0]}" tabindex="0" role="button" aria-pressed="${row[0] === current}">
+            ${row.map(cell => `<td>${escapeHtml(cell.startsWith('report.') ? t(cell) : cell)}</td>`).join('')}
+          </tr>`).join('')}
+      </tbody></table>`;
+
+  return `<div class="rep-table-select" data-field="${field.id}" data-table="${field.table}">
+      <div class="rep-table-head">
+        <h5>${t(spec.titleKey)}</h5>
+        <span class="rep-table-note">${t(spec.noteKey)}</span>
+      </div>
+      ${autoNote}
+      <div class="table-wrap rep-table-wrap">${body}</div>
+    </div>`;
 }
 
 function reportPlainFieldHtml(field) {
   const id = reportDomId(field.id);
   const labelKey = field.labelKey || `report.field.${field.id}`;
-  if (field.type === 'number') return numberField(id, labelKey, { step: '1', min: field.min, max: field.max });
+  if (field.type === 'number') {
+    return numberField(id, labelKey, { step: field.unit === 'm' ? '0.01' : '1', min: field.min, max: field.max, unit: field.unit });
+  }
+  if (field.type === 'select') {
+    const current = String(reportState.fields[field.id] ?? '');
+    return `<div class="field${field.span > 1 ? ' span-2' : ''}">
+        <label for="${id}">${t(labelKey)}</label>
+        <select id="${id}">
+          <option value="">${t('report.select.empty')}</option>
+          ${REPORT_OPTIONS[field.options].map(opt => `<option value="${opt}"${current === opt ? ' selected' : ''}>${t(`report.opt.${field.options}.${opt}`)}</option>`).join('')}
+        </select>
+        <p class="field-error" id="${id}-err" role="alert" hidden></p>
+      </div>`;
+  }
   if (field.type === 'month') {
     const current = String(reportState.fields[field.id] ?? '');
     return `<div class="field">
@@ -4874,7 +5495,12 @@ function reportPlainFieldHtml(field) {
         <p class="field-error" id="${id}-err" role="alert" hidden></p>
       </div>`;
   }
-  return textField(id, labelKey, { span: field.span || 1 });
+  const html = textField(id, labelKey, { span: field.span || 1 });
+  // Fields the model fills in carry a badge saying so; the value stays editable
+  // because an automatic read can be wrong and the engineer signs the report.
+  return field.source === 'model'
+    ? html.replace('</label>', ` <span class="rep-from-model">${t('report.fromModel')}</span></label>`)
+    : html;
 }
 
 function reportAutoTextHtml(field) {
@@ -4894,9 +5520,13 @@ function reportAutoTextHtml(field) {
 
 function reportImageFieldHtml(field) {
   const src = reportState.images[field.code];
+  // Figures carry the caption the report prints ("Şekil 1.1 Bina boy kesiti"),
+  // so the slot is labelled with it rather than a generic name.
+  const title = field.figure ? t(field.figure) : t(field.labelKey);
+  const hint = field.figure ? t('report.fig.hint') : t(field.hintKey);
   return `<div class="rep-image" data-code="${field.code}">
       <div class="rep-image-head">
-        <div><strong>${t(field.labelKey)}</strong><small>${t(field.hintKey)}</small></div>
+        <div><strong>${title}</strong><small>${hint}</small></div>
         <span class="rep-code">${t('report.image.code', { code: field.code })}</span>
       </div>
       <div class="rep-drop${src ? ' has' : ''}" data-drop="${field.code}" tabindex="0" role="button" aria-label="${escapeHtml(t('report.image.drop'))}">
@@ -4943,16 +5573,32 @@ function reportRefreshDerived() {
 function bindReportStep(panel, step) {
   for (const field of reportStepFields(step)) {
     if (field.type === 'image') { bindReportImageField(panel, field); continue; }
+    if (field.type === 'storeyRoles') { bindReportStoreyRoles(panel); continue; }
+    if (field.type === 'measure') { bindReportMeasure(panel); continue; }
+    if (field.type === 'tableSelect') { bindReportTableSelect(panel, field); continue; }
     const el = $('#' + reportDomId(field.id), panel);
     if (!el) continue;
     if (field.type !== 'autotext') el.value = reportState.fields[field.id] ?? '';
     el.addEventListener('input', () => {
-      if (field.type === 'autotext') reportState.texts[field.id] = el.value;
-      else reportState.fields[field.id] = el.value;
+      if (field.type === 'autotext') {
+        reportState.texts[field.id] = el.value;
+      } else {
+        reportState.fields[field.id] = el.value;
+        reportState.touched[field.id] = true;
+      }
       saveReportState();
       reportRefreshDerived();
     });
-    el.addEventListener('change', renderReportStructurePanel);
+    // A <select> only fires `change`, so the derived texts have to be repainted
+    // from there too, not just the step badges.
+    el.addEventListener('change', () => {
+      if (field.type === 'select') {
+        reportState.fields[field.id] = el.value;
+        saveReportState();
+        renderReportEditorPanel();
+      }
+      renderReportStructurePanel();
+    });
   }
 
   $$('[data-toggle-text]', panel).forEach(btn => btn.addEventListener('click', () => {
@@ -4963,16 +5609,79 @@ function bindReportStep(panel, step) {
     renderReportEditorPanel();
   }));
 
-  const bulkPick = $('#repBulkPick', panel);
-  const bulkFolder = $('#repBulkFolder', panel);
-  if (bulkPick && bulkFolder) {
-    bulkPick.addEventListener('click', () => bulkFolder.click());
-    bulkFolder.addEventListener('change', () => {
-      const files = [...bulkFolder.files];
-      bulkFolder.value = '';
-      if (files.length) reportBulkAssign(files);
+}
+
+function bindReportStoreyRoles(panel) {
+  $$('.rep-storey-role', panel).forEach(select => select.addEventListener('change', () => {
+    reportState.storeyRoles[select.dataset.storey] = select.value;
+    reportPrefillStoreyHeights();
+    saveReportState();
+    renderReportModule();
+  }));
+}
+
+// Heights follow from the roles: the basement storeys share one height and the rest
+// another, both read from the model's storey table. Only blank fields are filled —
+// a value the engineer typed is never overwritten.
+function reportPrefillStoreyHeights() {
+  const stories = reportState.stories || [];
+  if (stories.length === 0) return;
+  const roles = reportState.storeyRoles || {};
+  const heightOf = s => Number(s.height) || 0;
+  const pick = list => {
+    const values = list.map(heightOf).filter(h => h > 0);
+    if (values.length === 0) return '';
+    // The height quoted in the report is the one most storeys share.
+    const tally = new Map();
+    for (const v of values) tally.set(v, (tally.get(v) || 0) + 1);
+    return String([...tally.entries()].sort((a, b) => b[1] - a[1] || b[0] - a[0])[0][0]);
+  };
+  const basement = stories.filter(s => roles[s.name] === 'basement');
+  const above = stories.filter(s => ['ground', 'normal', 'roof'].includes(roles[s.name]));
+  // Recomputed on every change of the marks, because the answer depends on them —
+  // but never over a value the engineer typed.
+  const setIfUntouched = (key, value) => {
+    if (!reportState.touched[key]) reportState.fields[key] = value;
+  };
+  setIfUntouched('basementH', pick(basement));
+  setIfUntouched('typicalH', pick(above));
+  const total = [...basement, ...above].reduce((sum, s) => sum + heightOf(s), 0);
+  setIfUntouched('totalH', total > 0 ? String(Number(total.toFixed(2))) : '');
+}
+
+function bindReportMeasure(panel) {
+  ['planWidth', 'planDepth'].forEach(key => {
+    const el = $('#' + reportDomId(key), panel);
+    if (!el) return;
+    el.addEventListener('input', () => {
+      reportState.fields[key] = el.value;
+      reportState.touched[key] = true;
+      saveReportState();
+      reportRefreshDerived();
     });
-  }
+    el.addEventListener('change', renderReportStructurePanel);
+  });
+  const button = $('#repMeasurePlan', panel);
+  if (button) button.addEventListener('click', reportMeasurePlanExtent);
+}
+
+function bindReportTableSelect(panel, field) {
+  const root = $(`[data-field="${field.id}"]`, panel);
+  if (!root) return;
+  const choose = value => {
+    // Clicking the selected row again clears it, so a wrong pick is undoable.
+    reportState.fields[field.id] = reportState.fields[field.id] === value ? '' : value;
+    // An explicit pick outranks whatever the model suggests from now on.
+    reportState.touched[field.id] = true;
+    saveReportState();
+    renderReportModule();
+  };
+  $$('[data-pick]', root).forEach(cell => {
+    cell.addEventListener('click', () => choose(cell.dataset.pick));
+    cell.addEventListener('keydown', event => {
+      if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); choose(cell.dataset.pick); }
+    });
+  });
 }
 
 function bindReportImageField(panel, field) {
@@ -5044,25 +5753,6 @@ async function reportAcceptImage(code, file) {
   } catch (error) {
     log(error.message, 'error');
   }
-}
-
-// Folder pick: a file is placed when its name without the extension matches an
-// image code registered anywhere in the active process. Codes are ASCII, so the
-// comparison stays locale-invariant.
-async function reportBulkAssign(files) {
-  const codes = new Set(reportImageCodes());
-  let matched = 0;
-  for (const file of files) {
-    const code = file.name.replace(/\.[^.]+$/, '').toUpperCase();
-    if (!codes.has(code)) continue;
-    try {
-      reportState.images[code] = await reportReadImage(file);
-      matched++;
-    } catch { /* an unreadable or oversized file simply is not placed */ }
-  }
-  saveReportState();
-  renderReportModule();
-  log(matched ? t('report.bulk.result', { count: matched }) : t('report.bulk.none'), matched ? 'ok' : 'info');
 }
 
 function reportSaveTemplate() {

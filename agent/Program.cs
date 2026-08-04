@@ -76,7 +76,9 @@ internal sealed class AgentApplicationContext : ApplicationContext
             GetStoryDriftsOnUiThread,
             GetTableOnUiThread,
             SelectFramesOnUiThread,
-            GetFrameSectionsOnUiThread);
+            GetFrameSectionsOnUiThread,
+            GetModelMaterialsOnUiThread,
+            GetPlanExtentOnUiThread);
         try
         {
             _server.Start();
@@ -210,6 +212,22 @@ internal sealed class AgentApplicationContext : ApplicationContext
             return (FrameSectionsResult)_dispatcher.Invoke(new Func<FrameSectionsResult>(_etabs.GetFrameSections));
 
         return _etabs.GetFrameSections();
+    }
+
+    private ModelMaterialsResult GetModelMaterialsOnUiThread()
+    {
+        if (_dispatcher.InvokeRequired)
+            return (ModelMaterialsResult)_dispatcher.Invoke(new Func<ModelMaterialsResult>(_etabs.GetModelMaterials));
+
+        return _etabs.GetModelMaterials();
+    }
+
+    private PlanExtentResult GetPlanExtentOnUiThread()
+    {
+        if (_dispatcher.InvokeRequired)
+            return (PlanExtentResult)_dispatcher.Invoke(new Func<PlanExtentResult>(_etabs.GetPlanExtent));
+
+        return _etabs.GetPlanExtent();
     }
 
     private void ShowConnectionResult()
@@ -895,6 +913,252 @@ internal sealed class EtabsConnection : IDisposable
         }
     }
 
+    // Concrete class, rebar class and slab thickness as the report quotes them.
+    //
+    // The class is taken from the MATERIAL NAME when it already carries one (models
+    // are almost always named "C35" / "B420C"), and only derived from the strength
+    // when it does not. Strengths come back in the model's present units, so they are
+    // normalised to MPa before a class is inferred. Everything here is a suggestion —
+    // the web interface lets the engineer override it, because a model can hold
+    // several materials and only they know which one the report should quote.
+    public ModelMaterialsResult GetModelMaterials()
+    {
+        if (!EnsureModelReady(out var error))
+            return new ModelMaterialsResult(true, false, error, null, null, null);
+
+        try
+        {
+            var sap = _sapModel!;
+            var propMatProp = _sapModelInterface!.GetProperty("PropMaterial")!;
+            var propMat = propMatProp.GetValue(sap)!;
+            var propMatType = propMatProp.PropertyType;
+
+            var getNameList = propMatType.GetMethods().First(m => m.Name == "GetNameList" && m.GetParameters().Length == 2);
+            var nameArgs = new object?[] { 0, null };
+            getNameList.Invoke(propMat, nameArgs);
+            var names = (string[]?)nameArgs[1] ?? Array.Empty<string>();
+
+            var getMaterial = propMatType.GetMethods().FirstOrDefault(m => m.Name == "GetMaterial");
+            var getConcrete = propMatType.GetMethods().FirstOrDefault(m => m.Name == "GetOConcrete_1")
+                ?? propMatType.GetMethods().FirstOrDefault(m => m.Name == "GetOConcrete");
+            var getRebar = propMatType.GetMethods().FirstOrDefault(m => m.Name == "GetORebar_1")
+                ?? propMatType.GetMethods().FirstOrDefault(m => m.Name == "GetORebar");
+
+            string? concreteClass = null, rebarClass = null;
+            double bestFc = 0, bestFy = 0;
+
+            foreach (var name in names)
+            {
+                int matType = 0;
+                if (getMaterial is not null)
+                {
+                    var matArgs = new object?[] { name, 0, 0, "", "" };
+                    try { getMaterial.Invoke(propMat, matArgs); matType = (int)(matArgs[1] ?? 0); } catch { /* older signature */ }
+                }
+
+                // eMatType: 2 = Concrete, 6 = Rebar.
+                if (matType == 2 && getConcrete is not null)
+                {
+                    var args = BuildArgs(getConcrete, name);
+                    try
+                    {
+                        getConcrete.Invoke(propMat, args);
+                        var fc = ToMpa(Convert.ToDouble(args[1] ?? 0.0));
+                        // The report quotes the governing (highest) concrete grade.
+                        if (fc > bestFc) { bestFc = fc; concreteClass = ClassFromName(name, 'C') ?? $"C{Math.Round(fc / 5.0) * 5:0}"; }
+                    }
+                    catch { /* material without concrete data */ }
+                }
+                else if (matType == 6 && getRebar is not null)
+                {
+                    var args = BuildArgs(getRebar, name);
+                    try
+                    {
+                        getRebar.Invoke(propMat, args);
+                        var fy = ToMpa(Convert.ToDouble(args[1] ?? 0.0));
+                        if (fy > bestFy) { bestFy = fy; rebarClass = ClassFromName(name, 'B') ?? (fy >= 480 ? "B500C" : "B420C"); }
+                    }
+                    catch { /* material without rebar data */ }
+                }
+            }
+
+            return new ModelMaterialsResult(true, true, null, concreteClass, rebarClass, ReadSlabThickness());
+        }
+        catch (Exception ex)
+        {
+            AgentLog.Write($"GetModelMaterials failed: {ex}");
+            return new ModelMaterialsResult(true, false, ex.Message, null, null, null);
+        }
+    }
+
+    // Distinct thicknesses of the slab sections actually assigned to area objects,
+    // in cm, as the range the report prints ("26-30").
+    private string? ReadSlabThickness()
+    {
+        try
+        {
+            var sap = _sapModel!;
+            var areaProp = _sapModelInterface!.GetProperty("AreaObj")!;
+            var area = areaProp.GetValue(sap)!;
+            var areaType = areaProp.PropertyType;
+
+            var propAreaProp = _sapModelInterface.GetProperty("PropArea")!;
+            var propArea = propAreaProp.GetValue(sap)!;
+            var propAreaType = propAreaProp.PropertyType;
+
+            var getNameList = areaType.GetMethods().First(m => m.Name == "GetNameList" && m.GetParameters().Length == 2);
+            var nameArgs = new object?[] { 0, null };
+            getNameList.Invoke(area, nameArgs);
+            var names = (string[]?)nameArgs[1] ?? Array.Empty<string>();
+
+            var getProperty = areaType.GetMethods().FirstOrDefault(m => m.Name == "GetProperty" && m.GetParameters().Length == 2);
+            var getSlab = propAreaType.GetMethods().FirstOrDefault(m => m.Name == "GetSlab");
+            if (getProperty is null || getSlab is null) return null;
+
+            var used = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var name in names)
+            {
+                var args = new object?[] { name, "" };
+                try { getProperty.Invoke(area, args); } catch { continue; }
+                var prop = (string?)args[1];
+                if (!string.IsNullOrWhiteSpace(prop)) used.Add(prop);
+            }
+
+            var thicknesses = new SortedSet<int>();
+            foreach (var prop in used)
+            {
+                // GetSlab(Name, ref SlabType, ref ShellType, ref MatProp, ref Thickness, ref Color, ref Notes, ref GUID)
+                var args = new object?[] { prop, 0, 0, "", 0.0, 0, "", "" };
+                try
+                {
+                    if (getSlab.Invoke(propArea, args) is not 0) continue;
+                    var thickness = Convert.ToDouble(args[4] ?? 0.0);
+                    // Model length unit is metres (the pre-flight check enforces kN-m).
+                    var cm = (int)Math.Round(thickness * 100);
+                    if (cm > 0) thicknesses.Add(cm);
+                }
+                catch { /* not a slab section */ }
+            }
+
+            if (thicknesses.Count == 0) return null;
+            return thicknesses.Count == 1 ? thicknesses.Min.ToString() : $"{thicknesses.Min}-{thicknesses.Max}";
+        }
+        catch (Exception ex)
+        {
+            AgentLog.Write($"ReadSlabThickness failed: {ex}");
+            return null;
+        }
+    }
+
+    // X and Y span of the points on a middle storey — the standard floor plan extent
+    // the report quotes. A middle storey is chosen because the base and the roof are
+    // usually not representative of the typical floor.
+    public PlanExtentResult GetPlanExtent()
+    {
+        if (!EnsureModelReady(out var error))
+            return new PlanExtentResult(true, false, error, 0, 0, null);
+
+        try
+        {
+            var sap = _sapModel!;
+            var pointProp = _sapModelInterface!.GetProperty("PointObj")!;
+            var point = pointProp.GetValue(sap)!;
+            var pointType = pointProp.PropertyType;
+
+            var getNameList = pointType.GetMethods().First(m => m.Name == "GetNameList" && m.GetParameters().Length == 2);
+            var nameArgs = new object?[] { 0, null };
+            getNameList.Invoke(point, nameArgs);
+            var names = (string[]?)nameArgs[1] ?? Array.Empty<string>();
+
+            var getCoord = pointType.GetMethods().First(m => m.Name == "GetCoordCartesian");
+            var getLabel = pointType.GetMethods().First(m => m.Name == "GetLabelFromName");
+
+            // Group the points by storey, then measure the storey in the middle.
+            var byStory = new Dictionary<string, (double MinX, double MaxX, double MinY, double MaxY, int Count)>(StringComparer.OrdinalIgnoreCase);
+            foreach (var name in names)
+            {
+                var labelArgs = new object?[] { name, "", "" };
+                try { getLabel.Invoke(point, labelArgs); } catch { continue; }
+                var story = ((string?)labelArgs[2] ?? "").Trim();
+                if (story.Length == 0) continue;
+
+                var coordArgs = new object?[] { name, 0.0, 0.0, 0.0, "Global" };
+                try { if (getCoord.Invoke(point, coordArgs) is not 0) continue; } catch { continue; }
+                var x = Convert.ToDouble(coordArgs[1] ?? 0.0);
+                var y = Convert.ToDouble(coordArgs[2] ?? 0.0);
+
+                if (byStory.TryGetValue(story, out var box))
+                {
+                    byStory[story] = (Math.Min(box.MinX, x), Math.Max(box.MaxX, x),
+                                      Math.Min(box.MinY, y), Math.Max(box.MaxY, y), box.Count + 1);
+                }
+                else
+                {
+                    byStory[story] = (x, x, y, y, 1);
+                }
+            }
+
+            if (byStory.Count == 0)
+                return new PlanExtentResult(true, true, null, 0, 0, null);
+
+            // Order by elevation so "middle" means middle of the building, and skip
+            // the base level, which often carries only foundation points.
+            var stories = GetStories().Stories
+                .Where(s => byStory.ContainsKey(s.Name) && !s.Name.Equals("Base", StringComparison.OrdinalIgnoreCase))
+                .OrderBy(s => s.Elevation).ToList();
+            var pick = stories.Count > 0
+                ? stories[stories.Count / 2].Name
+                : byStory.OrderByDescending(kv => kv.Value.Count).First().Key;
+
+            var chosen = byStory[pick];
+            return new PlanExtentResult(true, true, null,
+                Math.Round(chosen.MaxX - chosen.MinX, 3), Math.Round(chosen.MaxY - chosen.MinY, 3), pick);
+        }
+        catch (Exception ex)
+        {
+            AgentLog.Write($"GetPlanExtent failed: {ex}");
+            return new PlanExtentResult(true, false, ex.Message, 0, 0, null);
+        }
+    }
+
+    // ETABS ref-parameter calls need a fully sized argument array; only the name is
+    // an input, so the rest start at their default and come back filled in.
+    private static object?[] BuildArgs(System.Reflection.MethodInfo method, string name)
+    {
+        var parameters = method.GetParameters();
+        var args = new object?[parameters.Length];
+        args[0] = name;
+        for (var i = 1; i < parameters.Length; i++)
+        {
+            var type = parameters[i].ParameterType.GetElementType() ?? parameters[i].ParameterType;
+            args[i] = type == typeof(string) ? "" : Activator.CreateInstance(type);
+        }
+        return args;
+    }
+
+    // Strengths come back in the model's present force/length units. kN-m gives
+    // kN/m², which is 1/1000 of a MPa; a value already in MPa is left alone.
+    private static double ToMpa(double value)
+    {
+        if (value <= 0) return 0;
+        return value > 1000 ? value / 1000.0 : value;
+    }
+
+    // "C35-Kolon" -> C35, "B420C" -> B420C. Returns null when the name carries no class.
+    private static string? ClassFromName(string name, char prefix)
+    {
+        var match = System.Text.RegularExpressions.Regex.Match(
+            name, prefix == 'C' ? @"\bC\s?(\d{2,3})\b" : @"\b(?:B|S)\s?(\d{3})\s?([ABC])?\b",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        if (!match.Success) return null;
+        if (prefix == 'C') return "C" + match.Groups[1].Value;
+        var grade = match.Groups[1].Value;
+        var suffix = match.Groups[2].Success ? match.Groups[2].Value.ToUpperInvariant() : "C";
+        return (name.TrimStart().StartsWith("S", StringComparison.OrdinalIgnoreCase) && !match.Groups[2].Success)
+            ? "S" + grade
+            : "B" + grade + suffix;
+    }
+
     // Reuses ConnectAndRead so every data endpoint shares the same connect/reconnect logic
     // and always operates against a live, readable model.
     private bool EnsureModelReady(out string? error)
@@ -1291,6 +1555,8 @@ internal sealed class LocalBridgeServer : IDisposable
     private readonly Func<string, string[], TableResult> _getTable;
     private readonly Func<IReadOnlyList<FrameKey>, SelectResult> _selectFrames;
     private readonly Func<FrameSectionsResult> _getFrameSections;
+    private readonly Func<ModelMaterialsResult> _getModelMaterials;
+    private readonly Func<PlanExtentResult> _getPlanExtent;
     private readonly CancellationTokenSource _cancellation = new();
     private TcpListener? _listener;
 
@@ -1308,7 +1574,9 @@ internal sealed class LocalBridgeServer : IDisposable
         Func<string[], StoryDriftsResult> getStoryDrifts,
         Func<string, string[], TableResult> getTable,
         Func<IReadOnlyList<FrameKey>, SelectResult> selectFrames,
-        Func<FrameSectionsResult> getFrameSections)
+        Func<FrameSectionsResult> getFrameSections,
+        Func<ModelMaterialsResult> getModelMaterials,
+        Func<PlanExtentResult> getPlanExtent)
     {
         _getSnapshot = getSnapshot;
         _getCombinations = getCombinations;
@@ -1324,6 +1592,8 @@ internal sealed class LocalBridgeServer : IDisposable
         _getTable = getTable;
         _selectFrames = selectFrames;
         _getFrameSections = getFrameSections;
+        _getModelMaterials = getModelMaterials;
+        _getPlanExtent = getPlanExtent;
     }
 
     public void Start()
@@ -1465,6 +1735,18 @@ internal sealed class LocalBridgeServer : IDisposable
                     if (path == "/api/etabs/frame-sections")
                     {
                         await WriteResponseAsync(stream, 200, "OK", _getFrameSections(), origin, cancellationToken);
+                        return;
+                    }
+
+                    if (path == "/api/etabs/model-materials")
+                    {
+                        await WriteResponseAsync(stream, 200, "OK", _getModelMaterials(), origin, cancellationToken);
+                        return;
+                    }
+
+                    if (path == "/api/etabs/plan-extent")
+                    {
+                        await WriteResponseAsync(stream, 200, "OK", _getPlanExtent(), origin, cancellationToken);
                         return;
                     }
 
@@ -1797,6 +2079,10 @@ internal sealed record SelectResult(bool AgentOnline, bool EtabsConnected, strin
 internal sealed record FrameSectionInfo(string Unique, string Label, string Story, string Section, double H, double B);
 
 internal sealed record FrameSectionsResult(bool AgentOnline, bool EtabsConnected, string? Error, FrameSectionInfo[] Sections);
+internal sealed record ModelMaterialsResult(bool AgentOnline, bool EtabsConnected, string? Error,
+    string? ConcreteClass, string? RebarClass, string? SlabThickness);
+internal sealed record PlanExtentResult(bool AgentOnline, bool EtabsConnected, string? Error,
+    double Width, double Depth, string? Story);
 
 internal sealed record PierForceRow(string Story, string Pier, string LoadCase, string Location, double P, double V2, double V3);
 

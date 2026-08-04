@@ -1,6 +1,6 @@
 # Known issues and limitations
 
-Current as of **web v1.13.0 / agent v1.12.2**. Release notes live on the
+Current as of **web v1.14.0 / agent v1.13.0**. Release notes live on the
 [Releases page](https://github.com/simsekahmet/structural_engineering_assistant/releases).
 
 ## Limitations you must be aware of before relying on a result
@@ -12,10 +12,18 @@ Current as of **web v1.13.0 / agent v1.12.2**. Release notes live on the
 - **Wall Shear's short-wall, 0.5V and rigid-basement rules have no documented
   validation case yet** (the core Vr/Vmax path is validated as VC-05). See
   `VALIDATION.md`.
-- **The Report module is under construction.** Only the cover step of the
-  Introduction process is implemented; the remaining steps and the appendix
-  processes are listed but marked "to be defined", and there is no printable
-  document output yet. See the *Reporting* section of `STATUS.md`.
+- **The Report module is under construction.** Steps 1–4 of the Introduction
+  process are implemented; the remaining steps and the appendix processes are
+  listed but marked "to be defined", and there is no document output yet. See the
+  *Reporting* section of `STATUS.md`.
+- **Material and slab reads are a starting point, not an answer.** A model can hold
+  several concrete or rebar materials; the agent quotes the governing (highest)
+  strength and infers the class from the material name where it carries one. Check
+  the pre-selected row against the model before signing the report — the reference
+  table is clickable precisely so it can be corrected.
+- **The plan extent is the point envelope of a middle storey.** It includes anything
+  modelled at that level, so a projecting balcony or an isolated point moves it.
+  Compare it with the formwork plan before quoting it.
 - **Report data lives in this browser.** It is stored locally and never sent
   anywhere, which also means clearing browser data or switching machine loses it.
   Use *Save template* to keep a copy. Cover images are downscaled to 1600 px on the

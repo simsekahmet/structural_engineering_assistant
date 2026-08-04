@@ -7,7 +7,7 @@
   <meta name="description" content="Web-based structural engineering checks and reporting for ETABS models.">
   <title>Structural Engineering Assistant</title>
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="styles.css?v=1.13.0">
+  <link rel="stylesheet" href="styles.css?v=1.14.0">
 </head>
 <body>
   <div class="app-shell">
@@ -68,7 +68,7 @@
         <a class="nav-item" href="#report" data-view="report"><span class="nav-icon">❏</span><span data-i18n="module.report.title">Report</span></a>
       </nav>
       <div class="sidebar-footer">
-        <span class="version-badge" id="versionBadge">v1.13.0</span>
+        <span class="version-badge" id="versionBadge">v1.14.0</span>
         <nav class="doc-links" data-i18n-aria-label="docs.aria" aria-label="Documentation">
           <a href="https://github.com/simsekahmet/structural_engineering_assistant/blob/main/docs/STATUS.md" target="_blank" rel="noopener" data-i18n="docs.status">Module status</a>
           <a href="https://github.com/simsekahmet/structural_engineering_assistant/blob/main/docs/VALIDATION.md" target="_blank" rel="noopener" data-i18n="docs.validation">Validation cases</a>
@@ -150,7 +150,10 @@
       <section class="view module-view" id="moduleView" aria-labelledby="moduleTitle">
         <div class="page-heading">
           <div><span class="eyebrow" id="moduleCategory">ENGINEERING MODULE</span><h1 id="moduleTitle">Module</h1><p id="moduleDescription"></p></div>
-          <button class="button button-secondary" type="button" data-back-dashboard data-i18n="action.dashboard">← Dashboard</button>
+          <div class="heading-actions">
+            <div id="moduleHeadingSlot"></div>
+            <button class="button button-secondary" type="button" data-back-dashboard data-i18n="action.dashboard">← Dashboard</button>
+          </div>
         </div>
         <div class="module-workspace">
           <section class="panel setup-panel" id="setupPanel">
@@ -204,7 +207,7 @@
     </form>
   </dialog>
 
-  <script src="version.js?v=1.13.0"></script>
-  <script src="app.js?v=1.13.0" defer></script>
+  <script src="version.js?v=1.14.0"></script>
+  <script src="app.js?v=1.14.0" defer></script>
 </body>
 </html>
