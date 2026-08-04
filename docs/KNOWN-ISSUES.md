@@ -1,6 +1,6 @@
 # Known issues and limitations
 
-Current as of **web v1.12.0 / agent v1.12.0**. Release notes live on the
+Current as of **web v1.12.3 / agent v1.12.2**. Release notes live on the
 [Releases page](https://github.com/simsekahmet/structural_engineering_assistant/releases).
 
 ## Limitations you must be aware of before relying on a result
@@ -9,8 +9,9 @@ Current as of **web v1.12.0 / agent v1.12.0**. Release notes live on the
   *present* units, and every module assumes kN-m. A model left in kip-in produces
   plausible-looking but wrong numbers. The pre-flight check flags this, but it
   cannot fix it — change the units in ETABS.
-- **Four checks have no documented validation case yet** — Interstory Drift,
-  Second-Order Effects, Beam Shear, Beam Axial. See `VALIDATION.md`.
+- **Wall Shear's short-wall, 0.5V and rigid-basement rules have no documented
+  validation case yet** (the core Vr/Vmax path is validated as VC-05). See
+  `VALIDATION.md`.
 - **Results are not a design.** Every output must be reviewed and approved by the
   responsible structural engineer. The tool reproduces code equations; it does not
   exercise engineering judgement.
