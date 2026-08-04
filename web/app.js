@@ -7,7 +7,8 @@ const moduleDefinitions = [
   { id: 'wall-shear', key: 'wallShear', icon: '▤', categoryKey: 'category.memberChecks', ready: true },
   { id: 'wall-axial', key: 'wallAxial', icon: '▯', categoryKey: 'category.memberChecks', ready: true },
   { id: 'beam-shear', key: 'beamShear', icon: '═', categoryKey: 'category.memberChecks', ready: true },
-  { id: 'beam-axial', key: 'beamAxial', icon: '⇥', categoryKey: 'category.memberChecks', ready: true }
+  { id: 'beam-axial', key: 'beamAxial', icon: '⇥', categoryKey: 'category.memberChecks', ready: true },
+  { id: 'report', key: 'report', icon: '❏', categoryKey: 'category.reporting', ready: true }
 ];
 
 const translations = {
@@ -23,7 +24,8 @@ const translations = {
     'action.viewArchitecture': 'View connection architecture', 'action.dashboard': '← Dashboard', 'action.close': 'Close', 'action.understood': 'Understood',
     'action.searching': 'Searching for bridge…', 'action.downloadAgent': 'Download Windows Agent',
     'nav.general': 'GENERAL', 'nav.analysis': 'ANALYSIS & CHECKS', 'nav.memberChecks': 'MEMBER CHECKS',
-    'category.analysis': 'Analysis & Checks', 'category.memberChecks': 'Member Checks',
+    'nav.reporting': 'REPORTING',
+    'category.analysis': 'Analysis & Checks', 'category.memberChecks': 'Member Checks', 'category.reporting': 'Reporting',
     'version': 'v0.2 · bilingual preview',
     'dashboard.eyebrow': 'PROJECT CENTER', 'dashboard.title': 'Structural Engineering Dashboard',
     'dashboard.description': 'Connect your ETABS model, manage engineering checks, and report results from one workspace.',
@@ -162,6 +164,73 @@ const translations = {
     'module.wallAxial.title': 'Wall Axial Load', 'module.wallAxial.description': 'Evaluate wall axial load ratios for governing combinations.',
     'module.beamShear.title': 'Beam Shear', 'module.beamShear.description': 'Check beam shear safety by member and story.',
     'module.beamAxial.title': 'Beam Axial Load', 'module.beamAxial.description': 'Filter and report axial force effects in beams.',
+    'module.report.title': 'Report', 'module.report.description': 'Build the deliverable calculation report step by step from the shared project information, the checks and their outputs.',
+
+    'report.panel.structure.title': 'Report Structure', 'report.panel.structure.desc': 'Process, steps and template',
+    'report.panel.editor.title': 'Report Content',
+    'report.stepOf': '{process} PROCESS · STEP {index} / {total}',
+    'report.process.intro': 'Introduction', 'report.process.beam': 'App. B — Beam',
+    'report.process.column': 'App. C — Column', 'report.process.wall': 'App. D — Wall',
+    'report.process.pending': 'This process will be defined in a later step.',
+    'report.activeProcess': 'ACTIVE PROCESS',
+    'report.count.variables': 'Variables', 'report.count.images': 'Images', 'report.count.tables': 'Tables',
+    'report.badge.active': 'ACTIVE STEP', 'report.badge.done': 'COMPLETE', 'report.badge.pending': 'TO BE DEFINED',
+    'report.badge.empty': '{count} EMPTY FIELD(S)',
+    'report.prev': '‹ Back', 'report.next': 'Continue ›',
+    'report.settings.title': 'REPORT SETTINGS', 'report.settings.fontScale': 'Global font size',
+    'report.template.save': 'Save template', 'report.template.load': 'Load template',
+    'report.template.saved': 'Report template saved as a file.', 'report.template.loaded': 'Report template loaded.',
+    'report.template.invalid': 'This file is not a valid report template.',
+    'report.reset': 'Clear the report',
+    'report.reset.confirm': 'Every piece of report information you entered — including the images — will be cleared. Continue?',
+    'report.reset.done': 'Report information cleared.',
+    'report.saved': 'Report information is kept in this browser and is never sent anywhere.',
+    'report.bulk.title': 'BULK IMAGE MAPPING',
+    'report.bulk.text': 'Places the images in a folder automatically by their code names. The code is written next to every image slot — for example KAPAK.',
+    'report.bulk.button': 'Select image folder',
+    'report.bulk.result': '{count} image(s) matched by code.',
+    'report.bulk.none': 'No file in the folder matched an image code.',
+    'report.step.cover.title': 'Cover',
+    'report.step.cover.desc': 'The cover text, the report scope and the footer are composed together from the shared project information.',
+    'report.step.intro.title': '1 Introduction', 'report.step.system.title': '2 Structural System',
+    'report.step.material.title': '4 Materials / 5 Soil', 'report.step.loads.title': '6 Loads',
+    'report.step.seismic.title': 'Earthquake Definitions', 'report.step.design.title': '9 Design Principles',
+    'report.step.model.title': '10 Analysis Model', 'report.step.baseShear.title': '10.4 Base Shear',
+    'report.step.drift.title': 'Interstory Drift & Second-Order', 'report.step.review.title': 'Review',
+    'report.step.pending.title': 'This step is not defined yet',
+    'report.step.pending.text': 'Its fields will be added from the report template, step by step, so nothing is guessed at.',
+    'report.group.project': 'SHARED PROJECT INFORMATION',
+    'report.group.project.hint': 'Enter the project information; empty fields are left out of the composed texts.',
+    'report.group.texts': 'REPORT TEXTS', 'report.group.image': 'COVER IMAGE', 'report.group.date': 'DATE',
+    'report.optional': 'OPTIONAL',
+    'report.field.il': 'Province', 'report.field.ilce': 'District', 'report.field.mahalle': 'Neighbourhood',
+    'report.field.ada': 'Block no. (ada)', 'report.field.parsel': 'Parcel',
+    'report.field.projectName': 'Project name', 'report.field.blockName': 'Building block name',
+    'report.field.month': 'Month', 'report.field.year': 'Year',
+    'report.text.cover': 'COVER TEXT', 'report.text.scope': '1 INTRODUCTION · REPORT SCOPE TEXT', 'report.text.footer': 'FOOTER',
+    'report.text.manual': 'Edit manually', 'report.text.auto': 'Back to automatic',
+    'report.text.empty': 'The variables of this section are empty, so this text will be printed empty in the report.',
+    'report.template.cover': 'CALCULATION REPORT',
+    'report.template.scope': 'This report covers the calculations and checks of the reinforced-concrete structural system of {subject}{location}, carried out in accordance with TBDY 2018 and TS 500.',
+    'report.part.il': '{v} Province', 'report.part.ilce': '{v} District', 'report.part.mahalle': '{v} Neighbourhood',
+    'report.part.ada': 'block (ada) {v}', 'report.part.parsel': 'parcel {v}',
+    'report.part.location': ', located on {v}',
+    'report.part.projectBlock': 'block {block} of the {project} project',
+    'report.part.projectBlockNamed': '{block} of the {project} project',
+    'report.part.project': 'the {project} project', 'report.part.block': 'block {block}',
+    'report.part.blockNamed': '{block}',
+    'report.part.structure': 'the structure',
+    'report.image.label': 'Cover image', 'report.image.hint': 'The image used on the cover.',
+    'report.image.code': 'CODE: {code}',
+    'report.image.drop': 'Drag and drop or upload', 'report.image.limits': 'PNG, JPG or WEBP · max {max} MB',
+    'report.image.remove': 'Remove image', 'report.image.added': 'Image added.',
+    'report.image.type': 'Only PNG, JPG and WEBP images are supported.',
+    'report.image.size': 'The image is larger than {max} MB.',
+    'report.image.readFailed': 'The image could not be read.',
+    'report.preview.title': 'COVER PREVIEW', 'report.preview.imageArea': 'COVER IMAGE AREA',
+    'report.preview.date': 'DATE', 'report.preview.footer': 'FOOTER',
+    'report.preview.pending': 'The preview of this step will be added together with the step itself.',
+    'validate.year': 'Year {value} is not plausible. Expected 2000–2100.',
     'drift.params.title': 'Earthquake Parameters', 'drift.params.sdsDD2': 'SDS (DD-2)', 'drift.params.sdsDD3': 'SDS (DD-3)',
     'drift.params.sd1DD2': 'SD1 (DD-2)', 'drift.params.sd1DD3': 'SD1 (DD-3)', 'drift.params.k': 'k', 'drift.params.tp': 'Tp',
     'drift.params.flexibleJoint': 'Flexible joint present? (Yes: 0.016, No: 0.008)', 'drift.params.basement': 'Basement assumption?',
@@ -255,7 +324,8 @@ const translations = {
     'action.viewArchitecture': 'Bağlantı mimarisini görüntüle', 'action.dashboard': '← Ana Sayfa', 'action.close': 'Kapat', 'action.understood': 'Anladım',
     'action.searching': 'Köprü aranıyor…', 'action.downloadAgent': 'Windows Agent’ı İndir',
     'nav.general': 'GENEL', 'nav.analysis': 'ANALİZ & KONTROL', 'nav.memberChecks': 'ELEMAN TAHKİKLERİ',
-    'category.analysis': 'Analiz & Kontrol', 'category.memberChecks': 'Eleman Tahkikleri',
+    'nav.reporting': 'RAPORLAMA',
+    'category.analysis': 'Analiz & Kontrol', 'category.memberChecks': 'Eleman Tahkikleri', 'category.reporting': 'Raporlama',
     'version': 'v0.2 · çift dilli önizleme',
     'dashboard.eyebrow': 'PROJE MERKEZİ', 'dashboard.title': 'Yapısal Mühendislik Paneli',
     'dashboard.description': 'ETABS modelinizi bağlayın, tahkikleri tek merkezden yönetin ve sonuçları raporlayın.',
@@ -394,6 +464,73 @@ const translations = {
     'module.wallAxial.title': 'Perde Eksenel Yük', 'module.wallAxial.description': 'Perde eksenel yük oranlarını kritik kombinasyonlar için değerlendirin.',
     'module.beamShear.title': 'Kiriş Kesme', 'module.beamShear.description': 'Kiriş kesme güvenliğini eleman ve kat bazında tahkik edin.',
     'module.beamAxial.title': 'Kiriş Eksenel Yük', 'module.beamAxial.description': 'Kirişlerdeki eksenel kuvvet etkilerini filtreleyin ve raporlayın.',
+    'module.report.title': 'Rapor', 'module.report.description': 'Teslim edilecek hesap raporunu; ortak proje bilgileri, tahkikler ve çıktılarından adım adım oluşturun.',
+
+    'report.panel.structure.title': 'Rapor Yapısı', 'report.panel.structure.desc': 'Süreç, adımlar ve şablon',
+    'report.panel.editor.title': 'Rapor İçeriği',
+    'report.stepOf': '{process} SÜRECİ · ADIM {index} / {total}',
+    'report.process.intro': 'Giriş', 'report.process.beam': 'EK-B — Kiriş',
+    'report.process.column': 'EK-C — Kolon', 'report.process.wall': 'EK-D — Perde',
+    'report.process.pending': 'Bu süreç sonraki adımlarda tanımlanacak.',
+    'report.activeProcess': 'AKTİF SÜREÇ',
+    'report.count.variables': 'Değişken', 'report.count.images': 'Görsel', 'report.count.tables': 'Tablo',
+    'report.badge.active': 'AKTİF ADIM', 'report.badge.done': 'TAMAMLANDI', 'report.badge.pending': 'TANIMLANACAK',
+    'report.badge.empty': '{count} BOŞ ALAN',
+    'report.prev': '‹ Geri', 'report.next': 'Devam ›',
+    'report.settings.title': 'RAPOR AYARLARI', 'report.settings.fontScale': 'Genel punto',
+    'report.template.save': 'Şablon kaydet', 'report.template.load': 'Şablon yükle',
+    'report.template.saved': 'Rapor şablonu dosya olarak kaydedildi.', 'report.template.loaded': 'Rapor şablonu yüklendi.',
+    'report.template.invalid': 'Bu dosya geçerli bir rapor şablonu değil.',
+    'report.reset': 'Raporu temizle',
+    'report.reset.confirm': 'Girdiğiniz tüm rapor bilgileri — görseller dâhil — silinecek. Devam edilsin mi?',
+    'report.reset.done': 'Rapor bilgileri temizlendi.',
+    'report.saved': 'Rapor bilgileri bu tarayıcıda saklanır, hiçbir yere gönderilmez.',
+    'report.bulk.title': 'TOPLU GÖRSEL EŞLEME',
+    'report.bulk.text': 'Klasördeki görselleri kod adlarına göre otomatik yerleştirir. Kod, her görsel alanının yanında yazar — örneğin KAPAK.',
+    'report.bulk.button': 'Görsel klasörü seç',
+    'report.bulk.result': '{count} görsel koduna göre eşleştirildi.',
+    'report.bulk.none': 'Klasördeki hiçbir dosya bir görsel koduyla eşleşmedi.',
+    'report.step.cover.title': 'Kapak',
+    'report.step.cover.desc': 'Ortak proje bilgilerinden kapak yazısı, rapor kapsamı ve alt bilgi birlikte oluşturulur.',
+    'report.step.intro.title': '1 Giriş', 'report.step.system.title': '2 Taşıyıcı Sistem',
+    'report.step.material.title': '4 Malzeme / 5 Zemin', 'report.step.loads.title': '6 Yükler',
+    'report.step.seismic.title': 'Deprem Tanımları', 'report.step.design.title': '9 Tasarım Esasları',
+    'report.step.model.title': '10 Hesap Modeli', 'report.step.baseShear.title': '10.4 Taban Kesme',
+    'report.step.drift.title': 'Göreli Kat & 2. Mertebe', 'report.step.review.title': 'Kontrol',
+    'report.step.pending.title': 'Bu adım henüz tanımlanmadı',
+    'report.step.pending.text': 'Alanları, rapor altlığından adım adım eklenecek; hiçbir alan tahmin edilmeyecek.',
+    'report.group.project': 'ORTAK PROJE BİLGİLERİ',
+    'report.group.project.hint': 'Proje bilgilerini girin; boş alanlar oluşturulan metinlere eklenmez.',
+    'report.group.texts': 'RAPOR METİNLERİ', 'report.group.image': 'KAPAK GÖRSELİ', 'report.group.date': 'TARİH',
+    'report.optional': 'İSTEĞE BAĞLI',
+    'report.field.il': 'İl', 'report.field.ilce': 'İlçe', 'report.field.mahalle': 'Mahalle',
+    'report.field.ada': 'Ada', 'report.field.parsel': 'Parsel',
+    'report.field.projectName': 'Proje adı', 'report.field.blockName': 'Blok adı',
+    'report.field.month': 'Ay', 'report.field.year': 'Yıl',
+    'report.text.cover': 'KAPAK YAZISI', 'report.text.scope': '1 GİRİŞ · RAPOR KAPSAMI METNİ', 'report.text.footer': 'ALT BİLGİ',
+    'report.text.manual': 'Manuel düzenle', 'report.text.auto': 'Otomatiğe dön',
+    'report.text.empty': 'Bu bölümdeki değişkenler boş bırakıldığı için raporda bu metin boş basılacak.',
+    'report.template.cover': 'HESAP RAPORU',
+    'report.template.scope': 'Bu rapor, {location} {subject} ait betonarme taşıyıcı sistemin TBDY 2018 ve TS 500 uyarınca yapılan hesap ve tahkiklerini kapsamaktadır.',
+    'report.part.il': '{v} İli', 'report.part.ilce': '{v} İlçesi', 'report.part.mahalle': '{v} Mahallesi',
+    'report.part.ada': '{v} Ada', 'report.part.parsel': '{v} Parsel',
+    'report.part.location': '{v} üzerinde yer alan',
+    'report.part.projectBlock': '{project} projesinin {block} bloğuna',
+    'report.part.projectBlockNamed': '{project} projesinin {block} yapısına',
+    'report.part.project': '{project} projesine', 'report.part.block': '{block} bloğuna',
+    'report.part.blockNamed': '{block} yapısına',
+    'report.part.structure': 'yapıya',
+    'report.image.label': 'Kapak görseli', 'report.image.hint': 'Kapakta kullanılacak görsel.',
+    'report.image.code': 'KOD: {code}',
+    'report.image.drop': 'Sürükleyip bırakın veya yükleyin', 'report.image.limits': 'PNG, JPG veya WEBP · en fazla {max} MB',
+    'report.image.remove': 'Görseli kaldır', 'report.image.added': 'Görsel eklendi.',
+    'report.image.type': 'Yalnızca PNG, JPG ve WEBP görseller desteklenir.',
+    'report.image.size': 'Görsel {max} MB sınırından büyük.',
+    'report.image.readFailed': 'Görsel okunamadı.',
+    'report.preview.title': 'KAPAK ÖNİZLEMESİ', 'report.preview.imageArea': 'KAPAK GÖRSELİ ALANI',
+    'report.preview.date': 'TARİH', 'report.preview.footer': 'ALT BİLGİ',
+    'report.preview.pending': 'Bu adımın önizlemesi, adımın kendisiyle birlikte eklenecek.',
+    'validate.year': '{value} yılı makul değil. 2000–2100 aralığı bekleniyor.',
     'drift.params.title': 'Deprem Parametreleri', 'drift.params.sdsDD2': 'SDS (DD-2)', 'drift.params.sdsDD3': 'SDS (DD-3)',
     'drift.params.sd1DD2': 'SD1 (DD-2)', 'drift.params.sd1DD3': 'SD1 (DD-3)', 'drift.params.k': 'k', 'drift.params.tp': 'Tp',
     'drift.params.flexibleJoint': 'Esnek derz var mı? (Var: 0.016, Yok: 0.008)', 'drift.params.basement': 'Bodrum kabulü var mı?',
@@ -499,7 +636,8 @@ const moduleRenderers = {
   'beam-shear': renderBeamShearModule,
   'beam-axial': renderBeamAxialModule,
   'wall-axial': renderWallAxialModule,
-  'wall-shear': renderWallShearModule
+  'wall-shear': renderWallShearModule,
+  report: renderReportModule
 };
 
 // Shared across beam checks: unique frame name -> { section, h, b } (h/b in model length units).
@@ -1200,6 +1338,16 @@ function numberField(id, labelKey, { step = 'any', min, max, unit } = {}) {
   return `<div class="field">
       <label for="${id}">${label}</label>
       <input ${attrs}>
+      <p class="field-error" id="${id}-err" role="alert" hidden></p>
+    </div>`;
+}
+
+// Free-text sibling of numberField(), with the same label/error wiring. `span: 2`
+// makes the field take the whole width of a two-column .field-grid.
+function textField(id, labelKey, { span = 1, placeholder = '' } = {}) {
+  return `<div class="field${span > 1 ? ' span-2' : ''}">
+      <label for="${id}">${t(labelKey)}</label>
+      <input type="text" id="${id}" ${placeholder ? `placeholder="${escapeHtml(placeholder)}"` : ''} aria-describedby="${id}-err">
       <p class="field-error" id="${id}-err" role="alert" hidden></p>
     </div>`;
 }
@@ -4336,6 +4484,637 @@ async function wallShearExportExcel() {
   } finally {
     if (btn) btn.disabled = false;
   }
+}
+
+// ---------------------------------------------------------------------------
+// Reporting (Raporlama) — the deliverable a design office actually hands over.
+//
+// The report is described as DATA, not as markup: a process owns an ordered list
+// of steps, a step owns groups of fields, and a field is one of text / number /
+// month / image / autotext. Rendering, the per-step progress badges, the process
+// counters, template save-load and the bulk image mapper all read that schema, so
+// adding the next page of the report outline is a schema entry rather than new UI
+// code. That is the foundation the rest of the report is built on.
+//
+// Only the cover step is defined so far. The remaining steps are listed under the
+// names they carry in the report outline and marked "to be defined" — their fields
+// are added as the outline for each one is settled, never guessed at.
+// ---------------------------------------------------------------------------
+
+const REPORT_IMAGE_MAX_MB = 15;
+// Cover images are usually a render or a photo; capping the long edge keeps the
+// stored data URL inside the localStorage quota without a visible quality loss.
+const REPORT_IMAGE_MAX_PX = 1600;
+
+const reportProcesses = [
+  { id: 'intro', labelKey: 'report.process.intro' },
+  { id: 'beam', labelKey: 'report.process.beam', pending: true },
+  { id: 'column', labelKey: 'report.process.column', pending: true },
+  { id: 'wall', labelKey: 'report.process.wall', pending: true }
+];
+
+const reportSteps = {
+  intro: [
+    {
+      id: 'cover',
+      titleKey: 'report.step.cover.title',
+      descKey: 'report.step.cover.desc',
+      groups: [
+        {
+          titleKey: 'report.group.project',
+          hintKey: 'report.group.project.hint',
+          fields: [
+            { id: 'il', type: 'text' }, { id: 'ilce', type: 'text' }, { id: 'mahalle', type: 'text' },
+            { id: 'ada', type: 'text' }, { id: 'parsel', type: 'text' },
+            { id: 'projectName', type: 'text', span: 2 }, { id: 'blockName', type: 'text', span: 2 }
+          ]
+        },
+        {
+          titleKey: 'report.group.texts',
+          fields: [
+            { id: 'coverText', type: 'autotext', labelKey: 'report.text.cover' },
+            { id: 'scopeText', type: 'autotext', labelKey: 'report.text.scope' },
+            { id: 'footerText', type: 'autotext', labelKey: 'report.text.footer' }
+          ]
+        },
+        {
+          titleKey: 'report.group.image',
+          badgeKey: 'report.optional',
+          fields: [{
+            id: 'coverImage', type: 'image', code: 'KAPAK', optional: true,
+            labelKey: 'report.image.label', hintKey: 'report.image.hint'
+          }]
+        },
+        {
+          titleKey: 'report.group.date',
+          fields: [{ id: 'month', type: 'month' }, { id: 'year', type: 'number', min: 2000, max: 2100 }]
+        }
+      ]
+    },
+    { id: 'intro1', titleKey: 'report.step.intro.title', pending: true },
+    { id: 'system', titleKey: 'report.step.system.title', pending: true },
+    { id: 'material', titleKey: 'report.step.material.title', pending: true },
+    { id: 'loads', titleKey: 'report.step.loads.title', pending: true },
+    { id: 'seismic', titleKey: 'report.step.seismic.title', pending: true },
+    { id: 'design', titleKey: 'report.step.design.title', pending: true },
+    { id: 'model', titleKey: 'report.step.model.title', pending: true },
+    { id: 'baseShear', titleKey: 'report.step.baseShear.title', pending: true },
+    { id: 'drift', titleKey: 'report.step.drift.title', pending: true },
+    { id: 'review', titleKey: 'report.step.review.title', pending: true }
+  ],
+  beam: [],
+  column: [],
+  wall: []
+};
+
+// A report text is composed from the shared project variables. Empty variables are
+// left out of the sentence rather than printed as gaps, and a text whose variables
+// are all empty stays empty — which is exactly what gets printed in the report.
+const reportComposers = {
+  coverText: () => t('report.template.cover'),
+
+  scopeText: f => {
+    const clean = key => String(f[key] ?? '').trim();
+    const place = ['il', 'ilce', 'mahalle', 'ada', 'parsel']
+      .filter(clean).map(key => t(`report.part.${key}`, { v: clean(key) })).join(', ');
+    const project = clean('projectName'), block = clean('blockName');
+    // "A Blok" already carries the word, so appending it again would read
+    // "A Blok bloğuna". Pick the phrasing that does not repeat it.
+    const named = /blo[kğ]|block/i.test(block) ? 'Named' : '';
+    const subject = project && block ? t(`report.part.projectBlock${named}`, { project, block })
+      : project ? t('report.part.project', { project })
+      : block ? t(`report.part.block${named}`, { block })
+      : place ? t('report.part.structure') : '';
+    if (!subject) return '';
+    return t('report.template.scope', { location: place ? t('report.part.location', { v: place }) : '', subject })
+      .replace(/\s+/g, ' ').replace(/\s+([.,])/g, '$1').trim();
+  },
+
+  footerText: f => {
+    const clean = key => String(f[key] ?? '').trim();
+    const place = [clean('il'), clean('ilce')].filter(Boolean).join(' / ');
+    return [clean('projectName'), clean('blockName'), place].filter(Boolean).join(' · ');
+  }
+};
+
+function reportDefaults() {
+  return { process: 'intro', step: 'cover', fields: {}, texts: {}, images: {}, fontScale: 100 };
+}
+
+function loadReportState() {
+  try {
+    const stored = JSON.parse(localStorage.getItem('sea-report'));
+    return stored && typeof stored === 'object' ? { ...reportDefaults(), ...stored } : reportDefaults();
+  } catch {
+    return reportDefaults();
+  }
+}
+
+function saveReportState() {
+  try {
+    localStorage.setItem('sea-report', JSON.stringify(reportState));
+  } catch {
+    // Images are the only thing large enough to blow the quota; the typed
+    // information matters more, so keep that and drop the images from storage.
+    try { localStorage.setItem('sea-report', JSON.stringify({ ...reportState, images: {} })); } catch { /* give up */ }
+  }
+}
+
+const reportState = loadReportState();
+
+function reportActiveSteps() {
+  return reportSteps[reportState.process] || [];
+}
+
+function reportActiveStep() {
+  const steps = reportActiveSteps();
+  return steps.find(s => s.id === reportState.step) || steps[0] || { id: '', titleKey: '', pending: true };
+}
+
+function reportStepFields(step) {
+  return (step.groups || []).flatMap(group => group.fields);
+}
+
+function reportFieldFilled(field) {
+  if (field.type === 'image') return !!reportState.images[field.code];
+  return String(reportState.fields[field.id] ?? '').trim() !== '';
+}
+
+// Autotext fields are derived, so they are never counted as something to fill in.
+function reportEmptyCount(step) {
+  return reportStepFields(step).filter(f => f.type !== 'autotext' && !f.optional && !reportFieldFilled(f)).length;
+}
+
+function reportProcessCounts() {
+  const steps = reportActiveSteps();
+  const fields = steps.flatMap(reportStepFields);
+  return {
+    variables: fields.filter(f => f.type !== 'image' && f.type !== 'autotext').length,
+    images: fields.filter(f => f.type === 'image').length,
+    tables: steps.reduce((sum, s) => sum + (s.tables || []).length, 0)
+  };
+}
+
+function reportImageCodes() {
+  return reportActiveSteps().flatMap(s => reportStepFields(s).filter(f => f.type === 'image').map(f => f.code));
+}
+
+function reportComposedText(id) {
+  if (reportState.texts[id] !== undefined) return reportState.texts[id];
+  const composer = reportComposers[id];
+  return composer ? composer(reportState.fields) : '';
+}
+
+function reportMonthNames() {
+  const fmt = new Intl.DateTimeFormat(currentLanguage === 'tr' ? 'tr-TR' : 'en-GB', { month: 'long' });
+  return Array.from({ length: 12 }, (_, i) => fmt.format(new Date(2000, i, 1)));
+}
+
+function reportDateLabel() {
+  const month = Number(reportState.fields.month);
+  const year = String(reportState.fields.year ?? '').trim();
+  const name = month >= 1 && month <= 12 ? reportMonthNames()[month - 1] : '';
+  return [name, year].filter(Boolean).join(' ');
+}
+
+// Report-scoped DOM ids, so a field called "year" cannot collide with a module input.
+function reportDomId(fieldId) {
+  return 'rep' + fieldId.charAt(0).toUpperCase() + fieldId.slice(1);
+}
+
+function renderReportModule() {
+  renderReportStructurePanel();
+  renderReportEditorPanel();
+}
+
+// --- Panel 1: the report outline -------------------------------------------
+function renderReportStructurePanel() {
+  const panel = $('#setupPanel');
+  const steps = reportActiveSteps();
+  const active = reportActiveStep();
+  const counts = reportProcessCounts();
+  const process = reportProcesses.find(p => p.id === reportState.process) || reportProcesses[0];
+
+  panel.innerHTML = `
+    <div class="panel-heading compact"><div><span class="step-number">1</span><div><h2>${t('report.panel.structure.title')}</h2><p>${t('report.panel.structure.desc')}</p></div></div></div>
+    <div class="rep-processes">
+      ${reportProcesses.map(p => `
+        <button type="button" class="rep-process${p.id === reportState.process ? ' on' : ''}" data-process="${p.id}"
+                ${p.pending ? `disabled title="${escapeHtml(t('report.process.pending'))}"` : ''}>${t(p.labelKey)}</button>`).join('')}
+    </div>
+    <div class="rep-summary">
+      <p class="rep-summary-label">${t('report.activeProcess')}</p>
+      <strong>${t(process.labelKey)}</strong>
+      <div class="rep-counts">
+        <span><strong>${counts.variables}</strong><small>${t('report.count.variables')}</small></span>
+        <span><strong>${counts.images}</strong><small>${t('report.count.images')}</small></span>
+        <span><strong>${counts.tables}</strong><small>${t('report.count.tables')}</small></span>
+      </div>
+    </div>
+    <ol class="rep-steps">${steps.map((step, index) => reportStepItem(step, index, active)).join('')}</ol>
+    ${setupSection('repSettings', 'report.settings.title', `
+      <div class="field-grid">
+        <div class="field">
+          <label for="repFontScale">${t('report.settings.fontScale')}</label>
+          <select id="repFontScale">
+            ${[90, 95, 100, 105, 110].map(v => `<option value="${v}"${v === reportState.fontScale ? ' selected' : ''}>${v}%</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="panel-actions two-up">
+        <button class="button button-secondary" type="button" id="repSaveTemplate">${t('report.template.save')}</button>
+        <button class="button button-secondary" type="button" id="repLoadTemplate">${t('report.template.load')}</button>
+      </div>
+      <p class="rep-note">${t('report.saved')}</p>`, false)}
+    <div class="panel-actions">
+      <button class="button button-secondary full-width" type="button" id="repReset">${t('report.reset')}</button>
+    </div>
+    <input type="file" id="repTemplateFile" accept="application/json,.json" hidden>`;
+
+  bindSetupSections(panel);
+
+  $$('[data-process]', panel).forEach(btn => btn.addEventListener('click', () => {
+    reportState.process = btn.dataset.process;
+    reportState.step = (reportActiveSteps()[0] || {}).id || '';
+    saveReportState();
+    renderReportModule();
+  }));
+
+  $$('[data-step]', panel).forEach(btn => btn.addEventListener('click', () => {
+    reportState.step = btn.dataset.step;
+    saveReportState();
+    renderReportModule();
+  }));
+
+  const scale = $('#repFontScale', panel);
+  scale.addEventListener('change', () => {
+    reportState.fontScale = Number(scale.value) || 100;
+    saveReportState();
+    reportRefreshDerived();
+  });
+
+  const templateFile = $('#repTemplateFile', panel);
+  $('#repSaveTemplate', panel).addEventListener('click', reportSaveTemplate);
+  $('#repLoadTemplate', panel).addEventListener('click', () => templateFile.click());
+  templateFile.addEventListener('change', () => {
+    if (templateFile.files[0]) reportLoadTemplate(templateFile.files[0]);
+    templateFile.value = '';
+  });
+
+  $('#repReset', panel).addEventListener('click', () => {
+    if (!window.confirm(t('report.reset.confirm'))) return;
+    Object.assign(reportState, reportDefaults());
+    saveReportState();
+    renderReportModule();
+    log(t('report.reset.done'), 'ok');
+  });
+}
+
+function reportStepItem(step, index, active) {
+  const isActive = step.id === active.id;
+  const empty = step.pending ? -1 : reportEmptyCount(step);
+  const badge = step.pending ? t('report.badge.pending')
+    : isActive ? t('report.badge.active')
+    : empty > 0 ? t('report.badge.empty', { count: empty })
+    : t('report.badge.done');
+  const mark = step.pending ? '○' : empty === 0 ? '✓' : '•';
+  return `<li>
+      <button type="button" class="rep-step${isActive ? ' on' : ''}${step.pending ? ' pending' : ''}" data-step="${step.id}">
+        <span class="rep-step-mark">${mark}</span>
+        <span class="rep-step-text"><strong>${index + 1}. ${t(step.titleKey)}</strong><small>${badge}</small></span>
+      </button>
+    </li>`;
+}
+
+// --- Panel 2: the active step ------------------------------------------------
+function renderReportEditorPanel() {
+  const panel = $('#resultsPanel');
+  const steps = reportActiveSteps();
+  const step = reportActiveStep();
+  const index = steps.findIndex(s => s.id === step.id);
+  const processLabel = t((reportProcesses.find(p => p.id === reportState.process) || reportProcesses[0]).labelKey);
+
+  panel.innerHTML = `
+    <div class="panel-heading compact"><div><span class="step-number">2</span><div>
+      <h2>${t('report.panel.editor.title')}</h2>
+      <p>${t('report.stepOf', {
+        process: currentLanguage === 'tr' ? processLabel.toLocaleUpperCase('tr-TR') : processLabel.toUpperCase(),
+        index: index + 1, total: steps.length
+      })}</p>
+    </div></div></div>
+    <div class="rep-workspace">
+      <div class="rep-form">
+        <h3 class="rep-step-title">${t(step.titleKey)}</h3>
+        ${step.descKey ? `<p class="rep-step-desc">${t(step.descKey)}</p>` : ''}
+        ${step.pending ? reportPendingBlock() : reportStepBody(step)}
+      </div>
+      <aside class="rep-preview">
+        <p class="rep-preview-label">${t('report.preview.title')}</p>
+        <div id="repPreviewSlot">${reportPreviewFor(step)}</div>
+      </aside>
+    </div>
+    <div class="rep-nav">
+      <button class="button button-secondary" type="button" id="repPrev"${index <= 0 ? ' disabled' : ''}>${t('report.prev')}</button>
+      <button class="button button-primary" type="button" id="repNext"${index >= steps.length - 1 ? ' disabled' : ''}>${t('report.next')}</button>
+    </div>`;
+
+  bindReportStep(panel, step);
+
+  $('#repPrev', panel).addEventListener('click', () => reportGoToStep(index - 1, false));
+  $('#repNext', panel).addEventListener('click', () => reportGoToStep(index + 1, true));
+}
+
+function reportPendingBlock() {
+  return `<div class="rep-pending">
+      <strong>${t('report.step.pending.title')}</strong>
+      <p>${t('report.step.pending.text')}</p>
+    </div>`;
+}
+
+function reportStepBody(step) {
+  const hasImages = reportStepFields(step).some(f => f.type === 'image');
+  const bulk = hasImages ? `
+    <div class="rep-bulk">
+      <div><h4>${t('report.bulk.title')}</h4><p>${t('report.bulk.text')}</p></div>
+      <button class="button button-secondary" type="button" id="repBulkPick">${t('report.bulk.button')}</button>
+      <input type="file" id="repBulkFolder" webkitdirectory directory multiple hidden>
+    </div>` : '';
+  return bulk + (step.groups || []).map(reportGroupHtml).join('');
+}
+
+function reportGroupHtml(group) {
+  const plain = group.fields.filter(f => f.type !== 'autotext' && f.type !== 'image');
+  const rest = group.fields.filter(f => f.type === 'autotext' || f.type === 'image');
+  const grid = plain.length ? `<div class="field-grid">${plain.map(reportPlainFieldHtml).join('')}</div>` : '';
+  return `<section class="rep-group">
+      <div class="rep-group-head">
+        <h4>${t(group.titleKey)}</h4>
+        ${group.badgeKey ? `<span class="rep-badge">${t(group.badgeKey)}</span>` : ''}
+      </div>
+      ${group.hintKey ? `<p class="rep-group-hint">${t(group.hintKey)}</p>` : ''}
+      <div class="rep-group-body">
+        ${grid}
+        ${rest.map(f => f.type === 'image' ? reportImageFieldHtml(f) : reportAutoTextHtml(f)).join('')}
+      </div>
+    </section>`;
+}
+
+function reportPlainFieldHtml(field) {
+  const id = reportDomId(field.id);
+  const labelKey = field.labelKey || `report.field.${field.id}`;
+  if (field.type === 'number') return numberField(id, labelKey, { step: '1', min: field.min, max: field.max });
+  if (field.type === 'month') {
+    const current = String(reportState.fields[field.id] ?? '');
+    return `<div class="field">
+        <label for="${id}">${t(labelKey)}</label>
+        <select id="${id}">
+          <option value=""></option>
+          ${reportMonthNames().map((name, i) => `<option value="${i + 1}"${current === String(i + 1) ? ' selected' : ''}>${escapeHtml(name)}</option>`).join('')}
+        </select>
+        <p class="field-error" id="${id}-err" role="alert" hidden></p>
+      </div>`;
+  }
+  return textField(id, labelKey, { span: field.span || 1 });
+}
+
+function reportAutoTextHtml(field) {
+  const manual = reportState.texts[field.id] !== undefined;
+  const value = reportComposedText(field.id);
+  const empty = !manual && !value;
+  return `<div class="rep-text" data-text="${field.id}">
+      <div class="rep-text-head">
+        <span>${t(field.labelKey)}</span>
+        <button type="button" class="text-button" data-toggle-text="${field.id}">✎ ${t(manual ? 'report.text.auto' : 'report.text.manual')}</button>
+      </div>
+      ${manual
+        ? `<textarea class="rep-textarea" id="${reportDomId(field.id)}" rows="3" aria-label="${escapeHtml(t(field.labelKey))}">${escapeHtml(value)}</textarea>`
+        : `<p class="rep-text-body${empty ? ' muted' : ''}">${empty ? t('report.text.empty') : escapeHtml(value)}</p>`}
+    </div>`;
+}
+
+function reportImageFieldHtml(field) {
+  const src = reportState.images[field.code];
+  return `<div class="rep-image" data-code="${field.code}">
+      <div class="rep-image-head">
+        <div><strong>${t(field.labelKey)}</strong><small>${t(field.hintKey)}</small></div>
+        <span class="rep-code">${t('report.image.code', { code: field.code })}</span>
+      </div>
+      <div class="rep-drop${src ? ' has' : ''}" data-drop="${field.code}" tabindex="0" role="button" aria-label="${escapeHtml(t('report.image.drop'))}">
+        ${src
+          ? `<img src="${src}" alt="">`
+          : `<span class="rep-drop-icon" aria-hidden="true">▣</span><strong>${t('report.image.drop')}</strong><small>${t('report.image.limits', { max: REPORT_IMAGE_MAX_MB })}</small>`}
+      </div>
+      ${src ? `<button type="button" class="text-button rep-image-remove" data-remove="${field.code}">${t('report.image.remove')}</button>` : ''}
+      <input type="file" data-file="${field.code}" accept="image/png,image/jpeg,image/webp" hidden>
+    </div>`;
+}
+
+function reportPreviewFor(step) {
+  if (step.id !== 'cover') return `<p class="rep-preview-note">${t('report.preview.pending')}</p>`;
+  const cover = escapeHtml(reportComposedText('coverText'));
+  const footer = escapeHtml(reportComposedText('footerText'));
+  const date = escapeHtml(reportDateLabel());
+  const img = reportState.images.KAPAK;
+  return `<div class="rep-page" style="--rep-scale:${(reportState.fontScale || 100) / 100}">
+      <p class="rep-page-title">${cover || '&nbsp;'}</p>
+      <div class="rep-page-image">${img ? `<img src="${img}" alt="">` : `<span>${t('report.preview.imageArea')}</span>`}</div>
+      <p class="rep-page-date">${date || t('report.preview.date')}</p>
+      <p class="rep-page-footer">${footer || t('report.preview.footer')}</p>
+    </div>`;
+}
+
+// Repaints only what a keystroke can change — the preview and the auto-composed
+// texts — so typing never re-renders the form and steals focus. The step badges
+// are refreshed on `change` instead, once the field is left.
+function reportRefreshDerived() {
+  const slot = $('#repPreviewSlot');
+  if (slot) slot.innerHTML = reportPreviewFor(reportActiveStep());
+  $$('.rep-text').forEach(el => {
+    const id = el.dataset.text;
+    if (reportState.texts[id] !== undefined) return;
+    const body = $('.rep-text-body', el);
+    if (!body) return;
+    const value = reportComposedText(id);
+    body.classList.toggle('muted', !value);
+    body.textContent = value || t('report.text.empty');
+  });
+}
+
+function bindReportStep(panel, step) {
+  for (const field of reportStepFields(step)) {
+    if (field.type === 'image') { bindReportImageField(panel, field); continue; }
+    const el = $('#' + reportDomId(field.id), panel);
+    if (!el) continue;
+    if (field.type !== 'autotext') el.value = reportState.fields[field.id] ?? '';
+    el.addEventListener('input', () => {
+      if (field.type === 'autotext') reportState.texts[field.id] = el.value;
+      else reportState.fields[field.id] = el.value;
+      saveReportState();
+      reportRefreshDerived();
+    });
+    el.addEventListener('change', renderReportStructurePanel);
+  }
+
+  $$('[data-toggle-text]', panel).forEach(btn => btn.addEventListener('click', () => {
+    const id = btn.dataset.toggleText;
+    if (reportState.texts[id] !== undefined) delete reportState.texts[id];
+    else reportState.texts[id] = reportComposedText(id);
+    saveReportState();
+    renderReportEditorPanel();
+  }));
+
+  const bulkPick = $('#repBulkPick', panel);
+  const bulkFolder = $('#repBulkFolder', panel);
+  if (bulkPick && bulkFolder) {
+    bulkPick.addEventListener('click', () => bulkFolder.click());
+    bulkFolder.addEventListener('change', () => {
+      const files = [...bulkFolder.files];
+      bulkFolder.value = '';
+      if (files.length) reportBulkAssign(files);
+    });
+  }
+}
+
+function bindReportImageField(panel, field) {
+  const drop = $(`[data-drop="${field.code}"]`, panel);
+  const file = $(`[data-file="${field.code}"]`, panel);
+  const remove = $(`[data-remove="${field.code}"]`, panel);
+  if (!drop || !file) return;
+
+  drop.addEventListener('click', () => file.click());
+  drop.addEventListener('keydown', event => {
+    if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); file.click(); }
+  });
+  ['dragenter', 'dragover'].forEach(name => drop.addEventListener(name, event => {
+    event.preventDefault();
+    drop.classList.add('over');
+  }));
+  ['dragleave', 'dragend'].forEach(name => drop.addEventListener(name, () => drop.classList.remove('over')));
+  drop.addEventListener('drop', event => {
+    event.preventDefault();
+    drop.classList.remove('over');
+    const dropped = event.dataTransfer && event.dataTransfer.files[0];
+    if (dropped) reportAcceptImage(field.code, dropped);
+  });
+  file.addEventListener('change', () => {
+    const picked = file.files[0];
+    file.value = '';
+    if (picked) reportAcceptImage(field.code, picked);
+  });
+
+  if (remove) remove.addEventListener('click', () => {
+    delete reportState.images[field.code];
+    saveReportState();
+    renderReportModule();
+  });
+}
+
+// Validates the file, then downscales it so the report survives a page reload.
+function reportReadImage(file) {
+  return new Promise((resolve, reject) => {
+    if (!/^image\/(png|jpeg|webp)$/.test(file.type)) return reject(new Error(t('report.image.type')));
+    if (file.size > REPORT_IMAGE_MAX_MB * 1024 * 1024) return reject(new Error(t('report.image.size', { max: REPORT_IMAGE_MAX_MB })));
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error(t('report.image.readFailed')));
+    reader.onload = () => {
+      const image = new Image();
+      image.onerror = () => reject(new Error(t('report.image.readFailed')));
+      image.onload = () => {
+        const ratio = Math.min(1, REPORT_IMAGE_MAX_PX / Math.max(image.width, image.height));
+        if (ratio === 1 && file.size < 900 * 1024) return resolve(reader.result);
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(image.width * ratio));
+        canvas.height = Math.max(1, Math.round(image.height * ratio));
+        canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
+        // PNG is kept lossless because cover pages are often line drawings.
+        resolve(canvas.toDataURL(file.type === 'image/png' ? 'image/png' : 'image/jpeg', 0.86));
+      };
+      image.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function reportAcceptImage(code, file) {
+  try {
+    reportState.images[code] = await reportReadImage(file);
+    saveReportState();
+    renderReportModule();
+    log(t('report.image.added'), 'ok');
+  } catch (error) {
+    log(error.message, 'error');
+  }
+}
+
+// Folder pick: a file is placed when its name without the extension matches an
+// image code registered anywhere in the active process. Codes are ASCII, so the
+// comparison stays locale-invariant.
+async function reportBulkAssign(files) {
+  const codes = new Set(reportImageCodes());
+  let matched = 0;
+  for (const file of files) {
+    const code = file.name.replace(/\.[^.]+$/, '').toUpperCase();
+    if (!codes.has(code)) continue;
+    try {
+      reportState.images[code] = await reportReadImage(file);
+      matched++;
+    } catch { /* an unreadable or oversized file simply is not placed */ }
+  }
+  saveReportState();
+  renderReportModule();
+  log(matched ? t('report.bulk.result', { count: matched }) : t('report.bulk.none'), matched ? 'ok' : 'info');
+}
+
+function reportSaveTemplate() {
+  const payload = { app: 'sea-report', version: APP_VERSION, state: reportState };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'rapor-sablonu.json';
+  link.click();
+  URL.revokeObjectURL(url);
+  log(t('report.template.saved'), 'ok');
+}
+
+function reportLoadTemplate(file) {
+  const reader = new FileReader();
+  reader.onerror = () => log(t('report.template.invalid'), 'error');
+  reader.onload = () => {
+    try {
+      const parsed = JSON.parse(reader.result);
+      const incoming = parsed && parsed.app === 'sea-report' ? parsed.state : null;
+      if (!incoming || typeof incoming !== 'object') throw new Error('not a report template');
+      Object.assign(reportState, reportDefaults(), incoming);
+      if (!reportSteps[reportState.process]) Object.assign(reportState, { process: 'intro', step: 'cover' });
+      saveReportState();
+      renderReportModule();
+      log(t('report.template.loaded'), 'ok');
+    } catch {
+      log(t('report.template.invalid'), 'error');
+    }
+  };
+  reader.readAsText(file);
+}
+
+// Empty fields are allowed to stay empty — they simply print empty — so moving on
+// is only blocked when a value that WAS entered cannot be right.
+function reportValidateStep(step) {
+  const year = String(reportState.fields.year ?? '').trim();
+  if (step.id !== 'cover' || !year) return true;
+  return validateFields(
+    [{ id: reportDomId('year'), ok: inRange(Number(year), 2000, 2100), message: t('validate.year', { value: year }) }],
+    $('#resultsPanel'));
+}
+
+function reportGoToStep(index, validate) {
+  const steps = reportActiveSteps();
+  if (index < 0 || index >= steps.length) return;
+  if (validate && !reportValidateStep(reportActiveStep())) return;
+  reportState.step = steps[index].id;
+  saveReportState();
+  renderReportModule();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 moduleGrid.addEventListener('click', event => {

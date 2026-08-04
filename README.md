@@ -38,6 +38,10 @@ Every module also offers a **rigid basement** rule: stories at or below a chosen
 
 If more than one ETABS instance is open, **Connect to ETABS** lists them and lets you pick the model. A **Disconnect** button releases the model and clears everything fetched from it.
 
+## Reporting
+
+The **Report** module builds the calculation report a design office delivers: an ordered list of steps with per-step progress, auto-composed texts that leave empty project variables out (each one can be taken over manually), image slots filled individually or in bulk from a folder by code name, a live cover preview, and template save/load as a `.json` file. It is being built step by step against the report outline — only the cover step is implemented so far, and every other step is listed but marked "to be defined" rather than guessed at. Report data is kept in your own browser and is never sent anywhere. See the *Reporting* section of [docs/STATUS.md](docs/STATUS.md).
+
 ## Repository structure
 
 - `web/`: English/Turkish GitHub Pages interface (`version.js` is the single source of the web version).

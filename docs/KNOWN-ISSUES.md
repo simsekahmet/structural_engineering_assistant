@@ -1,6 +1,6 @@
 # Known issues and limitations
 
-Current as of **web v1.12.3 / agent v1.12.2**. Release notes live on the
+Current as of **web v1.13.0 / agent v1.12.2**. Release notes live on the
 [Releases page](https://github.com/simsekahmet/structural_engineering_assistant/releases).
 
 ## Limitations you must be aware of before relying on a result
@@ -12,6 +12,14 @@ Current as of **web v1.12.3 / agent v1.12.2**. Release notes live on the
 - **Wall Shear's short-wall, 0.5V and rigid-basement rules have no documented
   validation case yet** (the core Vr/Vmax path is validated as VC-05). See
   `VALIDATION.md`.
+- **The Report module is under construction.** Only the cover step of the
+  Introduction process is implemented; the remaining steps and the appendix
+  processes are listed but marked "to be defined", and there is no printable
+  document output yet. See the *Reporting* section of `STATUS.md`.
+- **Report data lives in this browser.** It is stored locally and never sent
+  anywhere, which also means clearing browser data or switching machine loses it.
+  Use *Save template* to keep a copy. Cover images are downscaled to 1600 px on the
+  long edge before they are stored.
 - **Results are not a design.** Every output must be reviewed and approved by the
   responsible structural engineer. The tool reproduces code equations; it does not
   exercise engineering judgement.
