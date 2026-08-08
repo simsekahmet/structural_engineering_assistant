@@ -513,14 +513,17 @@ th.rep-pick.on { color: #fff; background: var(--red); }
 .rep-soilp .field-grid { padding: 11px 0 0; }
 
 .rep-capture { margin-top: 12px; padding: 11px 12px; border: 1px solid var(--border-soft); border-radius: 11px; background: var(--surface-muted); }
-.rep-capture-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.rep-capture-help { margin: 0 0 9px; color: var(--muted); font-size: 9.5px; line-height: 1.55; }
 .rep-capture-list { list-style: none; margin: 0; padding: 0; }
-.rep-capture-list li { display: flex; align-items: center; justify-content: space-between; gap: 11px; padding: 8px 0; border-top: 1px solid var(--border-soft); }
-.rep-capture-info { min-width: 0; }
+.rep-capture-list li { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-top: 1px solid var(--border-soft); }
+.rep-capture-list li:first-child { border-top: 0; }
+.rep-cap-mark { width: 19px; height: 19px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 6px; color: var(--muted); background: var(--surface); font: 700 11px/1 Arial, sans-serif; }
+.cap-ok .rep-cap-mark { color: #fff; background: var(--green); }
+.cap-fail .rep-cap-mark { color: #fff; background: var(--red); }
+.cap-working .rep-cap-mark { color: #fff; background: var(--primary); }
+.rep-capture-info { flex: 1; min-width: 0; }
 .rep-capture-info strong { display: block; font-size: 11px; }
-.rep-capture-info img { max-width: 190px; max-height: 74px; margin-top: 5px; border: 1px solid var(--border); border-radius: 6px; }
-.rep-capture-list .button { flex: 0 0 auto; min-height: 29px; padding: 5px 11px; font-size: 10.5px; }
+.rep-capture-info small { display: block; margin-top: 2px; color: var(--red); font-size: 9.5px; line-height: 1.5; }
+.rep-capture-list img { flex: 0 0 auto; max-width: 120px; max-height: 58px; border: 1px solid var(--border); border-radius: 6px; }
 
 .rep-preview-label { margin: 0 0 8px; color: var(--muted); font-size: 9px; text-transform: uppercase; letter-spacing: .08em; }
 .rep-page { --rep-scale: 1; display: flex; flex-direction: column; aspect-ratio: 1 / 1.414; padding: 30px 22px 26px; border: 1px solid var(--border); border-radius: 8px; color: #17243b; background: #fff; box-shadow: 0 8px 22px rgba(40, 66, 112, .14); }

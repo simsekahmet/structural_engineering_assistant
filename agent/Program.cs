@@ -82,7 +82,8 @@ internal sealed class AgentApplicationContext : ApplicationContext
             GetLoadPatternsOnUiThread,
             GetWallSectionsOnUiThread,
             CaptureOnUiThread,
-            GetMenuTreeOnUiThread);
+            GetMenuTreeOnUiThread,
+            AutoViewOnUiThread);
         try
         {
             _server.Start();
@@ -264,6 +265,21 @@ internal sealed class AgentApplicationContext : ApplicationContext
             return (MenuTreeResult)_dispatcher.Invoke(new Func<MenuTreeResult>(_etabs.GetMenuTree));
 
         return _etabs.GetMenuTree();
+    }
+
+    private CaptureResult AutoViewOnUiThread(AutoViewRequest request)
+    {
+        if (_dispatcher.InvokeRequired)
+            return (CaptureResult)_dispatcher.Invoke(new Func<AutoViewRequest, CaptureResult>(RunAutoView), new object[] { request });
+
+        return RunAutoView(request);
+    }
+
+    private CaptureResult RunAutoView(AutoViewRequest request)
+    {
+        return string.Equals(request.Kind, "soil", StringComparison.OrdinalIgnoreCase)
+            ? _etabs.AutomateSoilView(request.LoadPattern ?? "", request.WallPrefix ?? "BAP")
+            : _etabs.AutomateLoadView(request.Story ?? "", request.LoadPattern ?? "");
     }
 
     private void ShowConnectionResult()
@@ -1000,6 +1016,342 @@ internal sealed class EtabsConnection : IDisposable
             nodes.Add(new MenuNode(text, id, sub == IntPtr.Zero ? Array.Empty<MenuNode>() : ReadMenu(sub, depth + 1)));
         }
         return nodes.ToArray();
+    }
+
+    // --- View automation -----------------------------------------------------
+    //
+    // The v1 API has no view control, so the views the report needs are produced by
+    // driving the ETABS menus: find the menu item BY TEXT at run time (never by a
+    // hard-coded id, which would not survive a reordering), post WM_COMMAND, then
+    // fill in whatever dialog appears. Every failure reports the menu texts or the
+    // dialog controls it actually found, so a mismatch says what is really there.
+
+    // Menu paths are given as alternatives because the wording differs between
+    // ETABS versions; the first path that resolves wins.
+    private static readonly string[][][] PlanViewPaths =
+    {
+        new[] { new[] { "View" }, new[] { "Set Plan View", "Plan View", "Set Plan" } }
+    };
+
+    private static readonly string[][][] ShellLoadPaths =
+    {
+        new[] { new[] { "Display" }, new[] { "Load Assigns", "Load Assignments" }, new[] { "Shell", "Area", "Shell Loads", "Area Loads" } }
+    };
+
+    private static readonly string[][][] View3DPaths =
+    {
+        new[] { new[] { "View" }, new[] { "Set 3D View", "3D View", "Set Default 3D View" } }
+    };
+
+    private static readonly string[][][] ShowSelectedOnlyPaths =
+    {
+        new[] { new[] { "View" }, new[] { "Show Selected Objects Only", "Show Selected Only", "Show Selected" } }
+    };
+
+    public CaptureResult AutomateLoadView(string story, string loadPattern)
+    {
+        if (!EnsureModelReady(out var error))
+            return new CaptureResult(true, false, error, null, 0, 0);
+
+        try
+        {
+            var main = FindEtabsWindow();
+            if (main == IntPtr.Zero)
+                return new CaptureResult(true, true, "ETABS main window could not be found.", null, 0, 0);
+
+            WindowCapture.SetForegroundWindow(main);
+            System.Threading.Thread.Sleep(250);
+
+            if (!string.IsNullOrWhiteSpace(story))
+            {
+                if (!InvokeMenu(main, PlanViewPaths, out var menuError))
+                    return new CaptureResult(true, true, menuError, null, 0, 0);
+                if (!FillDialog(main, story, out var dialogError))
+                    return new CaptureResult(true, true, $"Plan view dialog: {dialogError}", null, 0, 0);
+            }
+
+            if (!string.IsNullOrWhiteSpace(loadPattern))
+            {
+                if (!InvokeMenu(main, ShellLoadPaths, out var menuError))
+                    return new CaptureResult(true, true, menuError, null, 0, 0);
+                if (!FillDialog(main, loadPattern, out var dialogError))
+                    return new CaptureResult(true, true, $"Shell load dialog: {dialogError}", null, 0, 0);
+            }
+
+            System.Threading.Thread.Sleep(500);
+            return CaptureEtabsWindow();
+        }
+        catch (Exception ex)
+        {
+            AgentLog.Write($"AutomateLoadView failed: {ex}");
+            return new CaptureResult(true, false, ex.Message, null, 0, 0);
+        }
+    }
+
+    // Basement-wall view: the walls are selected through the API (reliable), then
+    // ETABS is asked to show only the selection in 3D with the load displayed.
+    public CaptureResult AutomateSoilView(string loadPattern, string wallPrefix)
+    {
+        if (!EnsureModelReady(out var error))
+            return new CaptureResult(true, false, error, null, 0, 0);
+
+        try
+        {
+            var selected = SelectWallsByPrefix(wallPrefix, out var selectError);
+            if (selected == 0)
+                return new CaptureResult(true, true, selectError ?? $"No wall section starts with \"{wallPrefix}\".", null, 0, 0);
+
+            var main = FindEtabsWindow();
+            if (main == IntPtr.Zero)
+                return new CaptureResult(true, true, "ETABS main window could not be found.", null, 0, 0);
+
+            WindowCapture.SetForegroundWindow(main);
+            System.Threading.Thread.Sleep(250);
+
+            if (!InvokeMenu(main, ShowSelectedOnlyPaths, out var showError))
+                return new CaptureResult(true, true, showError, null, 0, 0);
+            System.Threading.Thread.Sleep(300);
+
+            if (!InvokeMenu(main, View3DPaths, out var viewError))
+                return new CaptureResult(true, true, viewError, null, 0, 0);
+            // The 3D dialog, when there is one, is accepted with its defaults.
+            FillDialog(main, null, out _);
+            System.Threading.Thread.Sleep(300);
+
+            if (!string.IsNullOrWhiteSpace(loadPattern))
+            {
+                if (!InvokeMenu(main, ShellLoadPaths, out var menuError))
+                    return new CaptureResult(true, true, menuError, null, 0, 0);
+                if (!FillDialog(main, loadPattern, out var dialogError))
+                    return new CaptureResult(true, true, $"Shell load dialog: {dialogError}", null, 0, 0);
+            }
+
+            System.Threading.Thread.Sleep(500);
+            return CaptureEtabsWindow();
+        }
+        catch (Exception ex)
+        {
+            AgentLog.Write($"AutomateSoilView failed: {ex}");
+            return new CaptureResult(true, false, ex.Message, null, 0, 0);
+        }
+    }
+
+    // Selects every area object whose section name starts with the prefix.
+    private int SelectWallsByPrefix(string prefix, out string? error)
+    {
+        error = null;
+        try
+        {
+            var sap = _sapModel!;
+            var selectProp = _sapModelInterface!.GetProperty("SelectObj")!;
+            var select = selectProp.GetValue(sap)!;
+            selectProp.PropertyType.GetMethods().First(m => m.Name == "ClearSelection").Invoke(select, null);
+
+            var areaProp = _sapModelInterface.GetProperty("AreaObj")!;
+            var area = areaProp.GetValue(sap)!;
+            var areaType = areaProp.PropertyType;
+
+            var getNameList = areaType.GetMethods().First(m => m.Name == "GetNameList" && m.GetParameters().Length == 2);
+            var nameArgs = new object?[] { 0, null };
+            getNameList.Invoke(area, nameArgs);
+            var names = (string[]?)nameArgs[1] ?? Array.Empty<string>();
+
+            var getProperty = areaType.GetMethods().First(m => m.Name == "GetProperty" && m.GetParameters().Length == 2);
+            var setSelected = areaType.GetMethods().First(m => m.Name == "SetSelected");
+
+            var count = 0;
+            foreach (var name in names)
+            {
+                var args = new object?[] { name, "" };
+                try { getProperty.Invoke(area, args); } catch { continue; }
+                var section = (string?)args[1] ?? "";
+                if (!section.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) continue;
+
+                var selArgs = new object?[] { name, true, 0 };
+                try { setSelected.Invoke(area, selArgs); count++; } catch { /* skip */ }
+            }
+            return count;
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+            AgentLog.Write($"SelectWallsByPrefix failed: {ex}");
+            return 0;
+        }
+    }
+
+    // Resolves a menu path by text and posts its command. On failure the message
+    // lists the menu texts that WERE found at the level that did not match.
+    private bool InvokeMenu(IntPtr window, string[][][] pathAlternatives, out string error)
+    {
+        var bar = WindowCapture.GetMenu(window);
+        if (bar == IntPtr.Zero) { error = "ETABS window exposes no menu bar."; return false; }
+
+        var tried = new List<string>();
+        foreach (var path in pathAlternatives)
+        {
+            var menu = bar;
+            var ok = true;
+            for (var level = 0; level < path.Length; level++)
+            {
+                var index = FindMenuIndex(menu, path[level]);
+                if (index < 0)
+                {
+                    tried.Add($"[{string.Join(" / ", path[level])}] not found among: {string.Join(", ", MenuTexts(menu))}");
+                    ok = false;
+                    break;
+                }
+                if (level == path.Length - 1)
+                {
+                    var id = WindowCapture.GetMenuItemID(menu, index);
+                    if (id <= 0)
+                    {
+                        tried.Add($"\"{path[level][0]}\" has no command id");
+                        ok = false;
+                        break;
+                    }
+                    WindowCapture.PostMessage(window, WindowCapture.WM_COMMAND, (IntPtr)id, IntPtr.Zero);
+                    System.Threading.Thread.Sleep(600);
+                    error = "";
+                    return true;
+                }
+                menu = WindowCapture.GetSubMenu(menu, index);
+                if (menu == IntPtr.Zero) { tried.Add($"\"{path[level][0]}\" has no submenu"); ok = false; break; }
+            }
+            if (ok) break;
+        }
+
+        error = "ETABS menu path could not be resolved. " + string.Join(" | ", tried);
+        return false;
+    }
+
+    private static int FindMenuIndex(IntPtr menu, string[] candidates)
+    {
+        var count = WindowCapture.GetMenuItemCount(menu);
+        for (var i = 0; i < count; i++)
+        {
+            var text = MenuText(menu, i);
+            foreach (var candidate in candidates)
+            {
+                if (text.Equals(candidate, StringComparison.OrdinalIgnoreCase)) return i;
+                if (text.StartsWith(candidate, StringComparison.OrdinalIgnoreCase)) return i;
+            }
+        }
+        return -1;
+    }
+
+    private static string MenuText(IntPtr menu, int index)
+    {
+        var buffer = new System.Text.StringBuilder(256);
+        WindowCapture.GetMenuString(menu, index, buffer, buffer.Capacity, WindowCapture.MF_BYPOSITION);
+        // Strip the accelerator marker and any trailing shortcut column.
+        return buffer.ToString().Replace("&", "").Split('\t')[0].Trim().TrimEnd('.');
+    }
+
+    private static string[] MenuTexts(IntPtr menu)
+    {
+        var count = WindowCapture.GetMenuItemCount(menu);
+        var list = new List<string>(Math.Max(0, count));
+        for (var i = 0; i < count; i++)
+        {
+            var text = MenuText(menu, i);
+            if (text.Length > 0) list.Add(text);
+        }
+        return list.ToArray();
+    }
+
+    // Finds the dialog ETABS just opened, picks `choice` in its first list or combo
+    // box, and presses OK. Passing a null choice just accepts the defaults.
+    private bool FillDialog(IntPtr main, string? choice, out string error)
+    {
+        var dialog = WaitForDialog(main);
+        if (dialog == IntPtr.Zero)
+        {
+            // Not every command opens a dialog; that is a success, not a failure.
+            error = "";
+            return true;
+        }
+
+        var controls = ReadDialogControls(dialog);
+
+        if (!string.IsNullOrWhiteSpace(choice))
+        {
+            var picked = false;
+            foreach (var control in controls)
+            {
+                if (control.ClassName.IndexOf("COMBOBOX", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    var index = (int)WindowCapture.SendMessage(control.Handle, WindowCapture.CB_FINDSTRINGEXACT, (IntPtr)(-1), choice);
+                    if (index < 0) continue;
+                    WindowCapture.SendMessage(control.Handle, WindowCapture.CB_SETCURSEL, (IntPtr)index, IntPtr.Zero);
+                    WindowCapture.SendMessage(dialog, WindowCapture.WM_COMMAND,
+                        (IntPtr)((WindowCapture.CBN_SELCHANGE << 16) | (uint)control.Id), control.Handle);
+                    picked = true;
+                    break;
+                }
+                if (control.ClassName.IndexOf("LISTBOX", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    var index = (int)WindowCapture.SendMessage(control.Handle, WindowCapture.LB_FINDSTRINGEXACT, (IntPtr)(-1), choice);
+                    if (index < 0) continue;
+                    WindowCapture.SendMessage(control.Handle, WindowCapture.LB_SETCURSEL, (IntPtr)index, IntPtr.Zero);
+                    WindowCapture.SendMessage(dialog, WindowCapture.WM_COMMAND,
+                        (IntPtr)((WindowCapture.LBN_SELCHANGE << 16) | (uint)control.Id), control.Handle);
+                    picked = true;
+                    break;
+                }
+            }
+
+            if (!picked)
+            {
+                error = $"\"{choice}\" was not offered. Dialog contains: " +
+                    string.Join(", ", controls.Select(c => $"{c.ClassName}\"{c.Text}\""));
+                return false;
+            }
+        }
+
+        var ok = controls.FirstOrDefault(c =>
+            c.ClassName.IndexOf("BUTTON", StringComparison.OrdinalIgnoreCase) >= 0 &&
+            (c.Text.Equals("OK", StringComparison.OrdinalIgnoreCase) || c.Text.Equals("Tamam", StringComparison.OrdinalIgnoreCase)));
+        if (ok is null)
+        {
+            error = "No OK button in the dialog. Controls: " +
+                string.Join(", ", controls.Select(c => $"{c.ClassName}\"{c.Text}\""));
+            return false;
+        }
+
+        WindowCapture.SendMessage(ok.Handle, WindowCapture.BM_CLICK, IntPtr.Zero, IntPtr.Zero);
+        System.Threading.Thread.Sleep(400);
+        error = "";
+        return true;
+    }
+
+    // A dialog raised by the command becomes the foreground window and is not the
+    // main window; give ETABS a moment to put one up before deciding there is none.
+    private static IntPtr WaitForDialog(IntPtr main)
+    {
+        for (var attempt = 0; attempt < 12; attempt++)
+        {
+            var front = WindowCapture.GetForegroundWindow();
+            if (front != IntPtr.Zero && front != main && WindowCapture.IsWindowVisible(front)) return front;
+            System.Threading.Thread.Sleep(150);
+        }
+        return IntPtr.Zero;
+    }
+
+    private static DialogControl[] ReadDialogControls(IntPtr dialog)
+    {
+        var found = new List<DialogControl>();
+        WindowCapture.EnumChildWindows(dialog, (handle, _) =>
+        {
+            var className = new System.Text.StringBuilder(128);
+            WindowCapture.GetClassName(handle, className, className.Capacity);
+            var text = new System.Text.StringBuilder(256);
+            WindowCapture.GetWindowText(handle, text, text.Capacity);
+            found.Add(new DialogControl(handle, className.ToString(), text.ToString().Replace("&", "").Trim(),
+                WindowCapture.GetDlgCtrlID(handle)));
+            return true;
+        }, IntPtr.Zero);
+        return found.ToArray();
     }
 
     // Captures the ETABS main window as a PNG.
@@ -1777,6 +2129,7 @@ internal sealed class LocalBridgeServer : IDisposable
     private readonly Func<WallSectionsResult> _getWallSections;
     private readonly Func<CaptureResult> _capture;
     private readonly Func<MenuTreeResult> _getMenuTree;
+    private readonly Func<AutoViewRequest, CaptureResult> _autoView;
     private readonly CancellationTokenSource _cancellation = new();
     private TcpListener? _listener;
 
@@ -1800,7 +2153,8 @@ internal sealed class LocalBridgeServer : IDisposable
         Func<LoadPatternsResult> getLoadPatterns,
         Func<WallSectionsResult> getWallSections,
         Func<CaptureResult> capture,
-        Func<MenuTreeResult> getMenuTree)
+        Func<MenuTreeResult> getMenuTree,
+        Func<AutoViewRequest, CaptureResult> autoView)
     {
         _getSnapshot = getSnapshot;
         _getCombinations = getCombinations;
@@ -1822,6 +2176,7 @@ internal sealed class LocalBridgeServer : IDisposable
         _getWallSections = getWallSections;
         _capture = capture;
         _getMenuTree = getMenuTree;
+        _autoView = autoView;
     }
 
     public void Start()
@@ -1887,7 +2242,7 @@ internal sealed class LocalBridgeServer : IDisposable
 
                 // Request log: every accepted call is recorded so the engineer can audit what the
                 // web UI asked ETABS to do. WRITE marks the only endpoint that touches the model.
-                var isWrite = path is "/api/etabs/select-frames" or "/api/etabs/select-piers";
+                var isWrite = path is "/api/etabs/select-frames" or "/api/etabs/select-piers" or "/api/etabs/auto-view";
                 var isConnectionChange = path is "/api/etabs/connect-to" or "/api/etabs/disconnect";
                 AgentLog.Write($"{(isWrite ? "WRITE" : isConnectionChange ? "CONN " : "READ ")} {method} {path} origin={origin}");
 
@@ -2009,6 +2364,14 @@ internal sealed class LocalBridgeServer : IDisposable
                 if (method == "POST")
                 {
                     var json = Encoding.UTF8.GetString(body);
+
+                    if (path == "/api/etabs/auto-view")
+                    {
+                        var req = JsonSerializer.Deserialize<AutoViewRequest>(json, JsonOptions)
+                            ?? new AutoViewRequest(null, null, null, null);
+                        await WriteResponseAsync(stream, 200, "OK", _autoView(req), origin, cancellationToken);
+                        return;
+                    }
 
                     if (path == "/api/etabs/select-frames")
                     {
@@ -2341,6 +2704,7 @@ internal sealed record WallSectionsResult(bool AgentOnline, bool EtabsConnected,
 internal sealed record CaptureResult(bool AgentOnline, bool EtabsConnected, string? Error, string? Image, int Width, int Height);
 internal sealed record MenuNode(string Text, int Id, MenuNode[] Items);
 internal sealed record MenuTreeResult(bool AgentOnline, bool EtabsConnected, string? Error, MenuNode[] Menus);
+internal sealed record AutoViewRequest(string? Story, string? LoadPattern, string? WallPrefix, string? Kind);
 
 // Win32 calls needed to photograph the ETABS window. The v1 API exposes no picture
 // export and no view control, so the window itself is the only source of a view image.
@@ -2377,7 +2741,57 @@ internal static class WindowCapture
 
     [System.Runtime.InteropServices.DllImport("user32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
     internal static extern int GetMenuString(IntPtr hMenu, int uIDItem, System.Text.StringBuilder lpString, int nMaxCount, uint uFlag);
+
+    // --- driving menus and dialogs ---
+    internal const uint WM_COMMAND = 0x0111;
+    internal const uint BM_CLICK = 0x00F5;
+    internal const uint CB_FINDSTRINGEXACT = 0x0158;
+    internal const uint CB_SETCURSEL = 0x014E;
+    internal const uint CB_GETCOUNT = 0x0146;
+    internal const uint CB_GETLBTEXT = 0x0148;
+    internal const uint LB_FINDSTRINGEXACT = 0x01A2;
+    internal const uint LB_SETCURSEL = 0x0186;
+    internal const uint LB_GETCOUNT = 0x018B;
+    internal const uint LB_GETTEXT = 0x0189;
+    internal const uint CBN_SELCHANGE = 1;
+    internal const uint LBN_SELCHANGE = 1;
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    internal static extern IntPtr SendMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
+
+    [System.Runtime.InteropServices.DllImport("user32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
+    internal static extern IntPtr SendMessage(IntPtr hWnd, uint msg, IntPtr wParam, string lParam);
+
+    [System.Runtime.InteropServices.DllImport("user32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
+    internal static extern IntPtr SendMessage(IntPtr hWnd, uint msg, IntPtr wParam, System.Text.StringBuilder lParam);
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    internal static extern bool PostMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    internal static extern IntPtr GetForegroundWindow();
+
+    internal delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    internal static extern bool EnumChildWindows(IntPtr hWndParent, EnumWindowsProc callback, IntPtr lParam);
+
+    [System.Runtime.InteropServices.DllImport("user32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
+    internal static extern int GetClassName(IntPtr hWnd, System.Text.StringBuilder lpClassName, int nMaxCount);
+
+    [System.Runtime.InteropServices.DllImport("user32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
+    internal static extern int GetWindowText(IntPtr hWnd, System.Text.StringBuilder lpString, int nMaxCount);
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    internal static extern int GetDlgCtrlID(IntPtr hWnd);
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    internal static extern bool IsWindowVisible(IntPtr hWnd);
 }
+
+// One control found inside an ETABS dialog, described well enough that a failure
+// can say what WAS there instead of only what was missing.
+internal sealed record DialogControl(IntPtr Handle, string ClassName, string Text, int Id);
 
 
 

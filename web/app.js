@@ -288,11 +288,10 @@ const translations = {
     'report.soilP.generateHint': 'Wall sections whose name starts with "{prefix}" are the basement walls.',
     'report.soilP.needPattern': 'Choose a static or dynamic soil load pattern first.',
     'report.capture.title': 'VIEWS TO CAPTURE',
-    'report.capture.help': 'The ETABS API cannot switch views or export a picture, so each view is set up in ETABS and photographed here. Open the view described on the row, then press Capture.',
     'report.capture.row': '{target} · {pattern}',
-    'report.capture.button': 'Capture', 'report.capture.recapture': 'Capture again',
-    'report.capture.done': 'View captured: {what}.',
-    'report.capture.clear': 'Clear the list',
+    'report.capture.summary': '{done} of {total} view(s) captured.',
+    'report.capture.busy': 'Generating views — ETABS is being driven, please do not use the computer.',
+    'report.soilP.walls': 'Basement walls (3D)',
     'report.measure.button': 'Measure from model', 'report.measure.working': 'Measuring…',
     'report.measure.needConnection': 'Connect to a model to measure.',
     'report.measure.done': 'Plan extent measured on storey {story}.',
@@ -713,11 +712,10 @@ const translations = {
     'report.soilP.generateHint': 'Adı "{prefix}" ile başlayan perde kesitleri bodrum perdesi kabul edilir.',
     'report.soilP.needPattern': 'Önce statik veya dinamik toprak yükünü seçin.',
     'report.capture.title': 'YAKALANACAK GÖRÜNÜMLER',
-    'report.capture.help': 'ETABS API’si görünüm değiştiremiyor ve görsel dışa aktarmıyor; bu yüzden her görünüm ETABS’ta açılır ve buradan fotoğraflanır. Satırda yazan görünümü ETABS’ta açın, sonra Yakala’ya basın.',
     'report.capture.row': '{target} · {pattern}',
-    'report.capture.button': 'Yakala', 'report.capture.recapture': 'Yeniden yakala',
-    'report.capture.done': 'Görünüm yakalandı: {what}.',
-    'report.capture.clear': 'Listeyi temizle',
+    'report.capture.summary': '{total} görselden {done} tanesi üretildi.',
+    'report.capture.busy': 'Görseller üretiliyor — ETABS sürülüyor, lütfen bilgisayarı kullanmayın.',
+    'report.soilP.walls': 'Bodrum perdeleri (3B)',
     'report.measure.button': 'Modelden ölç', 'report.measure.working': 'Ölçülüyor…',
     'report.measure.needConnection': 'Ölçmek için bir modele bağlanın.',
     'report.measure.done': 'İzdüşüm {story} katından ölçüldü.',
@@ -5166,7 +5164,7 @@ function reportDefaults() {
     storeyRoles: {}, stories: [], modelHints: {}, modelError: '',
     // Load patterns and wall sections read from the model, plus the plan-view
     // groups: each group is one drawing that represents the storeys inside it.
-    loadPatterns: [], wallSections: [], planGroups: [],
+    loadPatterns: [], wallSections: [], planGroups: [], captureLog: [], captureKind: '',
     // Fields the engineer has typed into. Model-derived defaults keep refreshing
     // until then; once a field is here, nothing overwrites it automatically.
     touched: {}
@@ -5406,35 +5404,68 @@ function reportViewQueue() {
   })));
 }
 
-async function reportCaptureInto(key, describe) {
-  try {
-    const res = await fetchAgentJson('/api/etabs/capture', 30000);
-    if (!res.etabsConnected || !res.image) throw new Error(res.error || t('drift.error.notConnected'));
-    reportState.images[key] = res.image;
+// Runs a whole queue: ETABS is driven to each view and photographed, one after the
+// other. A view that fails is recorded with its reason and the run carries on, so
+// one bad row cannot cost the whole batch.
+let reportCaptureRunning = false;
+
+async function reportRunCaptureQueue(items, kind) {
+  if (reportCaptureRunning) return;
+  if (items.length === 0) { log(t(kind === 'soil' ? 'report.soilP.needPattern' : 'report.pg.nothingToDo'), 'error'); return; }
+
+  reportCaptureRunning = true;
+  reportState.captureKind = kind;
+  reportState.captureLog = items.map(item => ({ key: item.key, label: item.label, state: 'waiting' }));
+  saveReportState();
+  renderReportEditorPanel();
+
+  let done = 0;
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    reportState.captureLog[i].state = 'working';
+    reportPaintCaptureLog();
+    try {
+      const res = await postAgentJson('/api/etabs/auto-view', {
+        kind,
+        story: item.story || '',
+        loadPattern: item.pattern || '',
+        wallPrefix: REPORT_BASEMENT_WALL_PREFIX
+      }, 90000);
+      if (!res.etabsConnected || !res.image) throw new Error(res.error || t('drift.error.notConnected'));
+      reportState.images[item.key] = res.image;
+      reportState.captureLog[i].state = 'ok';
+      done++;
+    } catch (error) {
+      reportState.captureLog[i].state = 'fail';
+      reportState.captureLog[i].reason = /404/.test(error.message) ? t('report.model.agentOld') : describeError(error);
+    }
+    reportPaintCaptureLog();
     saveReportState();
-    renderReportModule();
-    log(t('report.capture.done', { what: describe }), 'ok');
-  } catch (error) {
-    log(/404/.test(error.message) ? t('report.model.agentOld') : describeError(error), 'error');
   }
+
+  reportCaptureRunning = false;
+  renderReportModule();
+  log(t('report.capture.summary', { done, total: items.length }), done === items.length ? 'ok' : 'error');
+}
+
+function reportPaintCaptureLog() {
+  const host = $('#repCaptureLog');
+  if (host) host.innerHTML = reportCaptureLogRows();
 }
 
 function reportGenerateLoadViews() {
-  const queue = reportViewQueue();
-  if (queue.length === 0) { log(t('report.pg.nothingToDo'), 'error'); return; }
-  reportState.captureQueue = queue.map(item => item.key);
-  reportState.captureKind = 'loads';
-  saveReportState();
-  renderReportEditorPanel();
+  // A grouped view is captured on its first storey — the group shares one drawing.
+  reportRunCaptureQueue(reportViewQueue().map(item => ({
+    key: item.key, label: t('report.capture.row', { target: item.target, pattern: item.pattern }),
+    story: item.stories[0], pattern: item.pattern
+  })), 'loads');
 }
 
 function reportGenerateSoilViews() {
-  const patterns = [reportState.fields.soilStatic, reportState.fields.soilDynamic].filter(Boolean);
-  if (patterns.length === 0) { log(t('report.soilP.needPattern'), 'error'); return; }
-  reportState.captureQueue = patterns.map(p => `S65::${p}`);
-  reportState.captureKind = 'soil';
-  saveReportState();
-  renderReportEditorPanel();
+  reportRunCaptureQueue([reportState.fields.soilStatic, reportState.fields.soilDynamic]
+    .filter(Boolean)
+    .map(p => ({ key: `S65::${p}`, label: t('report.capture.row', { target: t('report.soilP.walls'), pattern: p }), pattern: p })),
+  'soil');
 }
 
 // Report-wide controls live in the page heading, next to the Dashboard button.
@@ -5765,39 +5796,35 @@ function reportPlanGroupsHtml() {
         <button class="button button-primary" type="button" id="repGenLoadViews"${etabsConnected ? '' : ' disabled'}>${t('report.pg.generate')}</button>
         <span class="rep-measure-note" id="repGenNote">${etabsConnected ? t('report.pg.generateHint', { count: groups.length + loose.length }) : t('report.measure.needConnection')}</span>
       </div>
-      ${reportState.captureKind === 'loads' ? reportCaptureListHtml(reportViewQueue()) : ''}
+      ${reportState.captureKind === 'loads' ? reportCaptureLogHtml() : ''}
     </div>`;
 }
 
-// Each row is one view the report needs. ETABS cannot be driven to it from here,
-// so the row says what to open and the button photographs whatever is on screen.
-function reportCaptureListHtml(items) {
-  if (!items.length) return '';
+// Progress of an automatic run: one row per view, marked as it is captured.
+function reportCaptureLogHtml() {
+  const rows = reportState.captureLog || [];
+  if (rows.length === 0) return '';
   return `<div class="rep-capture">
-      <div class="rep-capture-head">
-        <p class="rep-pg-head">${t('report.capture.title')}</p>
-        <button type="button" class="text-button" id="repCaptureClear">${t('report.capture.clear')}</button>
-      </div>
-      <p class="rep-capture-help">${t('report.capture.help')}</p>
-      <ul class="rep-capture-list">
-        ${items.map(item => {
-          const shot = reportState.images[item.key];
-          return `<li>
-            <div class="rep-capture-info">
-              <strong>${escapeHtml(t('report.capture.row', { target: item.target, pattern: item.pattern }))}</strong>
-              ${shot ? `<img src="${shot}" alt="">` : ''}
-            </div>
-            <button class="button button-secondary" type="button" data-capture="${escapeHtml(item.key)}"
-                    data-describe="${escapeHtml(t('report.capture.row', { target: item.target, pattern: item.pattern }))}">
-              ${shot ? t('report.capture.recapture') : t('report.capture.button')}
-            </button>
-          </li>`;
-        }).join('')}
-      </ul>
+      <p class="rep-pg-head">${t('report.capture.title')}</p>
+      <div id="repCaptureLog">${reportCaptureLogRows()}</div>
     </div>`;
 }
 
-// --- 6.5 Soil and water ------------------------------------------------------
+function reportCaptureLogRows() {
+  const mark = { waiting: '·', working: '…', ok: '✓', fail: '!' };
+  return `<ul class="rep-capture-list">
+      ${(reportState.captureLog || []).map(row => `
+        <li class="cap-${row.state}">
+          <span class="rep-cap-mark">${mark[row.state] || '·'}</span>
+          <div class="rep-capture-info">
+            <strong>${escapeHtml(row.label)}</strong>
+            ${row.reason ? `<small>${escapeHtml(row.reason)}</small>` : ''}
+          </div>
+          ${reportState.images[row.key] ? `<img src="${reportState.images[row.key]}" alt="">` : ''}
+        </li>`).join('')}
+    </ul>`;
+}
+
 function reportSoilPressureHtml() {
   const current = reportState.fields.soilPressure || '';
   const patterns = reportState.loadPatterns || [];
@@ -6199,21 +6226,6 @@ function bindReportPlanGroups(panel) {
 
   const generate = $('#repGenLoadViews', panel);
   if (generate) generate.addEventListener('click', reportGenerateLoadViews);
-  bindReportCaptureList(panel);
-}
-
-function bindReportCaptureList(panel) {
-  $$('[data-capture]', panel).forEach(button => button.addEventListener('click', () => {
-    button.disabled = true;
-    reportCaptureInto(button.dataset.capture, button.dataset.describe)
-      .finally(() => { const again = $(`[data-capture="${CSS.escape(button.dataset.capture)}"]`); if (again) again.disabled = false; });
-  }));
-  const clear = $('#repCaptureClear', panel);
-  if (clear) clear.addEventListener('click', () => {
-    reportState.captureKind = '';
-    saveReportState();
-    renderReportEditorPanel();
-  });
 }
 
 function bindReportSoilPressure(panel) {
@@ -6235,7 +6247,6 @@ function bindReportSoilPressure(panel) {
 
   const generate = $('#repGenSoilViews', panel);
   if (generate) generate.addEventListener('click', reportGenerateSoilViews);
-  bindReportCaptureList(panel);
 }
 
 function bindReportImageField(panel, field) {

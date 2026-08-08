@@ -1,6 +1,6 @@
 # Module implementation status
 
-Last updated for **web v1.15.1 / agent v1.15.0**.
+Last updated for **web v1.16.0 / agent v1.16.0**.
 
 "Migrated" means the calculation itself runs against the live ETABS model and has
 been checked against an independent hand calculation. Every check module listed below
@@ -44,13 +44,21 @@ slab thickness, concrete and rebar class) are read through the agent as *suggest
 — the engineer's own entry always wins, because an automatic read can pick the wrong
 material and they sign the report.
 
-**View capture is deliberately semi-automatic.** The ETABS v1 API exposes no view
-control and no picture export — `cView` offers only `RefreshView` and
-`RefreshWindow` — so ETABS cannot be driven to a plan view or told to display shell
-loads from the agent. The Loads step therefore lists every view the report needs,
-the engineer sets that view up in ETABS, and the agent photographs the ETABS window
-on a single click. Fully automating this would mean driving ETABS menus with
-synthetic input, which breaks on any menu or version change.
+**View capture drives the ETABS window.** The v1 API exposes no view control and no
+picture export — `cView` offers only `RefreshView` and `RefreshWindow` — so the
+agent produces the section-6 figures by driving the ETABS menus: it resolves the
+menu item **by text at run time** (never by a hard-coded id, which would not
+survive a reordering), posts `WM_COMMAND`, fills in whatever dialog appears, and
+photographs the window. Basement-wall views select the walls through the API first
+(sections whose name starts with `BAP`), then ask ETABS to show only the selection
+in 3D.
+
+This is inherently coupled to the ETABS user interface. When a menu path cannot be
+resolved, the error names **the menu texts that were actually found**, and when a
+dialog does not offer the expected entry it lists the controls it did contain — so
+a mismatch reports what is really there instead of failing silently. A run captures
+every view in turn; a view that fails is marked with its reason and the rest carry
+on.
 
 Report data is held in the browser's local storage on the engineer's own machine and
 is never sent anywhere. Clearing browser data clears it — use *Save template* to keep
