@@ -271,11 +271,11 @@ const translations = {
     'report.load.needConnection': 'Connect to the model to list its load patterns.',
     'report.pg.storeys': 'STOREYS', 'report.pg.storeysHint': '{count} drawn on their own',
     'report.pg.groups': 'GROUPS', 'report.pg.groupsHint': 'one drawing each',
-    'report.pg.makeGroup': 'Group the selected storeys',
+    'report.pg.makeGroup': 'Add the selected storeys as a view',
     'report.pg.noGroups': 'No group yet — every storey is drawn on its own.',
     'report.pg.groupName': 'Group {n}', 'report.pg.dissolve': 'Dissolve',
     'report.pg.looseNote': '{count} storey(s) outside a group, each with its own drawing.',
-    'report.pg.needTwo': 'Select at least two storeys to group them.',
+    'report.pg.needOne': 'Select at least one storey.',
     'report.pg.generate': 'Generate load views',
     'report.pg.generateHint': '{count} drawing(s) × the selected load patterns.',
     'report.pg.nothingToDo': 'Select at least one load pattern first.',
@@ -696,11 +696,11 @@ const translations = {
     'report.load.needConnection': 'Modeldeki yükleri listelemek için bağlanın.',
     'report.pg.storeys': 'KATLAR', 'report.pg.storeysHint': '{count} tanesi ayrı çizilecek',
     'report.pg.groups': 'GRUPLAR', 'report.pg.groupsHint': 'her biri tek görsel',
-    'report.pg.makeGroup': 'Seçili katları grupla',
+    'report.pg.makeGroup': 'Seçili katları görsel olarak ekle',
     'report.pg.noGroups': 'Henüz grup yok — her kat ayrı çizilecek.',
     'report.pg.groupName': 'Grup {n}', 'report.pg.dissolve': 'Gruptan çıkar',
     'report.pg.looseNote': '{count} kat grup dışında, her biri kendi görselinde.',
-    'report.pg.needTwo': 'Gruplamak için en az iki kat seçin.',
+    'report.pg.needOne': 'En az bir kat seçin.',
     'report.pg.generate': 'Yük görsellerini üret',
     'report.pg.generateHint': '{count} görsel × seçili yükler.',
     'report.pg.nothingToDo': 'Önce en az bir yük seçin.',
@@ -1103,6 +1103,9 @@ function applyConnectionState(data) {
   setDisconnectVisible(true);
   etabsConnected = true;
   comboCachePromise = null;
+  // A new connection may well be a different model — reconnecting without
+  // disconnecting first used to leave the previous model's storeys in the report.
+  reportForgetModelData();
   log(t('terminal.connected', { model }), 'ok');
   showPreflight(data);
   // Re-render whatever module is open so its now-available data loads.
@@ -1115,12 +1118,7 @@ function applyConnectionState(data) {
 function resetAllModuleData() {
   comboCachePromise = null;
   wallShearRaw = null;
-  // The report keeps what the engineer typed, but everything it read from the
-  // model must be re-read against the next one.
-  reportModelLoaded = false;
-  reportState.stories = [];
-  reportState.modelHints = {};
-  reportState.modelError = '';
+  reportForgetModelData();
   for (const st of [driftState, pdeltaState, incrementState, columnAxialState,
                     beamShearState, beamAxialState, wallAxialState, wallShearState]) {
     st.combos = [];
@@ -5283,17 +5281,36 @@ function renderReportModule() {
 // Reads the storey list, the materials assigned in the model and the slab
 // thicknesses in one pass. Everything it produces is a *suggestion*: the engineer's
 // own entry always wins, because an automatic read can pick the wrong material.
+// Drops everything the report read from a model, so the next connection cannot
+// inherit it. What the engineer typed is kept — only model-derived data goes.
+function reportForgetModelData() {
+  reportModelLoaded = false;
+  reportState.stories = [];
+  reportState.loadPatterns = [];
+  reportState.wallSections = [];
+  reportState.modelHints = {};
+  reportState.modelError = '';
+}
+
 async function reportLoadModelData() {
   if (reportModelLoading) return;
   reportModelLoading = true;
   reportState.modelError = '';
   try {
-    if ((reportState.stories || []).length === 0) {
-      const res = await fetchAgentJson('/api/etabs/stories');
-      if (res.etabsConnected) {
-        reportState.stories = (res.stories || []).slice().sort((a, b) => a.elevation - b.elevation);
-        reportPrefillStoreyHeights();
+    // Always re-read: this runs once per connection, and the storeys must come
+    // from the model that is connected now, not from whatever was here before.
+    const res = await fetchAgentJson('/api/etabs/stories');
+    if (res.etabsConnected) {
+      reportState.stories = (res.stories || []).slice().sort((a, b) => a.elevation - b.elevation);
+      // Roles and plan groups name storeys; drop the ones this model does not have.
+      const live = new Set(reportState.stories.map(s => s.name));
+      for (const name of Object.keys(reportState.storeyRoles || {})) {
+        if (!live.has(name)) delete reportState.storeyRoles[name];
       }
+      reportState.planGroups = (reportState.planGroups || [])
+        .map(g => ({ ...g, stories: g.stories.filter(n => live.has(n)) }))
+        .filter(g => g.stories.length > 0);
+      reportPrefillStoreyHeights();
     }
     // Load patterns and wall sections drive the Loads step; a failure there must
     // not stop the materials read, so they are requested on their own.
@@ -5380,8 +5397,7 @@ function reportViewQueue() {
   ];
   // One view per target per selected load pattern, which is what section 6 prints.
   const patterns = [...new Set(REPORT_LOAD_BOXES
-    .flatMap(box => [reportState.fields[`${box.id}Rigid`], reportState.fields[`${box.id}Other`]])
-    .filter(Boolean))];
+    .flatMap(box => [...reportLoadSelection(`${box.id}Rigid`), ...reportLoadSelection(`${box.id}Other`)]))];
   return targets.flatMap(target => patterns.map(pattern => ({
     key: `${target.code}::${pattern}`,
     target: target.label,
@@ -5585,6 +5601,14 @@ const REPORT_LOAD_BOXES = [
   { id: 'l63', labelKey: 'report.load.63', kindKey: 'report.load.area', unit: 'kN/m²' }
 ];
 
+// A load box holds a LIST of patterns. Older saved reports stored a single string,
+// so read through this rather than touching reportState.fields directly.
+function reportLoadSelection(key) {
+  const value = reportState.fields[key];
+  if (Array.isArray(value)) return value;
+  return value ? [value] : [];
+}
+
 // Table 6.1 of the template: the soil pressure assumed on the basement walls.
 const REPORT_SOIL_PRESSURE = [
   { id: 'cohesionless', labelKey: 'report.soilP.cohesionless', overKey: 'report.soilP.fullHeight', formula: '0.2 (γ·Hb + q)' },
@@ -5639,11 +5663,17 @@ function reportLoadBoxesHtml() {
   const rigidOn = !!reportState.fields.loadRigid;
   const stories = (reportState.stories || []).slice().reverse();
 
-  const chips = (key, selected) => patterns.length
-    ? `<div class="rep-chips" data-chipset="${key}">
-        ${patterns.map(p => `<button type="button" class="rep-chip${selected === p ? ' on' : ''}" data-chip="${escapeHtml(p)}" aria-pressed="${selected === p}">${escapeHtml(p)}</button>`).join('')}
-      </div>`
-    : `<p class="rep-chip-empty">${t(etabsConnected ? 'report.load.noPatterns' : 'report.load.needConnection')}</p>`;
+  const chips = key => {
+    const selected = reportLoadSelection(key);
+    return patterns.length
+      ? `<div class="rep-chips" data-chipset="${key}">
+          ${patterns.map(p => {
+            const on = selected.includes(p);
+            return `<button type="button" class="rep-chip${on ? ' on' : ''}" data-chip="${escapeHtml(p)}" aria-pressed="${on}">${escapeHtml(p)}</button>`;
+          }).join('')}
+        </div>`
+      : `<p class="rep-chip-empty">${t(etabsConnected ? 'report.load.noPatterns' : 'report.load.needConnection')}</p>`;
+  };
 
   return `<div class="rep-loads">
       <div class="rigid-row rep-rigid-row">
@@ -5675,16 +5705,16 @@ function reportLoadBoxesHtml() {
             ${rigidOn ? `
               <div class="rep-load-pick">
                 <span>${t('report.load.rigidLoads')}</span>
-                ${chips(`${box.id}Rigid`, reportState.fields[`${box.id}Rigid`])}
+                ${chips(`${box.id}Rigid`)}
               </div>
               <div class="rep-load-pick">
                 <span>${t('report.load.otherLoads')}</span>
-                ${chips(`${box.id}Other`, reportState.fields[`${box.id}Other`])}
+                ${chips(`${box.id}Other`)}
               </div>`
             : `
               <div class="rep-load-pick">
                 <span>${t('report.load.allLoads')}</span>
-                ${chips(`${box.id}Other`, reportState.fields[`${box.id}Other`])}
+                ${chips(`${box.id}Other`)}
               </div>`}
           </div>
         </div>`).join('')}
@@ -6138,8 +6168,12 @@ function bindReportLoadBoxes(panel) {
   $$('[data-chipset]', panel).forEach(set => {
     const key = set.dataset.chipset;
     $$('[data-chip]', set).forEach(chip => chip.addEventListener('click', () => {
-      // One pattern per box: picking the selected one again clears it.
-      reportState.fields[key] = reportState.fields[key] === chip.dataset.chip ? '' : chip.dataset.chip;
+      // Several patterns can share one box — a figure is captured per pattern.
+      const current = reportLoadSelection(key);
+      const name = chip.dataset.chip;
+      reportState.fields[key] = current.includes(name)
+        ? current.filter(p => p !== name)
+        : [...current, name];
       saveReportState();
       renderReportModule();
     }));
@@ -6150,7 +6184,7 @@ function bindReportPlanGroups(panel) {
   const add = $('#repPgAdd', panel);
   if (add) add.addEventListener('click', () => {
     const picked = $$('#repPgStoreys input:checked', panel).map(input => input.value);
-    if (picked.length < 2) { log(t('report.pg.needTwo'), 'error'); return; }
+    if (picked.length < 1) { log(t('report.pg.needOne'), 'error'); return; }
     reportState.planGroups = [...(reportState.planGroups || []), { stories: picked }];
     saveReportState();
     renderReportModule();

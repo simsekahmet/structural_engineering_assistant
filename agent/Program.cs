@@ -81,7 +81,8 @@ internal sealed class AgentApplicationContext : ApplicationContext
             GetPlanExtentOnUiThread,
             GetLoadPatternsOnUiThread,
             GetWallSectionsOnUiThread,
-            CaptureOnUiThread);
+            CaptureOnUiThread,
+            GetMenuTreeOnUiThread);
         try
         {
             _server.Start();
@@ -255,6 +256,14 @@ internal sealed class AgentApplicationContext : ApplicationContext
             return (CaptureResult)_dispatcher.Invoke(new Func<CaptureResult>(_etabs.CaptureEtabsWindow));
 
         return _etabs.CaptureEtabsWindow();
+    }
+
+    private MenuTreeResult GetMenuTreeOnUiThread()
+    {
+        if (_dispatcher.InvokeRequired)
+            return (MenuTreeResult)_dispatcher.Invoke(new Func<MenuTreeResult>(_etabs.GetMenuTree));
+
+        return _etabs.GetMenuTree();
     }
 
     private void ShowConnectionResult()
@@ -938,6 +947,59 @@ internal sealed class EtabsConnection : IDisposable
             AgentLog.Write($"GetFrameSections failed: {ex}");
             return new FrameSectionsResult(true, false, ex.Message, Array.Empty<FrameSectionInfo>());
         }
+    }
+
+    // Reads the ETABS menu bar as a tree.
+    //
+    // Automating the view setup means posting WM_COMMAND for the right menu items,
+    // and their ids are ETABS-internal. Rather than guess the menu layout, this
+    // reports the real one so the automation can be written against what is
+    // actually there — and so it can find items by TEXT at run time instead of
+    // hard-coded ids, which survives a reordering.
+    public MenuTreeResult GetMenuTree()
+    {
+        if (!EnsureModelReady(out var error))
+            return new MenuTreeResult(true, false, error, Array.Empty<MenuNode>());
+
+        try
+        {
+            var handle = FindEtabsWindow();
+            if (handle == IntPtr.Zero)
+                return new MenuTreeResult(true, true, "ETABS main window could not be found.", Array.Empty<MenuNode>());
+
+            var bar = WindowCapture.GetMenu(handle);
+            if (bar == IntPtr.Zero)
+                return new MenuTreeResult(true, true, "ETABS window exposes no menu bar.", Array.Empty<MenuNode>());
+
+            return new MenuTreeResult(true, true, null, ReadMenu(bar, 0));
+        }
+        catch (Exception ex)
+        {
+            AgentLog.Write($"GetMenuTree failed: {ex}");
+            return new MenuTreeResult(true, false, ex.Message, Array.Empty<MenuNode>());
+        }
+    }
+
+    // Two levels deep is enough to describe "Display > Load Assigns > Shell".
+    private static MenuNode[] ReadMenu(IntPtr menu, int depth)
+    {
+        var count = WindowCapture.GetMenuItemCount(menu);
+        if (count <= 0 || depth > 3) return Array.Empty<MenuNode>();
+
+        var nodes = new List<MenuNode>(count);
+        for (var i = 0; i < count; i++)
+        {
+            var buffer = new System.Text.StringBuilder(256);
+            WindowCapture.GetMenuString(menu, i, buffer, buffer.Capacity, WindowCapture.MF_BYPOSITION);
+            var text = buffer.ToString().Replace("&", "").Trim();
+
+            var sub = WindowCapture.GetSubMenu(menu, i);
+            var id = sub == IntPtr.Zero ? WindowCapture.GetMenuItemID(menu, i) : 0;
+            if (text.Length == 0 && sub == IntPtr.Zero) continue;
+
+            nodes.Add(new MenuNode(text, id, sub == IntPtr.Zero ? Array.Empty<MenuNode>() : ReadMenu(sub, depth + 1)));
+        }
+        return nodes.ToArray();
     }
 
     // Captures the ETABS main window as a PNG.
@@ -1714,6 +1776,7 @@ internal sealed class LocalBridgeServer : IDisposable
     private readonly Func<LoadPatternsResult> _getLoadPatterns;
     private readonly Func<WallSectionsResult> _getWallSections;
     private readonly Func<CaptureResult> _capture;
+    private readonly Func<MenuTreeResult> _getMenuTree;
     private readonly CancellationTokenSource _cancellation = new();
     private TcpListener? _listener;
 
@@ -1736,7 +1799,8 @@ internal sealed class LocalBridgeServer : IDisposable
         Func<PlanExtentResult> getPlanExtent,
         Func<LoadPatternsResult> getLoadPatterns,
         Func<WallSectionsResult> getWallSections,
-        Func<CaptureResult> capture)
+        Func<CaptureResult> capture,
+        Func<MenuTreeResult> getMenuTree)
     {
         _getSnapshot = getSnapshot;
         _getCombinations = getCombinations;
@@ -1757,6 +1821,7 @@ internal sealed class LocalBridgeServer : IDisposable
         _getLoadPatterns = getLoadPatterns;
         _getWallSections = getWallSections;
         _capture = capture;
+        _getMenuTree = getMenuTree;
     }
 
     public void Start()
@@ -1928,6 +1993,12 @@ internal sealed class LocalBridgeServer : IDisposable
                     if (path == "/api/etabs/capture")
                     {
                         await WriteResponseAsync(stream, 200, "OK", _capture(), origin, cancellationToken);
+                        return;
+                    }
+
+                    if (path == "/api/etabs/menu-tree")
+                    {
+                        await WriteResponseAsync(stream, 200, "OK", _getMenuTree(), origin, cancellationToken);
                         return;
                     }
 
@@ -2268,6 +2339,8 @@ internal sealed record LoadPatternInfo(string Name, string Kind);
 internal sealed record LoadPatternsResult(bool AgentOnline, bool EtabsConnected, string? Error, LoadPatternInfo[] Patterns);
 internal sealed record WallSectionsResult(bool AgentOnline, bool EtabsConnected, string? Error, string[] Names);
 internal sealed record CaptureResult(bool AgentOnline, bool EtabsConnected, string? Error, string? Image, int Width, int Height);
+internal sealed record MenuNode(string Text, int Id, MenuNode[] Items);
+internal sealed record MenuTreeResult(bool AgentOnline, bool EtabsConnected, string? Error, MenuNode[] Menus);
 
 // Win32 calls needed to photograph the ETABS window. The v1 API exposes no picture
 // export and no view control, so the window itself is the only source of a view image.
@@ -2287,6 +2360,23 @@ internal static class WindowCapture
 
     [System.Runtime.InteropServices.DllImport("user32.dll")]
     internal static extern bool ClientToScreen(IntPtr hWnd, ref POINT lpPoint);
+
+    internal const uint MF_BYPOSITION = 0x400;
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    internal static extern IntPtr GetMenu(IntPtr hWnd);
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    internal static extern int GetMenuItemCount(IntPtr hMenu);
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    internal static extern IntPtr GetSubMenu(IntPtr hMenu, int nPos);
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    internal static extern int GetMenuItemID(IntPtr hMenu, int nPos);
+
+    [System.Runtime.InteropServices.DllImport("user32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
+    internal static extern int GetMenuString(IntPtr hMenu, int uIDItem, System.Text.StringBuilder lpString, int nMaxCount, uint uFlag);
 }
 
 

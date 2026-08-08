@@ -1,6 +1,6 @@
 # Module implementation status
 
-Last updated for **web v1.15.0 / agent v1.14.0**.
+Last updated for **web v1.15.1 / agent v1.15.0**.
 
 "Migrated" means the calculation itself runs against the live ETABS model and has
 been checked against an independent hand calculation. Every check module listed below
